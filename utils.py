@@ -97,7 +97,7 @@ class TreeInfo:
         if zoom_start is None:
             zoom_start = 0
         if zoom_end is None:
-            zoom_end = self.sequence_length
+            zoom_end = self.ts.sequence_length
         fig, ax = plt.subplots(figsize=(20, 5))
         polytomy_fractions = self.calc_polytomy_fractions()
         poly_fracs_by_pos = self.map_stats_to_genome(polytomy_fractions)
@@ -110,7 +110,7 @@ class TreeInfo:
             poly_fracs_means.append(np.mean(poly_win))
             poly_fracs_sd.append(np.std(poly_win))
         for gen_win in self.make_sliding_windows(
-            np.arange(1, self.sequence_length), window_size, overlap
+            np.arange(1, self.ts.sequence_length), window_size, overlap
         ):
             genomic_positions.append(gen_win[0] / 1_000_000)
         ax.plot(
