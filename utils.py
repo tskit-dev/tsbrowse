@@ -96,9 +96,9 @@ class TreeInfo:
         Plots the fraction of polytomies in windows actoss the genomic sequence
         """
         if zoom_start is None:
-            zoom_start = 0
+            zoom_start = max(0, self.ts.tables.sites.position[0] - 50_000)
         if zoom_end is None:
-            zoom_end = self.ts.sequence_length
+            zoom_end = self.ts.tables.sites.position[-1] + 50_000
         fig, ax = plt.subplots(figsize=(20, 5))
         polytomy_fractions = self.calc_polytomy_fractions()
         poly_fracs_by_pos = self.map_stats_to_genome(polytomy_fractions)
@@ -117,7 +117,6 @@ class TreeInfo:
         ax.plot(
             genomic_positions,
             poly_fracs_means,
-            color="grey",
             label="mean",
             linewidth=0.5,
         )
@@ -125,11 +124,11 @@ class TreeInfo:
             genomic_positions,
             np.array(poly_fracs_means) - np.array(poly_fracs_sd),
             np.array(poly_fracs_means) + np.array(poly_fracs_sd),
-            color="blue",
             alpha=0.3,
             label="mean +/- std",
         )
-        missing_vals = np.take(genomic_positions, np.where(np.isnan(poly_fracs_means)))
+        missing_vals = np.take(
+            genomic_positions, np.where(np.isnan(poly_fracs_means)))
         ax.plot(
             missing_vals,
             np.zeros(len(missing_vals)),
@@ -142,7 +141,6 @@ class TreeInfo:
         ax.set_title("Polytomy score", fontsize=10)
         ax.set_ylim(0, 1)
         ax.set_xlim(zoom_start / 1_000_000, zoom_end / 1_000_000)
-        # ax.legend(fontsize=12, numpoints = 1)
         handles, labels = ax.get_legend_handles_labels()
         unique = [
             (h, l)
@@ -159,17 +157,16 @@ class TreeInfo:
         if max_num_muts is None:
             counts, edges, bars = plt.hist(
                 self.sites_num_mutations,
-                facecolor="lightblue",
                 alpha=0.75,
                 edgecolor="black",
             )
         else:
-            sites_with_many_muts = np.sum(self.sites_num_mutations > max_num_muts)
+            sites_with_many_muts = np.sum(
+                self.sites_num_mutations > max_num_muts)
             textstr = f"there are {sites_with_many_muts} sites\nwith more than {max_num_muts} mutations"
             counts, edges, bars = plt.hist(
                 self.sites_num_mutations,
                 range(max_num_muts),
-                facecolor="lightblue",
                 alpha=0.75,
                 edgecolor="black",
             )
@@ -185,7 +182,6 @@ class TreeInfo:
     ):
         count = self.sites_num_mutations
         pos = self.ts.sites_position
-        # zero_fraction = np.sum(count == 0) / self.ts.num_sites
         if zoom_start is None:
             zoom_start = pos[0]
         if zoom_end is None:
@@ -204,8 +200,3 @@ class TreeInfo:
         grid.fig.set_figheight(8)
         grid.ax_joint.set_xlabel("Position on genome")
         grid.ax_joint.set_ylabel("Number of mutations")
-        # grid.ax_joint.annotate(
-        #    f"{zero_fraction * 100:.2f}% sites have 0 mutations",
-        #    xy=(zoom_start/1_000_000, np.max(count)),
-        #    xycoords="data",
-        # )
