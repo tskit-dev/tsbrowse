@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 """
 QC functions for tsinfer trees
@@ -150,3 +151,61 @@ class TreeInfo:
         ]
         ax.legend(*zip(*unique))
         plt.show()
+
+    def plot_mutations_per_site_distribution(
+        self, max_num_muts=None, show_counts=False
+    ):
+        fig, ax = plt.subplots()
+        if max_num_muts is None:
+            counts, edges, bars = plt.hist(
+                self.sites_num_mutations,
+                facecolor="lightblue",
+                alpha=0.75,
+                edgecolor="black",
+            )
+        else:
+            sites_with_many_muts = np.sum(self.sites_num_mutations > max_num_muts)
+            textstr = f"there are {sites_with_many_muts} sites\nwith more than {max_num_muts} mutations"
+            counts, edges, bars = plt.hist(
+                self.sites_num_mutations,
+                range(max_num_muts),
+                facecolor="lightblue",
+                alpha=0.75,
+                edgecolor="black",
+            )
+            ax.text(0.3, 0.7, textstr, transform=ax.transAxes)
+        plt.xlabel("Number of mutations")
+        plt.ylabel("Number of sites")
+        plt.title("Mutations per site distribution")
+        if show_counts:
+            plt.bar_label(bars, rotation=45)
+
+    def plot_mutations_per_site_along_seq(
+        self, zoom_start=None, zoom_end=None, hist_bins=1000
+    ):
+        count = self.sites_num_mutations
+        pos = self.ts.sites_position
+        # zero_fraction = np.sum(count == 0) / self.ts.num_sites
+        if zoom_start is None:
+            zoom_start = pos[0]
+        if zoom_end is None:
+            zoom_end = pos[-1]
+        grid = sns.jointplot(
+            x=pos / 1_000_000,
+            y=count,
+            kind="scatter",
+            marginal_ticks=True,
+            alpha=0.5,
+            marginal_kws=dict(bins=hist_bins),
+            xlim=(zoom_start / 1_000_000, zoom_end / 1_000_000),
+        )
+        grid.ax_marg_y.remove()
+        grid.fig.set_figwidth(20)
+        grid.fig.set_figheight(8)
+        grid.ax_joint.set_xlabel("Position on genome")
+        grid.ax_joint.set_ylabel("Number of mutations")
+        # grid.ax_joint.annotate(
+        #    f"{zero_fraction * 100:.2f}% sites have 0 mutations",
+        #    xy=(zoom_start/1_000_000, np.max(count)),
+        #    xycoords="data",
+        # )
