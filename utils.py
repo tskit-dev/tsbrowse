@@ -210,31 +210,24 @@ class TreeInfo:
 
     def plot_mutations_per_node(self, max_num_muts=None, show_counts=False):
         fig, ax = plt.subplots()
-        if max_num_muts is None:
-            counts, edges, bars = plt.hist(
-                self.nodes_num_mutations,
-                alpha=0.75,
-                edgecolor="black",
-            )
-            ax.set_xticks(edges)
-        else:
+        bins = None
+        if max_num_muts is not None:
+            bins = range(max_num_muts + 1)
             nodes_with_many_muts = np.sum(
                 self.nodes_num_mutations > max_num_muts)
-            textstr = f"there are {nodes_with_many_muts:,} nodes\nwith more than {max_num_muts:,} mutations"
-            counts, edges, bars = plt.hist(
-                self.nodes_num_mutations,
-                range(max_num_muts + 1),
-                alpha=0.75,
-                edgecolor="black",
-            )
-            ax.text(0.6, 0.9, textstr, transform=ax.transAxes)
-            ax.set_xticks(edges)
-
+            ax.text(0.6, 0.9, 
+                    f"there are {nodes_with_many_muts:,} nodes\nwith more than {max_num_muts:,} mutations", 
+                    transform=ax.transAxes)
+        counts, edges, bars = plt.hist(
+            self.nodes_num_mutations,
+            bins=bins, edgecolor="black"
+        )
+        ax.set_xticks(edges)
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
         plt.xlabel("Number of mutations")
         plt.ylabel("Number of nodes")
-        plt.title("Mutations per node distribution")
+        plt.title("Mutations-per-node distribution")
         if show_counts:
             plt.bar_label(bars, fmt="{:,.0f}")
