@@ -207,7 +207,7 @@ class TreeInfo:
         grid.fig.set_figheight(8)
         grid.ax_joint.set_xlabel("Position on genome (Mb)")
         grid.ax_joint.set_ylabel("Number of mutations")
-    
+
     def plot_mutations_per_node(self, max_num_muts=None, show_counts=False):
         fig, ax = plt.subplots()
         if max_num_muts is None:
@@ -223,14 +223,13 @@ class TreeInfo:
             textstr = f"there are {nodes_with_many_muts:,} nodes\nwith more than {max_num_muts:,} mutations"
             counts, edges, bars = plt.hist(
                 self.nodes_num_mutations,
-                range(max_num_muts),
+                range(max_num_muts + 1),
                 alpha=0.75,
                 edgecolor="black",
             )
-            ax.text(0.3, 0.7, textstr, transform=ax.transAxes)
+            ax.text(0.6, 0.9, textstr, transform=ax.transAxes)
             ax.set_xticks(edges)
-            ax.xaxis.set_major_locator(plt.MaxNLocator(10))
-       
+
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
@@ -238,5 +237,4 @@ class TreeInfo:
         plt.ylabel("Number of nodes")
         plt.title("Mutations per node distribution")
         if show_counts:
-            plt.bar_label(bars, rotation=45)
-
+            plt.bar_label(bars, fmt="{:,.0f}")
