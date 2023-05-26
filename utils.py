@@ -223,3 +223,41 @@ class TreeInfo:
         plt.title("Mutations-per-node distribution")
         if show_counts:
             plt.bar_label(bars, fmt="{:,.0f}")
+
+    def plot_tree_spans(
+        self, log_transform=True, region_start=None,
+        region_end=None, show_counts=False
+    ):
+        fig, ax = plt.subplots()
+        bins = None
+        breakpoints = self.ts.breakpoints(as_array=True)
+        start_idx = 2
+        end_idx = len(breakpoints) - 1
+
+        if region_start is not None:
+            start_idx = max(start_idx, np.argmax(breakpoints > region_start))
+        if region_end is not None:
+            end_idx = min(np.argmax(breakpoints >= region_end),
+                          end_idx)
+
+        spans = (
+            breakpoints[start_idx:end_idx] -
+            breakpoints[start_idx - 1: end_idx - 1]
+        )
+        xlabel = "span"
+        if log_transform:
+            spans = np.log10(spans)
+            xlabel = "span (log10)"
+            bins = range(int(np.min(spans)), int(np.max(spans)) + 2)
+
+        counts, edges, bars = plt.hist(
+                spans, edgecolor="black", bins=bins
+            )
+        ax.set_xticks(edges)
+        if show_counts:
+            plt.bar_label(bars, fmt="{:,.0f}")
+        ax.set_xlabel(xlabel)
+        ax.yaxis.set_major_formatter(
+            plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
+        )
+        plt.title(f"Distribution of {len(spans):,} tree spans")
