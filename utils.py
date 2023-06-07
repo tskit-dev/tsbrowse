@@ -90,15 +90,16 @@ class TreeInfo:
         yield iterable[start:]
 
     def plot_polytomy_fractions(
-        self, zoom_start=None, zoom_end=None, window_size=100_000, overlap=0
+        self, region_start=None, region_end=None,
+        window_size=100_000, overlap=0
     ):
         """
         Plots the fraction of polytomies in windows actoss the genomic sequence
         """
-        if zoom_start is None:
-            zoom_start = max(0, self.ts.tables.sites.position[0] - 50_000)
-        if zoom_end is None:
-            zoom_end = self.ts.tables.sites.position[-1] + 50_000
+        if region_start is None:
+            region_start = max(0, self.ts.tables.sites.position[0] - 50_000)
+        if region_end is None:
+            region_end = self.ts.tables.sites.position[-1] + 50_000
         fig, ax = plt.subplots(figsize=(20, 5))
         polytomy_fractions = self.calc_polytomy_fractions()
         poly_fracs_by_pos = self.map_stats_to_genome(polytomy_fractions)
@@ -140,7 +141,7 @@ class TreeInfo:
         ax.set_ylabel("Window mean", fontsize=10)
         ax.set_title("Polytomy score", fontsize=10)
         ax.set_ylim(0, 1)
-        ax.set_xlim(zoom_start / 1_000_000, zoom_end / 1_000_000)
+        ax.set_xlim(region_start / 1_000_000, region_end / 1_000_000)
         handles, labels = ax.get_legend_handles_labels()
         unique = [
             (h, l)
@@ -150,21 +151,20 @@ class TreeInfo:
         ax.legend(*zip(*unique))
         plt.show()
 
-    def plot_mutations_per_site(
-        self, max_num_muts=None, show_counts=False
-    ):
+    def plot_mutations_per_site(self, max_num_muts=None, show_counts=False):
         fig, ax = plt.subplots()
-        bins=None
+        bins = None
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
             sites_with_many_muts = np.sum(
                 self.sites_num_mutations > max_num_muts)
-            ax.text(0.5, 0.9, 
-                    f"there are {sites_with_many_muts:,} sites\nwith more than {max_num_muts:,} mutations", 
-                    transform=ax.transAxes)
+            ax.text(
+                0.5, 0.9,
+                f"there are {sites_with_many_muts:,} sites\nwith more than {max_num_muts:,} mutations",
+                transform=ax.transAxes
+            )
         counts, edges, bars = plt.hist(
-            self.sites_num_mutations,
-            bins=bins, edgecolor="black"
+            self.sites_num_mutations, bins=bins, edgecolor="black"
         )
         ax.set_xticks(edges)
         ax.yaxis.set_major_formatter(
@@ -177,14 +177,14 @@ class TreeInfo:
             plt.bar_label(bars, fmt="{:,.0f}")
 
     def plot_mutations_per_site_along_seq(
-        self, zoom_start=None, zoom_end=None, hist_bins=1000
+        self, region_start=None, region_end=None, hist_bins=1000
     ):
         count = self.sites_num_mutations
         pos = self.ts.sites_position
-        if zoom_start is None:
-            zoom_start = pos[0]
-        if zoom_end is None:
-            zoom_end = pos[-1]
+        if region_start is None:
+            region_start = pos[0]
+        if region_end is None:
+            region_end = pos[-1]
         grid = sns.jointplot(
             x=pos / 1_000_000,
             y=count,
@@ -192,7 +192,7 @@ class TreeInfo:
             marginal_ticks=True,
             alpha=0.5,
             marginal_kws=dict(bins=hist_bins),
-            xlim=(zoom_start / 1_000_000, zoom_end / 1_000_000),
+            xlim=(region_start / 1_000_000, region_end / 1_000_000),
         )
         grid.ax_marg_y.remove()
         grid.fig.set_figwidth(20)
@@ -207,12 +207,14 @@ class TreeInfo:
             bins = range(max_num_muts + 1)
             nodes_with_many_muts = np.sum(
                 self.nodes_num_mutations > max_num_muts)
-            ax.text(0.5, 0.9, 
-                    f"there are {nodes_with_many_muts:,} nodes\nwith more than {max_num_muts:,} mutations", 
-                    transform=ax.transAxes)
+            ax.text(
+                0.5,
+                0.9,
+                f"there are {nodes_with_many_muts:,} nodes\nwith more than {max_num_muts:,} mutations",
+                transform=ax.transAxes
+            )
         counts, edges, bars = plt.hist(
-            self.nodes_num_mutations,
-            bins=bins, edgecolor="black"
+            self.nodes_num_mutations, bins=bins, edgecolor="black"
         )
         ax.set_xticks(edges)
         ax.yaxis.set_major_formatter(
@@ -237,8 +239,7 @@ class TreeInfo:
         if region_start is not None:
             start_idx = max(start_idx, np.argmax(breakpoints > region_start))
         if region_end is not None:
-            end_idx = min(np.argmax(breakpoints >= region_end),
-                          end_idx)
+            end_idx = min(np.argmax(breakpoints >= region_end), end_idx)
 
         spans = (
             breakpoints[start_idx:end_idx] -
@@ -250,9 +251,7 @@ class TreeInfo:
             xlabel = "span (log10)"
             bins = range(int(np.min(spans)), int(np.max(spans)) + 2)
 
-        counts, edges, bars = plt.hist(
-                spans, edgecolor="black", bins=bins
-            )
+        counts, edges, bars = plt.hist(spans, edgecolor="black", bins=bins)
         ax.set_xticks(edges)
         if show_counts:
             plt.bar_label(bars, fmt="{:,.0f}")
@@ -261,3 +260,34 @@ class TreeInfo:
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
         plt.title(f"Distribution of {len(spans):,} tree spans")
+
+    def calc_mean_node_arity(self):
+        span_sums = np.bincount(
+            self.ts.edges_parent,
+            weights=self.ts.edges_right - self.ts.edges_left,
+            minlength=self.ts.num_nodes,
+        )
+        node_spans = self.ts.sample_count_stat(
+            [self.ts.samples()],
+            lambda x: (x > 0),
+            1,
+            polarised=True,
+            span_normalise=False,
+            strict=False,
+            mode="node",
+        )[:, 0]
+        return span_sums / node_spans
+
+    def plot_mean_node_arity(self, show_counts=False):
+        fig, ax = plt.subplots()
+        mean_arity = self.calc_mean_node_arity()
+        counts, edges, bars = plt.hist(
+            mean_arity, bins=None, edgecolor="black")
+        ax.set_xlabel("Mean node arity")
+        ax.set_ylabel("Number of nodes")
+        ax.set_title("Mean-node-arity distribution")
+        ax.yaxis.set_major_formatter(
+            plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
+        )
+        if show_counts:
+            plt.bar_label(bars, fmt="{:,.0f}")
