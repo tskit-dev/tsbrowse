@@ -38,7 +38,7 @@ tinfo.plot_mutations_per_site()
 ```
 
 ```python
-tinfo.plot_mutations_per_site_along_seq(zoom_start=None, zoom_end=None)
+tinfo.plot_mutations_per_site_along_seq(region_start=None, region_end=None)
 ```
 
 ```python
@@ -51,4 +51,20 @@ tinfo.plot_tree_spans(log_transform=True, region_end=200_000_000, region_start=1
 
 ```python
 tinfo.plot_mean_node_arity(show_counts=True)
+```
+
+```python
+tinfo.plot_mutations_per_tree(show_counts=True)
+```
+
+```python
+tinfo.plot_mutations_per_tree_along_seq(hist_bins=500,region_start=150_000_000, region_end=190_000_000)
+```
+
+```python
+tinfo.plot_sites_per_tree(show_counts=True)
+```
+
+```python
+tinfo.plot_sites_per_tree_along_seq(hist_bins=500,region_start=150_000_000, region_end=190_000_000)
 ```

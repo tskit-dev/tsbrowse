@@ -90,8 +90,7 @@ class TreeInfo:
         yield iterable[start:]
 
     def plot_polytomy_fractions(
-        self, region_start=None, region_end=None,
-        window_size=100_000, overlap=0
+        self, region_start=None, region_end=None, window_size=100_000, overlap=0
     ):
         """
         Plots the fraction of polytomies in windows actoss the genomic sequence
@@ -159,9 +158,10 @@ class TreeInfo:
             sites_with_many_muts = np.sum(
                 self.sites_num_mutations > max_num_muts)
             ax.text(
-                0.5, 0.9,
+                0.5,
+                0.9,
                 f"there are {sites_with_many_muts:,} sites\nwith more than {max_num_muts:,} mutations",
-                transform=ax.transAxes
+                transform=ax.transAxes,
             )
         counts, edges, bars = plt.hist(
             self.sites_num_mutations, bins=bins, edgecolor="black"
@@ -211,7 +211,7 @@ class TreeInfo:
                 0.5,
                 0.9,
                 f"there are {nodes_with_many_muts:,} nodes\nwith more than {max_num_muts:,} mutations",
-                transform=ax.transAxes
+                transform=ax.transAxes,
             )
         counts, edges, bars = plt.hist(
             self.nodes_num_mutations, bins=bins, edgecolor="black"
@@ -227,8 +227,7 @@ class TreeInfo:
             plt.bar_label(bars, fmt="{:,.0f}")
 
     def plot_tree_spans(
-        self, log_transform=True, region_start=None,
-        region_end=None, show_counts=False
+        self, log_transform=True, region_start=None, region_end=None, show_counts=False
     ):
         fig, ax = plt.subplots()
         bins = None
@@ -291,3 +290,142 @@ class TreeInfo:
         )
         if show_counts:
             plt.bar_label(bars, fmt="{:,.0f}")
+
+    def calc_mutations_per_tree(self):
+        tree_mutations = np.zeros(self.ts.num_trees)
+        for tree in self.ts.trees():
+            tree_mutations[tree.index] = tree.num_mutations
+        return tree_mutations
+
+    def plot_mutations_per_tree(self, max_num_muts=None, show_counts=False):
+        fig, ax = plt.subplots()
+        bins = None
+        if max_num_muts is not None:
+            bins = range(max_num_muts + 1)
+            trees_with_many_muts = np.sum(
+                self.calc_mutations_per_tree() > max_num_muts)
+            ax.text(
+                0.01,
+                0.99,
+                f"there are {trees_with_many_muts:,} trees\nwith more than {max_num_muts:,} mutations",
+                transform=ax.transAxes,
+            )
+        counts, edges, bars = plt.hist(
+            self.calc_mutations_per_tree(), bins=bins, edgecolor="black"
+        )
+        ax.yaxis.set_major_formatter(
+            plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
+        )
+        plt.xlabel("Number of mutations")
+        plt.ylabel("Number of trees")
+        plt.title("Mutations-per-tree distribution")
+        if show_counts:
+            plt.bar_label(bars, fmt="{:,.0f}")
+
+    def plot_mutations_per_tree_along_seq(
+        self, region_start=None, region_end=None, hist_bins=1000
+    ):
+        tree_mutations = self.calc_mutations_per_tree()
+        tree_mutations = tree_mutations[1:-1]
+        breakpoints = self.ts.breakpoints(as_array=True)
+        tree_mids = breakpoints[1:] - \
+            ((breakpoints[1:] - breakpoints[:-1]) / 2)
+        tree_mids = tree_mids[1:-1]
+        if region_start is None or region_start < tree_mids[0]:
+            region_start = tree_mids[0]
+        if region_end is None or region_end > tree_mids[-1]:
+            region_end = tree_mids[-1]
+
+        grid = sns.jointplot(
+            x=tree_mids / 1_000_000,
+            y=tree_mutations,
+            kind="scatter",
+            marginal_ticks=True,
+            alpha=0.5,
+            marginal_kws=dict(bins=hist_bins),
+            xlim=(region_start / 1_000_000, region_end / 1_000_000),
+            # set ylim to the max number of sites in a tree in the region
+            ylim=(
+                0,
+                np.max(
+                    tree_mutations[
+                        (tree_mids >= region_start) & (tree_mids <= region_end)
+                    ]
+                ),
+            ),
+        )
+        grid.ax_marg_y.remove()
+        grid.fig.set_figwidth(20)
+        grid.fig.set_figheight(8)
+        grid.ax_joint.set_xlabel("Position on genome (Mb)")
+        grid.ax_joint.set_ylabel("Number of mutations per tree")
+
+    def calc_sites_per_tree(self):
+        tree_sites = np.zeros(self.ts.num_trees)
+        for tree in self.ts.trees():
+            tree_sites[tree.index] = tree.num_sites
+        return tree_sites
+
+    def plot_sites_per_tree(self, max_num_sites=None, show_counts=False):
+        fig, ax = plt.subplots()
+        bins = None
+        if max_num_sites is not None:
+            bins = range(max_num_sites + 1)
+            trees_with_many_sites = np.sum(
+                self.calc_sites_per_tree() > max_num_sites)
+            ax.text(
+                0.01,
+                0.99,
+                f"there are {trees_with_many_sites:,} trees\nwith more than {max_num_sites:,} sites",
+                ha="left",
+                va="top",
+                transform=ax.transAxes,
+            )
+
+        counts, edges, bars = plt.hist(
+            self.calc_sites_per_tree(), bins=bins, edgecolor="black"
+        )
+        ax.yaxis.set_major_formatter(
+            plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
+        )
+        plt.xlabel("Number of sites")
+        plt.ylabel("Number of trees")
+        plt.title("Sites-per-tree distribution")
+        if show_counts:
+            plt.bar_label(bars, fmt="{:,.0f}")
+
+    def plot_sites_per_tree_along_seq(
+        self, region_start=None, region_end=None, hist_bins=500
+    ):
+        tree_sites = self.calc_sites_per_tree()
+        tree_sites = tree_sites[1:-1]
+        breakpoints = self.ts.breakpoints(as_array=True)
+        tree_mids = breakpoints[1:] - \
+            ((breakpoints[1:] - breakpoints[:-1]) / 2)
+        tree_mids = tree_mids[1:-1]
+        if region_start is None or region_start < tree_mids[0]:
+            region_start = tree_mids[0]
+        if region_end is None or region_end > tree_mids[-1]:
+            region_end = tree_mids[-1]
+
+        grid = sns.jointplot(
+            x=tree_mids / 1_000_000,
+            y=tree_sites,
+            kind="scatter",
+            marginal_ticks=True,
+            alpha=0.5,
+            marginal_kws=dict(bins=hist_bins),
+            xlim=(region_start / 1_000_000, region_end / 1_000_000),
+            ylim=(
+                0,
+                np.max(
+                    tree_sites[(tree_mids >= region_start)
+                               & (tree_mids <= region_end)]
+                ),
+            ),
+        )
+        grid.ax_marg_y.remove()
+        grid.fig.set_figwidth(20)
+        grid.fig.set_figheight(8)
+        grid.ax_joint.set_xlabel("Position on genome (Mb)")
+        grid.ax_joint.set_ylabel("Number of sites per tree")
