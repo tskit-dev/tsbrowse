@@ -127,8 +127,7 @@ class TreeInfo:
             alpha=0.3,
             label="mean +/- std",
         )
-        missing_vals = np.take(
-            genomic_positions, np.where(np.isnan(poly_fracs_means)))
+        missing_vals = np.take(genomic_positions, np.where(np.isnan(poly_fracs_means)))
         ax.plot(
             missing_vals,
             np.zeros(len(missing_vals)),
@@ -155,8 +154,7 @@ class TreeInfo:
         bins = None
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
-            sites_with_many_muts = np.sum(
-                self.sites_num_mutations > max_num_muts)
+            sites_with_many_muts = np.sum(self.sites_num_mutations > max_num_muts)
             ax.text(
                 0.5,
                 0.9,
@@ -205,8 +203,7 @@ class TreeInfo:
         bins = None
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
-            nodes_with_many_muts = np.sum(
-                self.nodes_num_mutations > max_num_muts)
+            nodes_with_many_muts = np.sum(self.nodes_num_mutations > max_num_muts)
             ax.text(
                 0.5,
                 0.9,
@@ -241,8 +238,7 @@ class TreeInfo:
             end_idx = min(np.argmax(breakpoints >= region_end), end_idx)
 
         spans = (
-            breakpoints[start_idx:end_idx] -
-            breakpoints[start_idx - 1: end_idx - 1]
+            breakpoints[start_idx:end_idx] - breakpoints[start_idx - 1 : end_idx - 1]
         )
         xlabel = "span"
         if log_transform:
@@ -280,8 +276,7 @@ class TreeInfo:
     def plot_mean_node_arity(self, show_counts=False):
         fig, ax = plt.subplots()
         mean_arity = self.calc_mean_node_arity()
-        counts, edges, bars = plt.hist(
-            mean_arity, bins=None, edgecolor="black")
+        counts, edges, bars = plt.hist(mean_arity, bins=None, edgecolor="black")
         ax.set_xlabel("Mean node arity")
         ax.set_ylabel("Number of nodes")
         ax.set_title("Mean-node-arity distribution")
@@ -291,32 +286,44 @@ class TreeInfo:
         if show_counts:
             plt.bar_label(bars, fmt="{:,.0f}")
 
+    def calc_site_tree_index(self):
+        return (
+            np.searchsorted(
+                self.ts.breakpoints(as_array=True), self.ts.sites_position, side="right"
+            )
+            - 1
+        )
+
+    def calc_sites_per_tree(self):
+        site_tree_index = self.calc_site_tree_index()
+        unique_values, counts = np.unique(site_tree_index, return_counts=True)
+        sites_per_tree = np.zeros(self.ts.num_trees, dtype=np.int64)
+        sites_per_tree[unique_values] = counts
+        return sites_per_tree
+
     def calc_mutations_per_tree(self):
-        tree_mutations = np.zeros(self.ts.num_trees)
-        for tree in self.ts.trees():
-            tree_mutations[tree.index] = tree.num_mutations
-        return tree_mutations
+        site_tree_index = self.calc_site_tree_index()
+        mutation_tree_index = site_tree_index[self.ts.mutations_site]
+        unique_values, counts = np.unique(mutation_tree_index, return_counts=True)
+        mutations_per_tree = np.zeros(self.ts.num_trees, dtype=np.int64)
+        mutations_per_tree[unique_values] = counts
+        return mutations_per_tree
 
     def plot_mutations_per_tree(self, max_num_muts=None, show_counts=False):
         fig, ax = plt.subplots()
-        bins = None
+        tree_mutations = self.calc_mutations_per_tree()
+        bins = max(100, int(np.sqrt(self.ts.num_trees)))
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
-            trees_with_many_muts = np.sum(
-                self.calc_mutations_per_tree() > max_num_muts)
-            ax.text(
-                0.01,
-                0.99,
-                f"there are {trees_with_many_muts:,} trees\nwith more than {max_num_muts:,} mutations",
-                transform=ax.transAxes,
-            )
+            trees_with_many_muts = np.sum(tree_mutations > max_num_muts)
+
         counts, edges, bars = plt.hist(
             self.calc_mutations_per_tree(), bins=bins, edgecolor="black"
         )
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
-        plt.xlabel("Number of mutations")
+        plt.xlabel(f"Number of mutations\n\n\nThere are {trees_with_many_muts:,} trees with more than {max_num_muts:,} mutations")
         plt.ylabel("Number of trees")
         plt.title("Mutations-per-tree distribution")
         if show_counts:
@@ -328,8 +335,7 @@ class TreeInfo:
         tree_mutations = self.calc_mutations_per_tree()
         tree_mutations = tree_mutations[1:-1]
         breakpoints = self.ts.breakpoints(as_array=True)
-        tree_mids = breakpoints[1:] - \
-            ((breakpoints[1:] - breakpoints[:-1]) / 2)
+        tree_mids = breakpoints[1:] - ((breakpoints[1:] - breakpoints[:-1]) / 2)
         tree_mids = tree_mids[1:-1]
         if region_start is None or region_start < tree_mids[0]:
             region_start = tree_mids[0]
@@ -360,27 +366,12 @@ class TreeInfo:
         grid.ax_joint.set_xlabel("Position on genome (Mb)")
         grid.ax_joint.set_ylabel("Number of mutations per tree")
 
-    def calc_sites_per_tree(self):
-        tree_sites = np.zeros(self.ts.num_trees)
-        for tree in self.ts.trees():
-            tree_sites[tree.index] = tree.num_sites
-        return tree_sites
-
     def plot_sites_per_tree(self, max_num_sites=None, show_counts=False):
         fig, ax = plt.subplots()
-        bins = None
+        bins = max(100, int(np.sqrt(self.ts.num_trees)))
         if max_num_sites is not None:
             bins = range(max_num_sites + 1)
-            trees_with_many_sites = np.sum(
-                self.calc_sites_per_tree() > max_num_sites)
-            ax.text(
-                0.01,
-                0.99,
-                f"there are {trees_with_many_sites:,} trees\nwith more than {max_num_sites:,} sites",
-                ha="left",
-                va="top",
-                transform=ax.transAxes,
-            )
+            trees_with_many_sites = np.sum(self.calc_sites_per_tree() > max_num_sites)
 
         counts, edges, bars = plt.hist(
             self.calc_sites_per_tree(), bins=bins, edgecolor="black"
@@ -388,7 +379,7 @@ class TreeInfo:
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
-        plt.xlabel("Number of sites")
+        plt.xlabel(f"Number of sites\n\n\nThere are {trees_with_many_sites:,} trees with more than {max_num_sites:,} sites")
         plt.ylabel("Number of trees")
         plt.title("Sites-per-tree distribution")
         if show_counts:
@@ -400,8 +391,7 @@ class TreeInfo:
         tree_sites = self.calc_sites_per_tree()
         tree_sites = tree_sites[1:-1]
         breakpoints = self.ts.breakpoints(as_array=True)
-        tree_mids = breakpoints[1:] - \
-            ((breakpoints[1:] - breakpoints[:-1]) / 2)
+        tree_mids = breakpoints[1:] - ((breakpoints[1:] - breakpoints[:-1]) / 2)
         tree_mids = tree_mids[1:-1]
         if region_start is None or region_start < tree_mids[0]:
             region_start = tree_mids[0]
@@ -419,8 +409,7 @@ class TreeInfo:
             ylim=(
                 0,
                 np.max(
-                    tree_sites[(tree_mids >= region_start)
-                               & (tree_mids <= region_end)]
+                    tree_sites[(tree_mids >= region_start) & (tree_mids <= region_end)]
                 ),
             ),
         )
