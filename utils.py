@@ -2,6 +2,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from bokeh.models import RangeSlider
+from bokeh.layouts import layout
+from bokeh.plotting import figure, output_notebook, show
 
 """
 QC functions for tsinfer trees
@@ -90,8 +93,7 @@ class TreeInfo:
         yield iterable[start:]
 
     def plot_polytomy_fractions(
-        self, region_start=None, region_end=None,
-        window_size=100_000, overlap=0
+        self, region_start=None, region_end=None, window_size=100_000, overlap=0
     ):
         """
         Plots the fraction of polytomies in windows actoss the genomic sequence
@@ -159,9 +161,10 @@ class TreeInfo:
             sites_with_many_muts = np.sum(
                 self.sites_num_mutations > max_num_muts)
             ax.text(
-                0.5, 0.9,
+                0.5,
+                0.9,
                 f"there are {sites_with_many_muts:,} sites\nwith more than {max_num_muts:,} mutations",
-                transform=ax.transAxes
+                transform=ax.transAxes,
             )
         counts, edges, bars = plt.hist(
             self.sites_num_mutations, bins=bins, edgecolor="black"
@@ -211,7 +214,7 @@ class TreeInfo:
                 0.5,
                 0.9,
                 f"there are {nodes_with_many_muts:,} nodes\nwith more than {max_num_muts:,} mutations",
-                transform=ax.transAxes
+                transform=ax.transAxes,
             )
         counts, edges, bars = plt.hist(
             self.nodes_num_mutations, bins=bins, edgecolor="black"
@@ -227,8 +230,7 @@ class TreeInfo:
             plt.bar_label(bars, fmt="{:,.0f}")
 
     def plot_tree_spans(
-        self, log_transform=True, region_start=None,
-        region_end=None, show_counts=False
+        self, log_transform=True, region_start=None, region_end=None, show_counts=False
     ):
         fig, ax = plt.subplots()
         bins = None
@@ -291,3 +293,29 @@ class TreeInfo:
         )
         if show_counts:
             plt.bar_label(bars, fmt="{:,.0f}")
+
+    def plot_mutations_per_site_along_seq_bokeh(self, num_sites=100_000):
+        counts = self.sites_num_mutations
+        pos = self.ts.sites_position
+        pos = pos[:num_sites]
+        counts = counts[:num_sites]
+        p = figure(
+            title="mutations per site along the genome",
+            x_axis_label="position (bp)",
+            y_axis_label="mutations per site",
+        )
+        p.height = 400
+        p.width = 1000
+        p.circle(pos, counts, size=5, alpha=0.5)
+        range_slider = RangeSlider(
+            start=pos[0],
+            end=pos[-1],
+            value=(pos[0], pos[-1]),
+            step=100_000,
+            title="start position (bp)",
+        )
+        range_slider.js_link("value", p.x_range, "start", attr_selector=0)
+        range_slider.js_link("value", p.x_range, "end", attr_selector=1)
+        lo = layout([range_slider], [p])
+        output_notebook()
+        show(lo)
