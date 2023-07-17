@@ -4,32 +4,115 @@ import hvplot.pandas
 import holoviews as hv
 import pandas as pd
 import holoviews.operation.datashader as hd
+import datashader as ds
 from holoviews.streams import RangeXY
-
-
-# import hvplot.pandas
-# from bokeh.sampledata.autompg import autompg
-import tszip
 import tskit
 import utils
 
+# import tszip
+# compressed_path = ".tsz"
+# ts = tszip.decompress(path)
 
-def mutations_data(ts):
-    data = {
-        "position": ts.sites_position[ts.mutations_site].astype(int),
-        "node": ts.mutations_node,
-        "time": ts.mutations_time,
-    }
-    return pd.DataFrame(data)
-
-
-path = "/home/jk/work/github/sc2ts-paper/data/upgma-mds-1000-md-30-mm-3-2022-06-30-recinfo2-gisaid-il.ts.tsz"
-ts = tszip.decompress(path)
-# path = "/home/jk/work/github/sc2ts/results/full-md-30-mm-3-2021-04-13.ts"
-# ts = tskit.load(path)
+path = "/home/duncan/trees/pedigree_project/data/sim.trees"
+ts = tskit.load(path)
 ti = utils.TreeInfo(ts, 1)
 
+
+def mutations_data(ts, log_time_offset=0.01):
+    mutations = ts.tables.mutations
+    mutations_time = ts.mutations_time.copy()
+    mutations_node = ts.mutations_node.copy()
+    unknown = tskit.is_unknown_time(mutations_time)
+    mutations_time[unknown] = ts.nodes_time[mutations_node[unknown]]
+    mutations_log_time = np.log10(mutations_time + log_time_offset)
+    node_flag = ts.nodes_flags[mutations_node]
+    position = ts.sites_position[mutations.site]
+    array = np.column_stack(
+        [position, mutations_node, mutations_time, mutations_log_time, node_flag]
+    )
+    df = pd.DataFrame(
+        array, columns=["position", "mutation_node", "time", "log_time", "node_flag"]
+    )
+    df = df.astype(
+        {
+            "position": "float64",
+            "mutation_node": "int",
+            "time": "float64",
+            "log_time": "float64",
+            "mutation_node": "int",
+            "node_flag": "int",
+        }
+    )
+    return pd.DataFrame(df)
+
+
 df_mutations = mutations_data(ts)
+
+
+def filter_points(points, x_range, y_range):
+    if x_range and y_range:
+        return points[x_range, y_range]
+    return points
+
+
+def hover_points(points, threshold=5000):
+    ### Return points to interact with via hover if there are fewer than threshold
+    if len(points) > threshold:
+        return points.iloc[:0]
+    return points
+
+
+def shaded_points(points, threshold=5000):
+    ### Return points to datashade if there are more than threshold
+    if len(points) > threshold:
+        return points
+    return points.iloc[:0]
+
+
+def make_hist_on_axis(dimension, points, num_bins=30):
+    ### Make histogram function for a specified axis of a scatter plot
+    def compute_hist(x_range, y_range):
+        filtered_points = filter_points(points, x_range, y_range)
+        hist = hv.operation.histogram(
+            filtered_points, dimension=dimension, num_bins=num_bins, normed="height"
+        )
+        return hist
+
+    return compute_hist
+
+
+def make_hist(data, title, bins_range, log_y=True, plot_width=800):
+    ### Make histogram from given count data
+    count, bins = np.histogram(data, bins=bins_range)
+    ylabel = "log(Count)" if log_y else "Count"
+    np.seterr(divide="ignore")
+    if log_y:
+        count = np.log10(count)
+        count[count == -np.inf] = 0
+    histogram = hv.Histogram((count, bins)).opts(
+        title=title, ylabel=ylabel, tools=["hover"]
+    )
+    histogram = histogram.opts(shared_axes=False, width=round(plot_width / 2))
+    return histogram
+
+
+def make_hist_panel(log_y, plot_width=800):
+    ### Make row of mhistograms for holoviews panel
+    overall_site_hist = make_hist(
+        ti.sites_num_mutations,
+        "Mutations per site",
+        range(29),
+        log_y=log_y,
+        plot_width=plot_width,
+    )
+    overall_node_hist = make_hist(
+        ti.nodes_num_mutations,
+        "Mutations per node",
+        range(10),
+        log_y=log_y,
+        plot_width=plot_width,
+    )
+    return pn.Row(overall_site_hist, overall_node_hist)
 
 
 def page1():
@@ -38,49 +121,47 @@ def page1():
 
 
 def page2():
-    points = df_mutations.hvplot.scatter("position", "time")
-    pts = hd.datashade(points)  # , width=400, height=400)
-
-    rasterized = hd.rasterize(points).opts(tools=["hover"])
-    agg = hd.aggregate(points, width=120, height=120, streams=[RangeXY])
-    dynamic = hv.util.Dynamic(agg, operation=hv.QuadMesh).opts(
-        tools=["hover"], alpha=0, hover_alpha=0.2
+    plot_width = 1000
+    log_y_checkbox = pn.widgets.Checkbox(
+        name="Log y-axis of Mutations per site/node plots", value=False
     )
-    spread = hd.dynspread(pts, threshold=0.8, how="over", max_px=5)
-    main = (spread * dynamic).opts(width=1200)
-
-    # FIXME need to link up the histogram here with RangeXY somehow
-    ds_mutations = hv.Dataset(df_mutations)
-    time_hist = hv.operation.element.histogram(ds_mutations, dimension="time")
-    site_hist = hv.operation.element.histogram(ds_mutations, dimension="position")
-
-    # stream = hv.streams.Tap(source=points, x=np.nan, y=np.nan)
-
-    # @pn.depends(stream.param.x, stream.param.y)
-    # def location(x, y):
-    #     print("TAP", x, y)
-    #     # This is a bad way to do it!
-    #     # jitter = 10
-    #     # pos = df_mutations.position.between(x - jitter, x + jitter)
-    #     # time = df_mutations.time.between(y - jitter, y + jitter)
-    #     # subset = df_mutations[pos & time]
-    #     # print(subset)
-    #     return pn.pane.Str(f"Click at {x:.2f}, {y:.2f}", width=200)
-
-    count, bins = np.histogram(ti.sites_num_mutations, bins=range(29))
-    overall_site_hist = hv.Histogram((count, bins)).opts(
-        title="Mutations per site", tools=["hover"]
+    threshold = pn.widgets.IntSlider(
+        name="Maximum number of points", start=1000, end=10000, step=100
     )
 
-    # Gah - these two axes are linked
-    count, bins = np.histogram(ti.nodes_num_mutations, bins=range(10))
-    overall_node_hist = hv.Histogram((count, bins)).opts(
-        title="Mutations per node", tools=["hover"]
+    points = df_mutations.hvplot.scatter(
+        x="position",
+        y="time",
+        hover_cols=["position", "time", "mutation_node", "node_flag"],
+    ).opts(width=plot_width, height=round(plot_width / 2))
+
+    range_stream = hv.streams.RangeXY(source=points)
+    streams = [range_stream]
+
+    filtered = points.apply(filter_points, streams=streams)
+    time_hist = hv.DynamicMap(
+        make_hist_on_axis(dimension="time", points=points, num_bins=10), streams=streams
+    )
+    site_hist = hv.DynamicMap(
+        make_hist_on_axis(dimension="position", points=points, num_bins=10),
+        streams=streams,
+    )
+    hover = filtered.apply(hover_points, threshold=threshold)
+    shaded = hd.datashade(filtered, width=400, height=400, streams=streams)
+
+    main = (shaded * hover).opts(
+        hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10)
     )
 
-    return pn.Column(
-        main << time_hist << site_hist, overall_site_hist, overall_node_hist
+    hist_panel = pn.bind(make_hist_panel, log_y=log_y_checkbox, plot_width=plot_width)
+
+    plot_options = pn.Column(
+        pn.pane.Markdown("## Plot Options"),
+        log_y_checkbox,
+        threshold,
     )
+
+    return pn.Column(main << time_hist << site_hist, hist_panel, plot_options)
 
 
 pn.extension(sizing_mode="stretch_width")
