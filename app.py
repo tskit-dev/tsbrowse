@@ -17,35 +17,7 @@ ts = tskit.load(path)
 ti = utils.TreeInfo(ts, 1)
 
 
-def mutations_data(ts, log_time_offset=0.01):
-    mutations = ts.tables.mutations
-    mutations_time = ts.mutations_time.copy()
-    mutations_node = ts.mutations_node.copy()
-    unknown = tskit.is_unknown_time(mutations_time)
-    mutations_time[unknown] = ts.nodes_time[mutations_node[unknown]]
-    mutations_log_time = np.log10(mutations_time + log_time_offset)
-    node_flag = ts.nodes_flags[mutations_node]
-    position = ts.sites_position[mutations.site]
-    array = np.column_stack(
-        [position, mutations_node, mutations_time, mutations_log_time, node_flag]
-    )
-    df = pd.DataFrame(
-        array, columns=["position", "mutation_node", "time", "log_time", "node_flag"]
-    )
-    df = df.astype(
-        {
-            "position": "float64",
-            "mutation_node": "int",
-            "time": "float64",
-            "log_time": "float64",
-            "mutation_node": "int",
-            "node_flag": "int",
-        }
-    )
-    return pd.DataFrame(df)
-
-
-df_mutations = mutations_data(ts)
+df_mutations = ti.mutations_data()
 
 
 def filter_points(points, x_range, y_range):
