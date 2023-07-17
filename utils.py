@@ -1,11 +1,12 @@
+"""
+QC functions for tsinfer trees
+"""
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
-"""
-QC functions for tsinfer trees
-"""
+import tskit
 
 
 class TreeInfo:
@@ -46,6 +47,31 @@ class TreeInfo:
 
     def _repr_html_(self):
         return self.summary()._repr_html_()
+
+
+    def mutations_data(self):
+        # FIXME use tskit's impute mutations time
+        ts = self.ts
+        mutations_time = ts.mutations_time.copy()
+        mutations_node = ts.mutations_node.copy()
+        unknown = tskit.is_unknown_time(mutations_time)
+        mutations_time[unknown] = self.ts.nodes_time[mutations_node[unknown]]
+
+        node_flag = ts.nodes_flags[mutations_node]
+        position = ts.sites_position[ts.mutations_site]
+        df = pd.DataFrame({
+            "position": position,
+            "node": ts.mutations_node,
+            "time": mutations_time,
+        })
+        return df.astype(
+            {
+                "position": "float64",
+                "node": "int",
+                "time": "float64",
+            }
+        )
+
 
     def calc_polytomy_fractions(self):
         """
