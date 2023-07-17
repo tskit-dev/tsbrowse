@@ -1,3 +1,5 @@
+import sys
+
 import numpy as np
 import panel as pn
 import hvplot.pandas
@@ -9,11 +11,8 @@ from holoviews.streams import RangeXY
 import tskit
 import utils
 
-# import tszip
-# compressed_path = ".tsz"
-# ts = tszip.decompress(path)
-
-path = "/home/duncan/trees/pedigree_project/data/sim.trees"
+# Usage: panel serve app.py --args /path/to/trees-file
+path = sys.argv[1]
 ts = tskit.load(path)
 ti = utils.TreeInfo(ts, 1)
 
