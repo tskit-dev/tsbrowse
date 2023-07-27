@@ -8,6 +8,7 @@ import pandas as pd
 import seaborn as sns
 import tskit
 import numba
+import numba
 
 
 class TreeInfo:

@@ -56,6 +56,45 @@ def multiple_trees_example_ts():
     return tables.tree_sequence()
 
 
+def single_tree_with_polytomies_example_ts():
+    # 3.00┊         8         ┊
+    #    ┊  ┏━━━━━━╋━━━━━━━┓ ┊
+    # 2.00┊  ┃      7       ┃ ┊
+    #    ┊  ┃  ┏━━━╋━━━━┓  ┃ ┊
+    # 1.00┊  5  ┃   6    ┃  ┃ ┊
+    #    ┊ ┏┻┓ ┃ ┏━╋━━┓ ┃  ┃ ┊
+    # 0.00┊ 0 1 2 3 4 11 9 10 ┊
+    #    0                  10
+    ts = tskit.Tree.generate_balanced(5, span=10).tree_sequence
+    tables = ts.dump_tables()
+    tables.nodes.add_row(flags=1, time=0)
+    tables.edges.add_row(0, 10, 7, 9)
+    tables.nodes.add_row(flags=1, time=0)
+    tables.edges.add_row(0, 10, 8, 10)
+    tables.nodes.add_row(flags=1, time=0)
+    tables.edges.add_row(0, 10, 6, 11)
+    tables.sort()
+    return tables.tree_sequence()
+
+
+def multi_tree_with_polytomies_example_ts():
+    # 3.00┊     8       ┊     8       ┊
+    #    ┊  ┏━━┻━┓     ┊  ┏━━┻━━┓    ┊
+    # 2.00┊  ┃    7     ┊  ┃     7    ┊
+    #    ┊  ┃  ┏━┻━┓   ┊  ┃  ┏━━╋━━┓ ┊
+    # 1.00┊  5  ┃   6   ┊  5  ┃  6  ┃ ┊
+    #    ┊ ┏┻┓ ┃ ┏━╋━┓ ┊ ┏┻┓ ┃ ┏┻┓ ┃ ┊
+    # 0.00┊ 0 1 2 3 4 9 ┊ 0 1 2 3 4 9 ┊
+    #    0             5            10
+    ts = tskit.Tree.generate_balanced(5, span=10).tree_sequence
+    tables = ts.dump_tables()
+    tables.nodes.add_row(flags=1, time=0)
+    tables.edges.add_row(0, 5, 6, 9)
+    tables.edges.add_row(5, 10, 7, 9)
+    tables.sort()
+    return tables.tree_sequence()
+
+
 class TestMutationDataTable:
     def test_single_tree_example(self):
         ts = single_tree_example_ts()
@@ -130,3 +169,38 @@ class TestNodeDataTable:
         nt.assert_array_equal(df.time, [0.0, 0.0, 0.0, 1.0, 2.0])
         nt.assert_array_equal(df.num_mutations, [0, 0, 0, 0, 0])
         nt.assert_array_equal(df.ancestors_span, [10, 10, 10, 10, -np.inf])
+
+
+class TestTreesDataTable:
+    def test_single_tree_example(self):
+        ts = single_tree_example_ts()
+        ti = utils.TreeInfo(ts, 0)
+        df = ti.trees_data()
+        assert len(df) == 1
+        nt.assert_array_equal(df.left, 0)
+        nt.assert_array_equal(df.right, 10)
+        nt.assert_array_equal(df.total_branch_length, 6.0)
+        nt.assert_array_equal(df.mean_internal_arity, 2.0)
+        nt.assert_array_equal(df.max_internal_arity, 2.0)
+
+    def test_single_tree_with_polytomies_example(self):
+        ts = single_tree_with_polytomies_example_ts()
+        ti = utils.TreeInfo(ts, 0)
+        df = ti.trees_data()
+        assert len(df) == 1
+        nt.assert_array_equal(df.left, 0)
+        nt.assert_array_equal(df.right, 10)
+        nt.assert_array_equal(df.total_branch_length, 16.0)
+        nt.assert_array_equal(df.mean_internal_arity, 2.75)
+        nt.assert_array_equal(df.max_internal_arity, 3.0)
+
+    def test_multi_tree_example(self):
+        ts = multi_tree_with_polytomies_example_ts()
+        ti = utils.TreeInfo(ts, 0)
+        df = ti.trees_data()
+        assert len(df) == 2
+        nt.assert_array_equal(df.left, [0, 5])
+        nt.assert_array_equal(df.right, [5, 10])
+        nt.assert_array_equal(df.total_branch_length, [11.0, 12.0])
+        nt.assert_array_equal(df.mean_internal_arity, [2.25, 2.25])
+        nt.assert_array_equal(df.max_internal_arity, [3.0, 3.0])
