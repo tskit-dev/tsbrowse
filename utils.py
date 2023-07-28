@@ -48,7 +48,6 @@ class TreeInfo:
     def _repr_html_(self):
         return self.summary()._repr_html_()
 
-
     def mutations_data(self):
         # FIXME use tskit's impute mutations time
         ts = self.ts
@@ -59,11 +58,13 @@ class TreeInfo:
 
         node_flag = ts.nodes_flags[mutations_node]
         position = ts.sites_position[ts.mutations_site]
-        df = pd.DataFrame({
-            "position": position,
-            "node": ts.mutations_node,
-            "time": mutations_time,
-        })
+        df = pd.DataFrame(
+            {
+                "position": position,
+                "node": ts.mutations_node,
+                "time": mutations_time,
+            }
+        )
         return df.astype(
             {
                 "position": "float64",
@@ -72,6 +73,33 @@ class TreeInfo:
             }
         )
 
+    def edges_data(self):
+        ts = self.ts
+        edges_parent = ts.edges_parent
+        edges_child = ts.edges_child
+        nodes_time = ts.nodes_time
+        
+        df = pd.DataFrame(
+            {
+                "left": ts.edges_left,
+                "right": ts.edges_right,
+                "parent": edges_parent,
+                "child": edges_child,
+                "parent_time": nodes_time[edges_parent],
+                "child_time": nodes_time[edges_child]
+            }
+        )
+
+        return df.astype(
+            {
+                "left": "float64",
+                "right": "float64",
+                "parent": "int",
+                "child": "int",
+                "parent_time": "float64",
+                "child_time": "float64"
+            }
+        )
 
     def calc_polytomy_fractions(self):
         """
