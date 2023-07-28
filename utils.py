@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 import tskit
+import numba
 
 
 class TreeInfo:
@@ -48,6 +49,22 @@ class TreeInfo:
     def _repr_html_(self):
         return self.summary()._repr_html_()
 
+    @staticmethod
+    @numba.njit
+    def child_bounds(num_nodes, edges_left, edges_right, edges_child):
+        num_edges = edges_left.shape[0]
+        child_left = np.zeros(num_nodes, dtype=np.int64) + 1_000_000_000
+        child_right = np.zeros(num_nodes, dtype=np.int64)
+
+        for e in range(num_edges):
+            u = edges_child[e]
+            if edges_left[e] < child_left[u]:
+                child_left[u] = edges_left[e]
+            if edges_right[e] > child_right[u]:
+                child_right[u] = edges_right[e]
+            # print(u, child_left[u], child_right[u])
+        return child_left, child_right
+
     def mutations_data(self):
         # FIXME use tskit's impute mutations time
         ts = self.ts
@@ -58,6 +75,13 @@ class TreeInfo:
 
         node_flag = ts.nodes_flags[mutations_node]
         position = ts.sites_position[ts.mutations_site]
+        df = pd.DataFrame(
+            {
+                "position": position,
+                "node": ts.mutations_node,
+                "time": mutations_time,
+            }
+        )
         df = pd.DataFrame(
             {
                 "position": position,
@@ -98,6 +122,26 @@ class TreeInfo:
                 "child": "int",
                 "parent_time": "float64",
                 "child_time": "float64"
+            }
+        )
+
+    def nodes_data(self):
+        ts = self.ts
+        child_left, child_right = self.child_bounds(
+            ts.num_nodes, ts.edges_left, ts.edges_right, ts.edges_child
+        )
+        df = pd.DataFrame(
+            {
+                "time": ts.nodes_time,
+                "num_mutations": self.nodes_num_mutations,
+                "ancestors_span": child_right - child_left,
+            }
+        )
+        return df.astype(
+            {
+                "time": "float64",
+                "num_mutations": "int",
+                "ancestors_span": "float64",
             }
         )
 
@@ -181,7 +225,8 @@ class TreeInfo:
             alpha=0.3,
             label="mean +/- std",
         )
-        missing_vals = np.take(genomic_positions, np.where(np.isnan(poly_fracs_means)))
+        missing_vals = np.take(
+            genomic_positions, np.where(np.isnan(poly_fracs_means)))
         ax.plot(
             missing_vals,
             np.zeros(len(missing_vals)),
@@ -283,7 +328,8 @@ class TreeInfo:
             end_idx = min(np.argmax(breakpoints >= region_end), end_idx)
 
         spans = (
-            breakpoints[start_idx:end_idx] - breakpoints[start_idx - 1 : end_idx - 1]
+            breakpoints[start_idx:end_idx] -
+            breakpoints[start_idx - 1: end_idx - 1]
         )
         xlabel = "span"
         if log_transform:
@@ -321,7 +367,8 @@ class TreeInfo:
     def plot_mean_node_arity(self, show_counts=False):
         fig, ax = plt.subplots()
         mean_arity = self.calc_mean_node_arity()
-        counts, edges, bars = plt.hist(mean_arity, bins=None, edgecolor="black")
+        counts, edges, bars = plt.hist(
+            mean_arity, bins=None, edgecolor="black")
         ax.set_xlabel("Mean node arity")
         ax.set_ylabel("Number of nodes")
         ax.set_title("Mean-node-arity distribution")
@@ -349,7 +396,8 @@ class TreeInfo:
     def calc_mutations_per_tree(self):
         site_tree_index = self.calc_site_tree_index()
         mutation_tree_index = site_tree_index[self.ts.mutations_site]
-        unique_values, counts = np.unique(mutation_tree_index, return_counts=True)
+        unique_values, counts = np.unique(
+            mutation_tree_index, return_counts=True)
         mutations_per_tree = np.zeros(self.ts.num_trees, dtype=np.int64)
         mutations_per_tree[unique_values] = counts
         return mutations_per_tree
@@ -381,7 +429,8 @@ class TreeInfo:
         tree_mutations = self.calc_mutations_per_tree()
         tree_mutations = tree_mutations[1:-1]
         breakpoints = self.ts.breakpoints(as_array=True)
-        tree_mids = breakpoints[1:] - ((breakpoints[1:] - breakpoints[:-1]) / 2)
+        tree_mids = breakpoints[1:] - \
+            ((breakpoints[1:] - breakpoints[:-1]) / 2)
         tree_mids = tree_mids[1:-1]
         if region_start is None or region_start < tree_mids[0]:
             region_start = tree_mids[0]
@@ -439,7 +488,8 @@ class TreeInfo:
         tree_sites = self.calc_sites_per_tree()
         tree_sites = tree_sites[1:-1]
         breakpoints = self.ts.breakpoints(as_array=True)
-        tree_mids = breakpoints[1:] - ((breakpoints[1:] - breakpoints[:-1]) / 2)
+        tree_mids = breakpoints[1:] - \
+            ((breakpoints[1:] - breakpoints[:-1]) / 2)
         tree_mids = tree_mids[1:-1]
         if region_start is None or region_start < tree_mids[0]:
             region_start = tree_mids[0]
@@ -457,7 +507,8 @@ class TreeInfo:
             ylim=(
                 0,
                 np.max(
-                    tree_sites[(tree_mids >= region_start) & (tree_mids <= region_end)]
+                    tree_sites[(tree_mids >= region_start)
+                               & (tree_mids <= region_end)]
                 ),
             ),
         )
