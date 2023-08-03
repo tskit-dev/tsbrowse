@@ -20,6 +20,23 @@ def single_tree_example_ts():
     return tables.tree_sequence()
 
 
+def multiple_trees_example_ts():
+    # 2.00┊   4   ┊   4   ┊
+    #     ┊ ┏━┻┓  ┊  ┏┻━┓ ┊
+    # 1.00┊ ┃  3  ┊  3  ┃ ┊
+    #     ┊ ┃ ┏┻┓ ┊ ┏┻┓ ┃ ┊
+    # 0.00┊ 0 1 2 ┊ 0 1 2 ┊
+    #     0       5      10
+    ts = tskit.Tree.generate_balanced(3, span=10).tree_sequence
+    tables = ts.dump_tables()
+    tables.edges[1] = tables.edges[1].replace(right=5)
+    tables.edges[2] = tables.edges[2].replace(right=5)
+    tables.edges.add_row(5, 10, 3, 0)
+    tables.edges.add_row(5, 10, 4, 2)
+    tables.sort()
+    return tables.tree_sequence()
+
+
 class TestMutationDataTable:
     def test_single_tree_example(self):
         ts = single_tree_example_ts()
@@ -29,3 +46,29 @@ class TestMutationDataTable:
         nt.assert_array_equal(df.node, list(range(6)))
         nt.assert_array_equal(df.position, list(range(1, 7)))
         nt.assert_array_equal(df.time, [0, 0, 0, 0, 1, 1])
+
+
+class TestEdgeDataTable:
+    def test_single_tree_example(self):
+        ts = single_tree_example_ts()
+        ti = utils.TreeInfo(ts, 0)
+        df = ti.edges_data()
+        assert len(df) == 6
+        nt.assert_array_equal(df.left, [0, 0, 0, 0, 0, 0])
+        nt.assert_array_equal(df.right, [10, 10, 10, 10, 10, 10])
+        nt.assert_array_equal(df.parent, [4, 4, 5, 5, 6, 6])
+        nt.assert_array_equal(df.child, [0, 1, 2, 3, 4, 5])
+        nt.assert_array_equal(df.child_time, [0, 0, 0, 0, 1, 1])
+        nt.assert_array_equal(df.parent_time, [1, 1, 1, 1, 2, 2])
+
+    def test_multiple_trees_example(self):
+        ts = multiple_trees_example_ts()
+        ti = utils.TreeInfo(ts, 0)
+        df = ti.edges_data()
+        assert len(df) == 6
+        nt.assert_array_equal(df.left, [5, 0, 0, 0, 5, 0])
+        nt.assert_array_equal(df.right, [10, 10, 5, 5, 10, 10])
+        nt.assert_array_equal(df.parent, [3, 3, 3, 4, 4, 4])
+        nt.assert_array_equal(df.child, [0, 1, 2, 0, 2, 3])
+        nt.assert_array_equal(df.child_time, [0, 0, 0, 0, 0, 1])
+        nt.assert_array_equal(df.parent_time, [1, 1, 1, 2, 2, 2])
