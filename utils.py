@@ -178,15 +178,11 @@ class TreeInfo:
     def plot_mutations_per_site(self, max_num_muts=None, show_counts=False):
         fig, ax = plt.subplots()
         bins = None
+        plt.xlabel("Number of mutations")
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
             sites_with_many_muts = np.sum(self.sites_num_mutations > max_num_muts)
-            ax.text(
-                0.5,
-                0.9,
-                f"there are {sites_with_many_muts:,} sites\nwith more than {max_num_muts:,} mutations",
-                transform=ax.transAxes,
-            )
+            plt.xlabel(f"Number of mutations\n\n\nThere are {sites_with_many_muts:,} sites with more than {max_num_muts:,} mutations")
         counts, edges, bars = plt.hist(
             self.sites_num_mutations, bins=bins, edgecolor="black"
         )
@@ -194,7 +190,6 @@ class TreeInfo:
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
-        plt.xlabel("Number of mutations")
         plt.ylabel("Number of sites")
         plt.title("Mutations-per-site distribution")
         if show_counts:
@@ -227,15 +222,12 @@ class TreeInfo:
     def plot_mutations_per_node(self, max_num_muts=None, show_counts=False):
         fig, ax = plt.subplots()
         bins = None
+        plt.xlabel(f"Number of mutations")
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
             nodes_with_many_muts = np.sum(self.nodes_num_mutations > max_num_muts)
-            ax.text(
-                0.5,
-                0.9,
-                f"there are {nodes_with_many_muts:,} nodes\nwith more than {max_num_muts:,} mutations",
-                transform=ax.transAxes,
-            )
+            plt.xlabel(f"Number of mutations \n\n\nThere are {nodes_with_many_muts:,} nodes with more than {max_num_muts:,} mutations")
+        
         counts, edges, bars = plt.hist(
             self.nodes_num_mutations, bins=bins, edgecolor="black"
         )
@@ -243,7 +235,6 @@ class TreeInfo:
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
-        plt.xlabel("Number of mutations")
         plt.ylabel("Number of nodes")
         plt.title("Mutations-per-node distribution")
         if show_counts:
@@ -339,9 +330,11 @@ class TreeInfo:
         fig, ax = plt.subplots()
         tree_mutations = self.calc_mutations_per_tree()
         bins = max(100, int(np.sqrt(self.ts.num_trees)))
+        plt.xlabel(f"Number of mutations")
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
             trees_with_many_muts = np.sum(tree_mutations > max_num_muts)
+            plt.xlabel(f"Number of mutations\n\n\nThere are {trees_with_many_muts:,} trees with more than {max_num_muts:,} mutations")
 
         counts, edges, bars = plt.hist(
             self.calc_mutations_per_tree(), bins=bins, edgecolor="black"
@@ -349,7 +342,6 @@ class TreeInfo:
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
-        plt.xlabel(f"Number of mutations\n\n\nThere are {trees_with_many_muts:,} trees with more than {max_num_muts:,} mutations")
         plt.ylabel("Number of trees")
         plt.title("Mutations-per-tree distribution")
         if show_counts:
@@ -395,9 +387,11 @@ class TreeInfo:
     def plot_sites_per_tree(self, max_num_sites=None, show_counts=False):
         fig, ax = plt.subplots()
         bins = max(100, int(np.sqrt(self.ts.num_trees)))
+        plt.xlabel(f"Number of sites")
         if max_num_sites is not None:
             bins = range(max_num_sites + 1)
             trees_with_many_sites = np.sum(self.calc_sites_per_tree() > max_num_sites)
+            plt.xlabel(f"Number of sites\n\n\nThere are {trees_with_many_sites:,} trees with more than {max_num_sites:,} sites")
 
         counts, edges, bars = plt.hist(
             self.calc_sites_per_tree(), bins=bins, edgecolor="black"
@@ -405,7 +399,7 @@ class TreeInfo:
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
-        plt.xlabel(f"Number of sites\n\n\nThere are {trees_with_many_sites:,} trees with more than {max_num_sites:,} sites")
+        
         plt.ylabel("Number of trees")
         plt.title("Sites-per-tree distribution")
         if show_counts:
