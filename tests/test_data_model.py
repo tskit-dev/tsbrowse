@@ -19,6 +19,25 @@ def single_tree_example_ts():
         tables.mutations.add_row(site=j, derived_state="T", node=j)
     return tables.tree_sequence()
 
+def single_tree_recurrent_mutation_example_ts():
+    # 2.00 ┊                    6                    ┊
+    #      ┊            ┏━━━━━━━┻━━━━━━━┓            ┊
+    #      ┊      4:A→T x               x 5:A→T      ┊
+    #      ┊            |               x 6:A→G      ┊
+    # 1.00 ┊            4               5            ┊
+    #      ┊       ┏━━━━┻━━━━┓     ┏━━━━┻━━━━┓       ┊
+    #      ┊ 0:A→T x   1:A→T x     x 2:A→T   x 3:A→T ┊
+    #      ┊       |         |     |         |       ┊
+    # 0.00 ┊       0         1     2         3       ┊                         
+    #      0                                        10
+    ts = tskit.Tree.generate_balanced(4, span=10).tree_sequence
+    tables = ts.dump_tables()
+    for j in range(6):
+        tables.sites.add_row(position=j + 1, ancestral_state="A")
+        tables.mutations.add_row(site=j, derived_state="T", node=j)
+    tables.mutations.add_row(site=j, derived_state="G", node=j, parent=j)
+    ts = tables.tree_sequence()
+    return tables.tree_sequence()
 
 def multiple_trees_example_ts():
     # 2.00┊   4   ┊   4   ┊
@@ -46,7 +65,25 @@ class TestMutationDataTable:
         nt.assert_array_equal(df.node, list(range(6)))
         nt.assert_array_equal(df.position, list(range(1, 7)))
         nt.assert_array_equal(df.time, [0, 0, 0, 0, 1, 1])
+        nt.assert_array_equal(df.derived_state, ["T"] * 6)
+        nt.assert_array_equal(df.inherited_state, ["A"] * 6)
+        nt.assert_array_equal(df.num_parents, [0]*6)
+        nt.assert_array_equal(df.num_descendants, [1] * 4 + [2] * 2)
+        nt.assert_array_equal(df.num_inheritors, [1] * 4 + [2] * 2)
 
+    def test_single_tree_recurrent_mutation_example(self):
+        ts = single_tree_recurrent_mutation_example_ts()
+        ti = utils.TreeInfo(ts, 0)
+        df = ti.mutations_data()
+        assert len(df) == 7
+        nt.assert_array_equal(df.node, [0, 1, 2, 3, 4, 5, 5])
+        nt.assert_array_equal(df.position, [1, 2, 3, 4, 5, 6, 6])
+        nt.assert_array_equal(df.time, [0, 0, 0, 0, 1, 1, 1])
+        nt.assert_array_equal(df.derived_state, ["T"] * 6 + ["G"])
+        nt.assert_array_equal(df.inherited_state, ["A"] * 6 + ["T"])
+        nt.assert_array_equal(df.num_parents, [0] * 6 + [1])
+        nt.assert_array_equal(df.num_descendants, [1] * 4 + [2] * 3)
+        nt.assert_array_equal(df.num_inheritors, [1] * 4 + [2, 0, 2])
 
 class TestEdgeDataTable:
     def test_single_tree_example(self):
