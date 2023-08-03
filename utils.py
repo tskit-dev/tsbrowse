@@ -53,8 +53,8 @@ class TreeInfo:
     @numba.njit
     def child_bounds(num_nodes, edges_left, edges_right, edges_child):
         num_edges = edges_left.shape[0]
-        child_left = np.zeros(num_nodes, dtype=np.int64) + 1_000_000_000
-        child_right = np.zeros(num_nodes, dtype=np.int64)
+        child_left = np.zeros(num_nodes, dtype=np.float64) + np.inf
+        child_right = np.zeros(num_nodes, dtype=np.float64)
 
         for e in range(num_edges):
             u = edges_child[e]
@@ -62,7 +62,6 @@ class TreeInfo:
                 child_left[u] = edges_left[e]
             if edges_right[e] > child_right[u]:
                 child_right[u] = edges_right[e]
-            # print(u, child_left[u], child_right[u])
         return child_left, child_right
 
     def mutations_data(self):
@@ -82,13 +81,7 @@ class TreeInfo:
                 "time": mutations_time,
             }
         )
-        df = pd.DataFrame(
-            {
-                "position": position,
-                "node": ts.mutations_node,
-                "time": mutations_time,
-            }
-        )
+
         return df.astype(
             {
                 "position": "float64",
@@ -102,7 +95,7 @@ class TreeInfo:
         edges_parent = ts.edges_parent
         edges_child = ts.edges_child
         nodes_time = ts.nodes_time
-        
+
         df = pd.DataFrame(
             {
                 "left": ts.edges_left,
@@ -110,7 +103,7 @@ class TreeInfo:
                 "parent": edges_parent,
                 "child": edges_child,
                 "parent_time": nodes_time[edges_parent],
-                "child_time": nodes_time[edges_child]
+                "child_time": nodes_time[edges_child],
             }
         )
 
@@ -121,7 +114,7 @@ class TreeInfo:
                 "parent": "int",
                 "child": "int",
                 "parent_time": "float64",
-                "child_time": "float64"
+                "child_time": "float64",
             }
         )
 
@@ -254,8 +247,11 @@ class TreeInfo:
         plt.xlabel("Number of mutations")
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
-            sites_with_many_muts = np.sum(self.sites_num_mutations > max_num_muts)
-            plt.xlabel(f"Number of mutations\n\n\nThere are {sites_with_many_muts:,} sites with more than {max_num_muts:,} mutations")
+            sites_with_many_muts = np.sum(
+                self.sites_num_mutations > max_num_muts)
+            plt.xlabel(
+                f"Number of mutations\n\n\nThere are {sites_with_many_muts:,} sites with more than {max_num_muts:,} mutations"
+            )
         counts, edges, bars = plt.hist(
             self.sites_num_mutations, bins=bins, edgecolor="black"
         )
@@ -298,9 +294,12 @@ class TreeInfo:
         plt.xlabel(f"Number of mutations")
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
-            nodes_with_many_muts = np.sum(self.nodes_num_mutations > max_num_muts)
-            plt.xlabel(f"Number of mutations \n\n\nThere are {nodes_with_many_muts:,} nodes with more than {max_num_muts:,} mutations")
-        
+            nodes_with_many_muts = np.sum(
+                self.nodes_num_mutations > max_num_muts)
+            plt.xlabel(
+                f"Number of mutations \n\n\nThere are {nodes_with_many_muts:,} nodes with more than {max_num_muts:,} mutations"
+            )
+
         counts, edges, bars = plt.hist(
             self.nodes_num_mutations, bins=bins, edgecolor="black"
         )
@@ -410,7 +409,9 @@ class TreeInfo:
         if max_num_muts is not None:
             bins = range(max_num_muts + 1)
             trees_with_many_muts = np.sum(tree_mutations > max_num_muts)
-            plt.xlabel(f"Number of mutations\n\n\nThere are {trees_with_many_muts:,} trees with more than {max_num_muts:,} mutations")
+            plt.xlabel(
+                f"Number of mutations\n\n\nThere are {trees_with_many_muts:,} trees with more than {max_num_muts:,} mutations"
+            )
 
         counts, edges, bars = plt.hist(
             self.calc_mutations_per_tree(), bins=bins, edgecolor="black"
@@ -467,8 +468,11 @@ class TreeInfo:
         plt.xlabel(f"Number of sites")
         if max_num_sites is not None:
             bins = range(max_num_sites + 1)
-            trees_with_many_sites = np.sum(self.calc_sites_per_tree() > max_num_sites)
-            plt.xlabel(f"Number of sites\n\n\nThere are {trees_with_many_sites:,} trees with more than {max_num_sites:,} sites")
+            trees_with_many_sites = np.sum(
+                self.calc_sites_per_tree() > max_num_sites)
+            plt.xlabel(
+                f"Number of sites\n\n\nThere are {trees_with_many_sites:,} trees with more than {max_num_sites:,} sites"
+            )
 
         counts, edges, bars = plt.hist(
             self.calc_sites_per_tree(), bins=bins, edgecolor="black"
@@ -476,7 +480,7 @@ class TreeInfo:
         ax.yaxis.set_major_formatter(
             plt.FuncFormatter(lambda x, pos: "{:,}".format(int(x)))
         )
-        
+
         plt.ylabel("Number of trees")
         plt.title("Sites-per-tree distribution")
         if show_counts:

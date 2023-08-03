@@ -1,7 +1,7 @@
 import pytest
 import tskit
 import numpy.testing as nt
-
+import numpy as np
 import utils
 
 
@@ -74,7 +74,7 @@ class TestEdgeDataTable:
         nt.assert_array_equal(df.parent_time, [1, 1, 1, 2, 2, 2])
 
 
-class TestNodesDataTable:
+class TestNodeDataTable:
     def test_single_tree_example(self):
         ts = single_tree_example_ts()
         ti = utils.TreeInfo(ts, 0)
@@ -82,16 +82,14 @@ class TestNodesDataTable:
         assert len(df) == 7
         nt.assert_array_equal(df.time, [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 2.0])
         nt.assert_array_equal(df.num_mutations, [1, 1, 1, 1, 1, 1, 0])
-        nt.assert_array_equal(
-            df.ancestors_span, [10, 10, 10, 10, 10, 10, -1_000_000_000]
-        )
+        nt.assert_array_equal(df.ancestors_span, [
+                              10, 10, 10, 10, 10, 10, -np.inf])
 
-    def test_single_tree_example(self):
+    def test_multiple_tree_example(self):
         ts = multiple_trees_example_ts()
         ti = utils.TreeInfo(ts, 0)
         df = ti.nodes_data()
         assert len(df) == 5
         nt.assert_array_equal(df.time, [0.0, 0.0, 0.0, 1.0, 2.0])
         nt.assert_array_equal(df.num_mutations, [0, 0, 0, 0, 0])
-        nt.assert_array_equal(df.ancestors_span, [
-                              10, 10, 10, 10, -1_000_000_000])
+        nt.assert_array_equal(df.ancestors_span, [10, 10, 10, 10, -np.inf])
