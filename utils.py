@@ -74,11 +74,65 @@ class TreeInfo:
 
         node_flag = ts.nodes_flags[mutations_node]
         position = ts.sites_position[ts.mutations_site]
+
+        tables = self.ts.tables
+        assert np.all(
+            tables.mutations.derived_state_offset == np.arange(ts.num_mutations + 1)
+        )
+        derived_state = tables.mutations.derived_state.view("S1").astype(str)
+
+        assert np.all(
+            tables.sites.ancestral_state_offset == np.arange(ts.num_sites + 1)
+        )
+        ancestral_state = tables.sites.ancestral_state.view("S1").astype(str)
+        del tables
+        inherited_state = ancestral_state[ts.mutations_site]
+        mutations_with_parent = ts.mutations_parent != -1
+
+        parent = ts.mutations_parent[mutations_with_parent]
+        assert np.all(parent >= 0)
+        inherited_state[mutations_with_parent] = derived_state[parent]
+        self.mutations_derived_state = derived_state
+        self.mutations_inherited_state = inherited_state
+
+        self.mutations_position = ts.sites_position[ts.mutations_site].astype(
+            int
+        )
+        N = ts.num_mutations
+        mutations_num_descendants = np.zeros(N, dtype=int)
+        mutations_num_inheritors = np.zeros(N, dtype=int)
+        mutations_num_parents = np.zeros(N, dtype=int)
+
+        tree = ts.first()
+        
+        for mut_id in np.arange(N):
+            tree.seek(self.mutations_position[mut_id])
+            mutation_node = ts.mutations_node[mut_id]
+            descendants = tree.num_samples(mutation_node)
+            mutations_num_descendants[mut_id] = descendants
+            mutations_num_inheritors[mut_id] = descendants
+            # Subtract this number of descendants from the parent mutation. We are
+            # guaranteed to list parents mutations before their children
+            parent = ts.mutations_parent[mut_id]
+            if parent != -1:
+                mutations_num_inheritors[parent] -= descendants
+
+            num_parents = 0
+            while parent != -1:
+                num_parents += 1
+                parent = ts.mutations_parent[parent]
+            mutations_num_parents[mut_id] = num_parents
+
         df = pd.DataFrame(
             {
                 "position": position,
                 "node": ts.mutations_node,
                 "time": mutations_time,
+                "derived_state": self.mutations_derived_state,
+                "inherited_state": self.mutations_inherited_state,
+                "num_descendants": mutations_num_descendants,
+                "num_inheritors": mutations_num_inheritors,
+                "num_parents": mutations_num_parents
             }
         )
 
@@ -87,6 +141,11 @@ class TreeInfo:
                 "position": "float64",
                 "node": "int",
                 "time": "float64",
+                "derived_state": "str",
+                "inherited_state": "str",
+                "num_descendants": "int",
+                "num_inheritors": "int",
+                "num_parents": "int"
             }
         )
 
