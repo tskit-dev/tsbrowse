@@ -19,6 +19,7 @@ def single_tree_example_ts():
         tables.mutations.add_row(site=j, derived_state="T", node=j)
     return tables.tree_sequence()
 
+
 def single_tree_recurrent_mutation_example_ts():
     # 2.00 ┊                    6                    ┊
     #      ┊            ┏━━━━━━━┻━━━━━━━┓            ┊
@@ -28,7 +29,7 @@ def single_tree_recurrent_mutation_example_ts():
     #      ┊       ┏━━━━┻━━━━┓     ┏━━━━┻━━━━┓       ┊
     #      ┊ 0:A→T x   1:A→T x     x 2:A→T   x 3:A→T ┊
     #      ┊       |         |     |         |       ┊
-    # 0.00 ┊       0         1     2         3       ┊                         
+    # 0.00 ┊       0         1     2         3       ┊
     #      0                                        10
     ts = tskit.Tree.generate_balanced(4, span=10).tree_sequence
     tables = ts.dump_tables()
@@ -58,13 +59,13 @@ def multiple_trees_example_ts():
 
 def single_tree_with_polytomies_example_ts():
     # 3.00┊         8         ┊
-    #    ┊  ┏━━━━━━╋━━━━━━━┓ ┊
+    #     ┊  ┏━━━━━━╋━━━━━━━┓ ┊
     # 2.00┊  ┃      7       ┃ ┊
-    #    ┊  ┃  ┏━━━╋━━━━┓  ┃ ┊
+    #     ┊  ┃  ┏━━━╋━━━━┓  ┃ ┊
     # 1.00┊  5  ┃   6    ┃  ┃ ┊
-    #    ┊ ┏┻┓ ┃ ┏━╋━━┓ ┃  ┃ ┊
+    #     ┊ ┏┻┓ ┃ ┏━╋━━┓ ┃  ┃ ┊
     # 0.00┊ 0 1 2 3 4 11 9 10 ┊
-    #    0                  10
+    #     0                  10
     ts = tskit.Tree.generate_balanced(5, span=10).tree_sequence
     tables = ts.dump_tables()
     tables.nodes.add_row(flags=1, time=0)
@@ -79,13 +80,13 @@ def single_tree_with_polytomies_example_ts():
 
 def multi_tree_with_polytomies_example_ts():
     # 3.00┊     8       ┊     8       ┊
-    #    ┊  ┏━━┻━┓     ┊  ┏━━┻━━┓    ┊
+    #     ┊  ┏━━┻━┓     ┊  ┏━━┻━━┓    ┊
     # 2.00┊  ┃    7     ┊  ┃     7    ┊
-    #    ┊  ┃  ┏━┻━┓   ┊  ┃  ┏━━╋━━┓ ┊
+    #     ┊  ┃  ┏━┻━┓   ┊  ┃  ┏━━╋━━┓ ┊
     # 1.00┊  5  ┃   6   ┊  5  ┃  6  ┃ ┊
-    #    ┊ ┏┻┓ ┃ ┏━╋━┓ ┊ ┏┻┓ ┃ ┏┻┓ ┃ ┊
+    #     ┊ ┏┻┓ ┃ ┏━╋━┓ ┊ ┏┻┓ ┃ ┏┻┓ ┃ ┊
     # 0.00┊ 0 1 2 3 4 9 ┊ 0 1 2 3 4 9 ┊
-    #    0             5            10
+    #     0             5            10
     ts = tskit.Tree.generate_balanced(5, span=10).tree_sequence
     tables = ts.dump_tables()
     tables.nodes.add_row(flags=1, time=0)
@@ -106,7 +107,7 @@ class TestMutationDataTable:
         nt.assert_array_equal(df.time, [0, 0, 0, 0, 1, 1])
         nt.assert_array_equal(df.derived_state, ["T"] * 6)
         nt.assert_array_equal(df.inherited_state, ["A"] * 6)
-        nt.assert_array_equal(df.num_parents, [0]*6)
+        nt.assert_array_equal(df.num_parents, [0] * 6)
         nt.assert_array_equal(df.num_descendants, [1] * 4 + [2] * 2)
         nt.assert_array_equal(df.num_inheritors, [1] * 4 + [2] * 2)
 
@@ -123,6 +124,7 @@ class TestMutationDataTable:
         nt.assert_array_equal(df.num_parents, [0] * 6 + [1])
         nt.assert_array_equal(df.num_descendants, [1] * 4 + [2] * 3)
         nt.assert_array_equal(df.num_inheritors, [1] * 4 + [2, 0, 2])
+
 
 class TestEdgeDataTable:
     def test_single_tree_example(self):
@@ -194,7 +196,7 @@ class TestTreesDataTable:
         nt.assert_array_equal(df.mean_internal_arity, 2.75)
         nt.assert_array_equal(df.max_internal_arity, 3.0)
 
-    def test_multi_tree_example(self):
+    def test_multi_tree_with_polytomies_example(self):
         ts = multi_tree_with_polytomies_example_ts()
         ti = utils.TreeInfo(ts, 0)
         df = ti.trees_data()
