@@ -1,15 +1,13 @@
 import sys
-
 import numpy as np
 import panel as pn
 import hvplot.pandas
 import holoviews as hv
 import pandas as pd
 import holoviews.operation.datashader as hd
-import datashader as ds
-from holoviews.streams import RangeXY
 import tskit
 import utils
+import bokeh.models as bkm
 
 # Usage: panel serve app.py --args /path/to/trees-file
 path = sys.argv[1]
@@ -18,6 +16,13 @@ ti = utils.TreeInfo(ts, 1)
 
 
 df_mutations = ti.mutations_data()
+df_edges = ti.edges_data()
+
+
+# Global plot settings
+plot_width = 1000
+plot_height = 600
+threshold = 1000  # max number of points to overlay on a plot
 
 
 def filter_points(points, x_range, y_range):
@@ -67,8 +72,8 @@ def make_hist(data, title, bins_range, log_y=True, plot_width=800):
     return histogram
 
 
-def make_hist_panel(log_y, plot_width=800):
-    ### Make row of mhistograms for holoviews panel
+def make_hist_panel(log_y):
+    ### Make row of histograms for holoviews panel
     overall_site_hist = make_hist(
         ti.sites_num_mutations,
         "Mutations per site",
@@ -92,19 +97,15 @@ def page1():
 
 
 def page2():
-    plot_width = 1000
     log_y_checkbox = pn.widgets.Checkbox(
         name="Log y-axis of Mutations per site/node plots", value=False
-    )
-    threshold = pn.widgets.IntSlider(
-        name="Maximum number of points", start=1000, end=10000, step=100
     )
 
     points = df_mutations.hvplot.scatter(
         x="position",
         y="time",
         hover_cols=["position", "time", "mutation_node", "node_flag"],
-    ).opts(width=plot_width, height=round(plot_width / 2))
+    ).opts(width=plot_width, height=plot_height)
 
     range_stream = hv.streams.RangeXY(source=points)
     streams = [range_stream]
@@ -124,20 +125,92 @@ def page2():
         hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10)
     )
 
-    hist_panel = pn.bind(make_hist_panel, log_y=log_y_checkbox, plot_width=plot_width)
+    hist_panel = pn.bind(make_hist_panel, log_y=log_y_checkbox)
 
     plot_options = pn.Column(
         pn.pane.Markdown("## Plot Options"),
         log_y_checkbox,
-        threshold,
     )
 
     return pn.Column(main << time_hist << site_hist, hist_panel, plot_options)
 
 
-pn.extension(sizing_mode="stretch_width")
+def page3():
+    df_edges["parent_time_right"] = df_edges["parent_time"]
+    lines = hv.Segments(
+        df_edges, kdims=["left", "parent_time", "right", "parent_time_right"]
+    )
+    range_stream = hv.streams.RangeXY(source=lines)
+    streams = [range_stream]
+    filtered = lines.apply(filter_points, streams=streams)
+    hover = filtered.apply(hover_points, threshold=threshold)
+    shaded = hd.datashade(filtered, streams=streams)
+    hover_tool = bkm.HoverTool(
+        tooltips=[
+            ("child", "@child"),
+            ("parent", "@parent"),
+            ("span", "@span"),
+            ("branch_length", "@branch_length"),
+        ]
+    )
+    main = (shaded * hover).opts(
+        hv.opts.Segments(
+            tools=[hover_tool],
+            width=plot_width,
+            height=plot_height,
+            xlabel="Position",
+            ylabel="Time",
+        )
+    )
 
-pages = {"Overview": page1, "Mutations": page2}
+    return pn.Column(main)
+
+
+def page4():
+    node_id_input = pn.widgets.TextInput(value="", name="Node ID")
+    df_edges["parent_time_right"] = df_edges["parent_time"]
+    tabulator = pn.widgets.Tabulator(show_index=False)
+
+    def plot_data(node_id):
+        if len(node_id) > 0:
+            filtered_df = df_edges[df_edges["child"] == int(node_id)]
+            segments = hv.Segments(
+                filtered_df,
+                kdims=["left", "parent_time", "right", "parent_time_right"],
+                vdims=["child", "parent", "span", "branch_length"],
+            )
+            hover_tool = bkm.HoverTool(
+                tooltips=[
+                    ("child", "@child"),
+                    ("parent", "@parent"),
+                    ("span", "@span"),
+                    ("branch_length", "@branch_length"),
+                ]
+            )
+            segments = segments.opts(
+                width=plot_width,
+                height=plot_height,
+                tools=[hover_tool],
+                xlabel="Position",
+                ylabel="Time",
+            )
+
+            filtered_df = filtered_df.drop(columns=["parent_time_right"])
+            tabulator.value = filtered_df
+
+            return segments
+        else:
+            return pn.pane.Markdown("Please enter a Node ID.")
+
+    dynamic_plot = pn.bind(plot_data, node_id=node_id_input)
+
+    return pn.Column(node_id_input, dynamic_plot, tabulator)
+
+
+pn.extension(sizing_mode="stretch_width")
+pn.extension("tabulator")
+
+pages = {"Overview": page1, "Mutations": page2, "Edges": page3, "Edge Explorer": page4}
 
 
 def show(page):
