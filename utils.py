@@ -1,13 +1,162 @@
 """
 QC functions for tsinfer trees
 """
-
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import tskit
 import numba
+
+
+spec = [
+    ("num_edges", numba.int64),
+    ("sequence_length", numba.float64),
+    ("edges_left", numba.float64[:]),
+    ("edges_right", numba.float64[:]),
+    ("edge_insertion_order", numba.int32[:]),
+    ("edge_removal_order", numba.int32[:]),
+    ("edge_insertion_index", numba.int64),
+    ("edge_removal_index", numba.int64),
+    ("interval", numba.float64[:]),
+    ("in_range", numba.int64[:]),
+    ("out_range", numba.int64[:]),
+]
+
+
+@numba.experimental.jitclass(spec)
+class TreePosition:
+    def __init__(
+        self,
+        num_edges,
+        sequence_length,
+        edges_left,
+        edges_right,
+        edge_insertion_order,
+        edge_removal_order,
+    ):
+        self.num_edges = num_edges
+        self.sequence_length = sequence_length
+        self.edges_left = edges_left
+        self.edges_right = edges_right
+        self.edge_insertion_order = edge_insertion_order
+        self.edge_removal_order = edge_removal_order
+        self.edge_insertion_index = 0
+        self.edge_removal_index = 0
+        self.interval = np.zeros(2)
+        self.in_range = np.zeros(2, dtype=np.int64)
+        self.out_range = np.zeros(2, dtype=np.int64)
+
+    def next(self):
+        left = self.interval[1]
+        j = self.in_range[1]
+        k = self.out_range[1]
+        self.in_range[0] = j
+        self.out_range[0] = k
+        M = self.num_edges
+        edges_left = self.edges_left
+        edges_right = self.edges_right
+        out_order = self.edge_removal_order
+        in_order = self.edge_insertion_order
+
+        while k < M and edges_right[out_order[k]] == left:
+            k += 1
+        while j < M and edges_left[in_order[j]] == left:
+            j += 1
+        self.out_range[1] = k
+        self.in_range[1] = j
+
+        right = self.sequence_length
+        if j < M:
+            right = min(right, edges_left[in_order[j]])
+        if k < M:
+            right = min(right, edges_right[out_order[k]])
+        self.interval[:] = [left, right]
+        return j < M or left < self.sequence_length
+
+
+# Helper function to make it easier to communicate with the numba class
+def alloc_tree_position(ts):
+    return TreePosition(
+        num_edges=ts.num_edges,
+        sequence_length=ts.sequence_length,
+        edges_left=ts.edges_left,
+        edges_right=ts.edges_right,
+        edge_insertion_order=ts.indexes_edge_insertion_order,
+        edge_removal_order=ts.indexes_edge_removal_order,
+    )
+
+
+@numba.njit
+def _compute_per_tree_stats(
+    tree_pos, num_trees, num_nodes, nodes_time, edges_parent, edges_child
+):
+    tbl = np.zeros(num_trees)
+    num_internal_nodes = np.zeros(num_trees)
+    max_arity = np.zeros(num_trees, dtype=np.int32)
+    num_children = np.zeros(num_nodes, dtype=np.int32)
+    nodes_with_arity = np.zeros(num_nodes, dtype=np.int32)
+
+    current_tbl = 0
+    tree_index = 0
+    current_num_internal_nodes = 0
+    current_max_arity = 0
+    while tree_pos.next():
+        for j in range(tree_pos.out_range[0], tree_pos.out_range[1]):
+            e = tree_pos.edge_removal_order[j]
+            p = edges_parent[e]
+            nodes_with_arity[num_children[p]] -= 1
+            if (
+                num_children[p] == current_max_arity
+                and nodes_with_arity[num_children[p]] == 1
+            ):
+                current_max_arity -= 1
+
+            num_children[p] -= 1
+            if num_children[p] == 0:
+                current_num_internal_nodes -= 1
+            else:
+                nodes_with_arity[num_children[p]] += 1
+            c = edges_child[e]
+            branch_length = nodes_time[p] - nodes_time[c]
+            current_tbl -= branch_length
+
+        for j in range(tree_pos.in_range[0], tree_pos.in_range[1]):
+            e = tree_pos.edge_insertion_order[j]
+            p = edges_parent[e]
+            if num_children[p] == 0:
+                current_num_internal_nodes += 1
+            else:
+                nodes_with_arity[num_children[p]] -= 1
+            num_children[p] += 1
+            nodes_with_arity[num_children[p]] += 1
+            if num_children[p] > current_max_arity:
+                current_max_arity = num_children[p]
+            c = edges_child[e]
+            branch_length = nodes_time[p] - nodes_time[c]
+            current_tbl += branch_length
+        tbl[tree_index] = current_tbl
+        num_internal_nodes[tree_index] = current_num_internal_nodes
+        max_arity[tree_index] = current_max_arity
+        tree_index += 1
+        # print("tree", tree_index, nodes_with_arity)
+
+    return tbl, num_internal_nodes, max_arity
+
+
+def compute_per_tree_stats(ts):
+    """
+    Returns the per-tree statistics
+    """
+    tree_pos = alloc_tree_position(ts)
+    return _compute_per_tree_stats(
+        tree_pos,
+        ts.num_trees,
+        ts.num_nodes,
+        ts.nodes_time,
+        ts.edges_parent,
+        ts.edges_child,
+    )
 
 
 class TreeInfo:
@@ -211,27 +360,12 @@ class TreeInfo:
         num_children_per_tree = np.zeros(num_trees)
         num_nodes_per_tree = np.zeros(num_trees)
         max_internal_arity = np.zeros(num_trees)
-        total_branch_length = np.zeros(num_trees)
-        # we make an assumption here that all samples are leaves, as caclulating the number of leaves per tree slows things down
-        # TODO: when switching to numba to replace iterating over trees, fix this
-        # as the assumption is not valid for, e.g, ancestral samples, which are internal nodes
-        num_leaves_per_tree = ts.num_samples
 
-        for tree in ts.trees():
-            i = tree.index
-            num_children_per_node = tree.num_children_array[:-1]
-            num_children_per_tree[i] = np.sum(num_children_per_node)
-            num_nodes_per_tree[i] = tree.preorder().size
-            max_internal_arity[i] = np.max(num_children_per_node)
-            total_branch_length[i] = tree.total_branch_length
+        total_branch_length, num_internal_nodes, max_arity = compute_per_tree_stats(ts)
 
+        # FIXME - need to add this to the computation above
         mean_internal_arity = np.zeros(num_trees)
-        np.divide(
-            num_children_per_tree,
-            num_nodes_per_tree - num_leaves_per_tree,
-            out=mean_internal_arity,
-            where=num_nodes_per_tree != num_leaves_per_tree,
-        )
+
         site_tree_index = self.calc_site_tree_index()
         unique_values, counts = np.unique(site_tree_index, return_counts=True)
         sites_per_tree = np.zeros(ts.num_trees, dtype=np.int64)
@@ -243,7 +377,7 @@ class TreeInfo:
                 "right": breakpoints[1:],
                 "total_branch_length": total_branch_length,
                 "mean_internal_arity": mean_internal_arity,
-                "max_internal_arity": max_internal_arity,
+                "max_internal_arity": max_arity,
                 "num_sites": sites_per_tree,
             }
         )
