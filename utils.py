@@ -212,6 +212,9 @@ class TreeInfo:
         num_nodes_per_tree = np.zeros(num_trees)
         max_internal_arity = np.zeros(num_trees)
         total_branch_length = np.zeros(num_trees)
+        # we make an assumption here that all samples are leaves, as caclulating the number of leaves per tree slows things down
+        # TODO: when switching to numba to replace iterating over trees, fix this
+        # as the assumption is not valid for, e.g, ancestral samples, which are internal nodes
         num_leaves_per_tree = ts.num_samples
 
         for tree in ts.trees():
@@ -229,7 +232,10 @@ class TreeInfo:
             out=mean_internal_arity,
             where=num_nodes_per_tree != num_leaves_per_tree,
         )
-
+        site_tree_index = self.calc_site_tree_index()
+        unique_values, counts = np.unique(site_tree_index, return_counts=True)
+        sites_per_tree = np.zeros(ts.num_trees, dtype=np.int64)
+        sites_per_tree[unique_values] = counts
         breakpoints = ts.breakpoints(as_array=True)
         df = pd.DataFrame(
             {
@@ -238,6 +244,7 @@ class TreeInfo:
                 "total_branch_length": total_branch_length,
                 "mean_internal_arity": mean_internal_arity,
                 "max_internal_arity": max_internal_arity,
+                "num_sites": sites_per_tree,
             }
         )
 
@@ -248,6 +255,7 @@ class TreeInfo:
                 "total_branch_length": "float64",
                 "mean_internal_arity": "float64",
                 "max_internal_arity": "float64",
+                "num_sites": "int",
             }
         )
 
