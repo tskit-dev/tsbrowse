@@ -1,4 +1,6 @@
 import sys
+import logging
+
 import numpy as np
 import panel as pn
 import hvplot.pandas
@@ -11,14 +13,23 @@ import bokeh.models as bkm
 import pathlib
 import functools
 
+logger = logging.Logger(__file__)
+
 # Usage: panel serve app.py --args /path/to/trees-file
 path = pathlib.Path(sys.argv[1])
 trees_file = path.name
+logger.warning(f"Loading {path}")
 ts = tskit.load(path)
 ti = utils.TreeInfo(ts, 1)
 
+# NOTE using "warning" here so that we can get some output
+# from them. Will need to do this better at some point,
+# with configurable output levels.
+logger.warning(f"Computing mutations data frame")
 df_mutations = ti.mutations_data()
+logger.warning(f"Computing edges data frame")
 df_edges = ti.edges_data()
+logger.warning(f"Computing Trees data frame")
 df_trees = ti.trees_data()
 
 # Global plot settings
