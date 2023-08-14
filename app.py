@@ -31,6 +31,8 @@ logger.warning(f"Computing edges data frame")
 df_edges = ti.edges_data()
 logger.warning(f"Computing Trees data frame")
 df_trees = ti.trees_data()
+# TODO REMOVE
+logger.warning(f"Done")
 
 # Global plot settings
 plot_width = 1000
