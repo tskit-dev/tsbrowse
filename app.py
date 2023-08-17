@@ -6,359 +6,37 @@ import panel as pn
 import hvplot.pandas
 import holoviews as hv
 import pandas as pd
-import holoviews.operation.datashader as hd
+
 import tskit
 import utils
-import bokeh.models as bkm
+
 import pathlib
 import functools
+import model
+import pages
+
 
 logger = logging.Logger(__file__)
 
 # Usage: panel serve app.py --args /path/to/trees-file
 path = pathlib.Path(sys.argv[1])
-trees_file = path.name
-logger.warning(f"Loading {path}")
-ts = tskit.load(path)
-ti = utils.TreeInfo(ts, 1)
-
-# NOTE using "warning" here so that we can get some output
-# from them. Will need to do this better at some point,
-# with configurable output levels.
-logger.warning(f"Computing mutations data frame")
-df_mutations = ti.mutations_data()
-logger.warning(f"Computing edges data frame")
-df_edges = ti.edges_data()
-logger.warning(f"Computing Trees data frame")
-df_trees = ti.trees_data()
-# TODO REMOVE
-logger.warning(f"Done")
-
-# Global plot settings
-plot_width = 1000
-plot_height = 600
-threshold = 1000  # max number of points to overlay on a plot
-
-
-def filter_points(points, x_range, y_range):
-    if x_range and y_range:
-        return points[x_range, y_range]
-    return points
-
-
-def hover_points(points, threshold=5000):
-    ### Return points to interact with via hover if there are fewer than threshold
-    if len(points) > threshold:
-        return points.iloc[:0]
-    return points
-
-
-def shaded_points(points, threshold=5000):
-    ### Return points to datashade if there are more than threshold
-    if len(points) > threshold:
-        return points
-    return points.iloc[:0]
-
-
-def make_hist_on_axis(dimension, points, num_bins=30):
-    ### Make histogram function for a specified axis of a scatter plot
-    def compute_hist(x_range, y_range):
-        filtered_points = filter_points(points, x_range, y_range)
-        hist = hv.operation.histogram(
-            filtered_points, dimension=dimension, num_bins=num_bins, normed="height"
-        )
-        return hist
-
-    return compute_hist
-
-
-def make_hist(data, title, bins_range, log_y=True, plot_width=800):
-    ### Make histogram from given count data
-    count, bins = np.histogram(data, bins=bins_range)
-    ylabel = "log(Count)" if log_y else "Count"
-    np.seterr(divide="ignore")
-    if log_y:
-        count = np.log10(count)
-        count[count == -np.inf] = 0
-    histogram = hv.Histogram((count, bins)).opts(
-        title=title, ylabel=ylabel, tools=["hover"]
-    )
-    histogram = histogram.opts(shared_axes=False, width=round(plot_width / 2))
-    return histogram
-
-
-def make_hist_matplotlib(data, title, num_bins="auto", log_y=True, xlim=(None, None)):
-    ### Make histogram from given count data using parameters suitable for the matplotlib backend
-    # TODO return something sensible when data contains one row
-    if xlim[1] is not None:
-        data = data[data < xlim[1]]
-    if xlim[0] is not None:
-        data = data[data > xlim[0]]
-    count, bins = np.histogram(data, bins=num_bins)
-    ylabel = "log(Count)" if log_y else "Count"
-    np.seterr(divide="ignore")
-    if log_y:
-        count = np.log10(count)
-        count[count == -np.inf] = 0
-    return hv.Histogram((count, bins)).opts(title=title, ylabel=ylabel)
-
-
-def make_hist_panel(log_y):
-    ### Make row of histograms for holoviews panel
-    overall_site_hist = make_hist(
-        ti.sites_num_mutations,
-        "Mutations per site",
-        range(29),
-        log_y=log_y,
-        plot_width=plot_width,
-    )
-    overall_node_hist = make_hist(
-        ti.nodes_num_mutations,
-        "Mutations per node",
-        range(10),
-        log_y=log_y,
-        plot_width=plot_width,
-    )
-    return pn.Row(overall_site_hist, overall_node_hist)
-
-
-def page1():
-    return pn.pane.HTML(ts)
-    # hv_layout
-
-
-def page2():
-    hv.extension("bokeh")
-    plot_width = 1000
-    log_y_checkbox = pn.widgets.Checkbox(
-        name="Log y-axis of Mutations per site/node plots", value=False
-    )
-
-    points = df_mutations.hvplot.scatter(
-        x="position",
-        y="time",
-        hover_cols=["position", "time", "mutation_node", "node_flag"],
-    ).opts(width=plot_width, height=plot_height)
-
-    range_stream = hv.streams.RangeXY(source=points)
-    streams = [range_stream]
-
-    filtered = points.apply(filter_points, streams=streams)
-    time_hist = hv.DynamicMap(
-        make_hist_on_axis(dimension="time", points=points, num_bins=10), streams=streams
-    )
-    site_hist = hv.DynamicMap(
-        make_hist_on_axis(dimension="position", points=points, num_bins=10),
-        streams=streams,
-    )
-    hover = filtered.apply(hover_points, threshold=threshold)
-    shaded = hd.datashade(filtered, width=400, height=400, streams=streams)
-
-    main = (shaded * hover).opts(
-        hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10)
-    )
-
-    hist_panel = pn.bind(make_hist_panel, log_y=log_y_checkbox)
-
-    plot_options = pn.Column(
-        pn.pane.Markdown("## Plot Options"),
-        log_y_checkbox,
-    )
-
-    return pn.Column(main << time_hist << site_hist, hist_panel, plot_options)
-
-
-def page3():
-    hv.extension("bokeh")
-    df_edges["parent_time_right"] = df_edges["parent_time"]
-    lines = hv.Segments(
-        df_edges, kdims=["left", "parent_time", "right", "parent_time_right"]
-    )
-    range_stream = hv.streams.RangeXY(source=lines)
-    streams = [range_stream]
-    filtered = lines.apply(filter_points, streams=streams)
-    hover = filtered.apply(hover_points, threshold=threshold)
-    shaded = hd.datashade(filtered, streams=streams)
-    hover_tool = bkm.HoverTool(
-        tooltips=[
-            ("child", "@child"),
-            ("parent", "@parent"),
-            ("span", "@span"),
-            ("branch_length", "@branch_length"),
-        ]
-    )
-    main = (shaded * hover).opts(
-        hv.opts.Segments(
-            tools=[hover_tool],
-            width=plot_width,
-            height=plot_height,
-            xlabel="Position",
-            ylabel="Time",
-        )
-    )
-
-    return pn.Column(main)
-
-
-def page4():
-    hv.extension("bokeh")
-    node_id_input = pn.widgets.TextInput(value="", name="Node ID")
-    df_edges["parent_time_right"] = df_edges["parent_time"]
-    tabulator = pn.widgets.Tabulator(show_index=False)
-
-    def plot_data(node_id):
-        if len(node_id) > 0:
-            filtered_df = df_edges[df_edges["child"] == int(node_id)]
-            segments = hv.Segments(
-                filtered_df,
-                kdims=["left", "parent_time", "right", "parent_time_right"],
-                vdims=["child", "parent", "span", "branch_length"],
-            )
-            hover_tool = bkm.HoverTool(
-                tooltips=[
-                    ("child", "@child"),
-                    ("parent", "@parent"),
-                    ("span", "@span"),
-                    ("branch_length", "@branch_length"),
-                ]
-            )
-            segments = segments.opts(
-                width=plot_width,
-                height=plot_height,
-                tools=[hover_tool],
-                xlabel="Position",
-                ylabel="Time",
-            )
-
-            filtered_df = filtered_df.drop(columns=["parent_time_right"])
-            tabulator.value = filtered_df
-
-            return segments
-        else:
-            return pn.pane.Markdown("Please enter a Node ID.")
-
-    dynamic_plot = pn.bind(plot_data, node_id=node_id_input)
-
-    return pn.Column(node_id_input, dynamic_plot, tabulator)
-
-
-def page5():
-    hv.extension("matplotlib")
-    bins = min(50, int(np.sqrt(len(df_trees))))
-
-    sites_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.num_sites,
-        "Sites per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    log_y_checkbox = pn.widgets.Checkbox(name="log y-axis", value=True)
-
-    sites_hist_panel = pn.bind(
-        sites_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    spans = df_trees.right - df_trees.left
-
-    spans_hist_func = functools.partial(
-        make_hist_matplotlib,
-        spans,
-        "Genomic span per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    spans_hist_panel = pn.bind(
-        spans_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    muts_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.num_mutations,
-        "Mutations per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    muts_hist_panel = pn.bind(
-        muts_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    tbl_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.total_branch_length,
-        "Total branch length per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    tbl_hist_panel = pn.bind(
-        tbl_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    mean_arity_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.mean_internal_arity,
-        f"Mean arity per tree \n(not yet implemented)",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    mean_arity_hist_panel = pn.bind(
-        mean_arity_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    max_arity_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.max_internal_arity,
-        "Max arity per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    max_arity_hist_panel = pn.bind(
-        max_arity_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    plot_options = pn.Column(
-        pn.pane.Markdown("# Plot Options"),
-        log_y_checkbox,
-    )
-
-    hist_panel = pn.Column(
-        pn.Row(
-            sites_hist_panel,
-            spans_hist_panel,
-            muts_hist_panel,
-        ),
-        pn.Row(tbl_hist_panel, mean_arity_hist_panel, max_arity_hist_panel),
-    )
-
-    return pn.Column(hist_panel, plot_options)
+tsm = model.TSModel(tskit.load(path), path.name)
 
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension("tabulator")
 
 pages = {
-    "Overview": page1,
-    "Mutations": page2,
-    "Edges": page3,
-    "Edge Explorer": page4,
-    "Trees": page5,
+    "Overview": pages.overview,
+    "Mutations": pages.mutations,
+    "Edges": pages.edges,
+    "Edge Explorer": pages.edge_explorer,
+    "Trees": pages.trees,
 }
 
 
 def show(page):
-    return pages[page]()
+    return pages[page](tsm)
 
 
 starting_page = pn.state.session_args.get("page", [b"Overview"])[0].decode()
@@ -380,7 +58,7 @@ DEFAULT_PARAMS = {
     "header_background": ACCENT_COLOR,
 }
 pn.template.FastListTemplate(
-    title=f"{trees_file}",
+    title=tsm.name,
     sidebar=[page],
     main=[ishow],
     **DEFAULT_PARAMS,

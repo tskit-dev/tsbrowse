@@ -2,6 +2,8 @@ import pytest
 import tskit
 import numpy.testing as nt
 import numpy as np
+
+import model
 import utils
 
 
@@ -99,8 +101,8 @@ def multi_tree_with_polytomies_example_ts():
 class TestMutationDataTable:
     def test_single_tree_example(self):
         ts = single_tree_example_ts()
-        ti = utils.TreeInfo(ts, 0)
-        df = ti.mutations_data()
+        tsm = model.TSModel(ts)
+        df = tsm.mutations_df
         assert len(df) == 6
         nt.assert_array_equal(df.node, list(range(6)))
         nt.assert_array_equal(df.position, list(range(1, 7)))
@@ -113,8 +115,8 @@ class TestMutationDataTable:
 
     def test_single_tree_recurrent_mutation_example(self):
         ts = single_tree_recurrent_mutation_example_ts()
-        ti = utils.TreeInfo(ts, 0)
-        df = ti.mutations_data()
+        tsm = model.TSModel(ts)
+        df = tsm.mutations_df
         assert len(df) == 7
         nt.assert_array_equal(df.node, [0, 1, 2, 3, 4, 5, 5])
         nt.assert_array_equal(df.position, [1, 2, 3, 4, 5, 6, 6])
@@ -129,8 +131,8 @@ class TestMutationDataTable:
 class TestEdgeDataTable:
     def test_single_tree_example(self):
         ts = single_tree_example_ts()
-        ti = utils.TreeInfo(ts, 0)
-        df = ti.edges_data()
+        tsm = model.TSModel(ts)
+        df = tsm.edges_df
         assert len(df) == 6
         nt.assert_array_equal(df.left, [0, 0, 0, 0, 0, 0])
         nt.assert_array_equal(df.right, [10, 10, 10, 10, 10, 10])
@@ -141,8 +143,8 @@ class TestEdgeDataTable:
 
     def test_multiple_trees_example(self):
         ts = multiple_trees_example_ts()
-        ti = utils.TreeInfo(ts, 0)
-        df = ti.edges_data()
+        tsm = model.TSModel(ts)
+        df = tsm.edges_df
         assert len(df) == 6
         nt.assert_array_equal(df.left, [5, 0, 0, 0, 5, 0])
         nt.assert_array_equal(df.right, [10, 10, 5, 5, 10, 10])
@@ -155,8 +157,8 @@ class TestEdgeDataTable:
 class TestNodeDataTable:
     def test_single_tree_example(self):
         ts = single_tree_example_ts()
-        ti = utils.TreeInfo(ts, 0)
-        df = ti.nodes_data()
+        tsm = model.TSModel(ts)
+        df = tsm.nodes_df
         assert len(df) == 7
         nt.assert_array_equal(df.time, [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 2.0])
         nt.assert_array_equal(df.num_mutations, [1, 1, 1, 1, 1, 1, 0])
@@ -165,8 +167,8 @@ class TestNodeDataTable:
 
     def test_multiple_tree_example(self):
         ts = multiple_trees_example_ts()
-        ti = utils.TreeInfo(ts, 0)
-        df = ti.nodes_data()
+        tsm = model.TSModel(ts)
+        df = tsm.nodes_df
         assert len(df) == 5
         nt.assert_array_equal(df.time, [0.0, 0.0, 0.0, 1.0, 2.0])
         nt.assert_array_equal(df.num_mutations, [0, 0, 0, 0, 0])
@@ -176,8 +178,8 @@ class TestNodeDataTable:
 class TestTreesDataTable:
     def test_single_tree_example(self):
         ts = single_tree_example_ts()
-        ti = utils.TreeInfo(ts, 0)
-        df = ti.trees_data()
+        tsm = model.TSModel(ts)
+        df = tsm.trees_df
         assert len(df) == 1
         nt.assert_array_equal(df.left, 0)
         nt.assert_array_equal(df.right, 10)
@@ -187,8 +189,8 @@ class TestTreesDataTable:
 
     def test_single_tree_with_polytomies_example(self):
         ts = single_tree_with_polytomies_example_ts()
-        ti = utils.TreeInfo(ts, 0)
-        df = ti.trees_data()
+        tsm = model.TSModel(ts)
+        df = tsm.trees_df
         assert len(df) == 1
         nt.assert_array_equal(df.left, 0)
         nt.assert_array_equal(df.right, 10)
@@ -198,8 +200,8 @@ class TestTreesDataTable:
 
     def test_multi_tree_with_polytomies_example(self):
         ts = multi_tree_with_polytomies_example_ts()
-        ti = utils.TreeInfo(ts, 0)
-        df = ti.trees_data()
+        tsm = model.TSModel(ts)
+        df = tsm.trees_df
         assert len(df) == 2
         nt.assert_array_equal(df.left, [0, 5])
         nt.assert_array_equal(df.right, [5, 10])
