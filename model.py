@@ -2,7 +2,6 @@ from functools import cached_property
 
 import tskit
 import numpy as np
-import utils
 import numba
 import pandas as pd
 import numba
@@ -156,11 +155,13 @@ def compute_per_tree_stats(ts):
         ts.edges_child,
     )
 
+
 class TSModel:
     """
     A wrapper around a tskit.TreeSequence object that provides some
     convenience methods for analysing the tree sequence.
     """
+
     def __init__(self, ts, name=None):
         self.ts = ts
         self.name = name

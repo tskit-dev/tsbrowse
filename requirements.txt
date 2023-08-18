@@ -4,3 +4,5 @@ xarray
 datashader
 tskit
 seaborn
+pre-commit
+pytest

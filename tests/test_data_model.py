@@ -1,10 +1,8 @@
-import pytest
-import tskit
-import numpy.testing as nt
 import numpy as np
-
 import model
-import utils
+import numpy.testing as nt
+import tskit
+
 
 
 def single_tree_example_ts():
@@ -41,6 +39,7 @@ def single_tree_recurrent_mutation_example_ts():
     tables.mutations.add_row(site=j, derived_state="G", node=j, parent=j)
     ts = tables.tree_sequence()
     return tables.tree_sequence()
+
 
 def multiple_trees_example_ts():
     # 2.00┊   4   ┊   4   ┊
@@ -162,8 +161,7 @@ class TestNodeDataTable:
         assert len(df) == 7
         nt.assert_array_equal(df.time, [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 2.0])
         nt.assert_array_equal(df.num_mutations, [1, 1, 1, 1, 1, 1, 0])
-        nt.assert_array_equal(df.ancestors_span, [
-                              10, 10, 10, 10, 10, 10, -np.inf])
+        nt.assert_array_equal(df.ancestors_span, [10, 10, 10, 10, 10, 10, -np.inf])
 
     def test_multiple_tree_example(self):
         ts = multiple_trees_example_ts()
