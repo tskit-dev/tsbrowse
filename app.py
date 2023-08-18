@@ -1,17 +1,10 @@
 import sys
+import pathlib
 import logging
 
-import numpy as np
 import panel as pn
-import hvplot.pandas
-import holoviews as hv
-import pandas as pd
-
 import tskit
-import utils
 
-import pathlib
-import functools
 import model
 import pages
 
@@ -22,7 +15,6 @@ logger = logging.Logger(__file__)
 path = pathlib.Path(sys.argv[1])
 tsm = model.TSModel(tskit.load(path), path.name)
 
-
 pn.extension(sizing_mode="stretch_width")
 pn.extension("tabulator")
 
@@ -32,6 +24,7 @@ pages = {
     "Edges": pages.edges,
     "Edge Explorer": pages.edge_explorer,
     "Trees": pages.trees,
+    "Nodes": pages.nodes,
 }
 
 

@@ -68,4 +68,3 @@ plot_sites_per_tree(tsm, show_counts=True)
 
 ```python
 plot_sites_per_tree_along_seq(tsm, hist_bins=500,region_start=150_000_000, region_end=190_000_000)
-```
