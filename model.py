@@ -1,13 +1,11 @@
-"""
-QC functions for tsinfer trees
-"""
-import matplotlib.pyplot as plt
-import numpy as np
-import pandas as pd
-import seaborn as sns
-import tskit
-import numba
+from functools import cached_property
 
+import tskit
+import numpy as np
+import utils
+import numba
+import pandas as pd
+import numba
 
 spec = [
     ("num_edges", numba.int64),
@@ -158,15 +156,14 @@ def compute_per_tree_stats(ts):
         ts.edges_child,
     )
 
-
-class TreeInfo:
+class TSModel:
     """
-    Class for storing tree information
+    A wrapper around a tskit.TreeSequence object that provides some
+    convenience methods for analysing the tree sequence.
     """
-
-    def __init__(self, ts, chr):
+    def __init__(self, ts, name=None):
         self.ts = ts
-        self.chr = chr
+        self.name = name
 
         self.sites_num_mutations = np.bincount(
             self.ts.mutations_site, minlength=self.ts.num_sites
@@ -175,7 +172,8 @@ class TreeInfo:
             self.ts.mutations_node, minlength=self.ts.num_nodes
         )
 
-    def summary(self):
+    @cached_property
+    def summary_df(self):
         nodes_with_zero_muts = np.sum(self.nodes_num_mutations == 0)
         sites_with_zero_muts = np.sum(self.sites_num_mutations == 0)
 
@@ -196,7 +194,7 @@ class TreeInfo:
         return df.set_index("property")
 
     def _repr_html_(self):
-        return self.summary()._repr_html_()
+        return self.summary_df._repr_html_()
 
     @staticmethod
     @numba.njit
@@ -213,7 +211,8 @@ class TreeInfo:
                 child_right[u] = edges_right[e]
         return child_left, child_right
 
-    def mutations_data(self):
+    @cached_property
+    def mutations_df(self):
         # FIXME use tskit's impute mutations time
         ts = self.ts
         mutations_time = ts.mutations_time.copy()
@@ -296,7 +295,8 @@ class TreeInfo:
             }
         )
 
-    def edges_data(self):
+    @cached_property
+    def edges_df(self):
         ts = self.ts
         left = ts.edges_left
         right = ts.edges_right
@@ -334,7 +334,8 @@ class TreeInfo:
             }
         )
 
-    def nodes_data(self):
+    @cached_property
+    def nodes_df(self):
         ts = self.ts
         child_left, child_right = self.child_bounds(
             ts.num_nodes, ts.edges_left, ts.edges_right, ts.edges_child
@@ -354,7 +355,8 @@ class TreeInfo:
             }
         )
 
-    def trees_data(self):
+    @cached_property
+    def trees_df(self):
         ts = self.ts
         num_trees = ts.num_trees
 
@@ -434,107 +436,6 @@ class TreeInfo:
             end += step
         yield iterable[start:]
 
-    def plot_polytomy_fractions(
-        self, region_start=None, region_end=None, window_size=100_000, overlap=0
-    ):
-        """
-        Plots the fraction of polytomies in windows actoss the genomic sequence
-        """
-        if region_start is None:
-            region_start = max(0, self.ts.tables.sites.position[0] - 50_000)
-        if region_end is None:
-            region_end = self.ts.tables.sites.position[-1] + 50_000
-        fig, ax = plt.subplots(figsize=(20, 5))
-        polytomy_fractions = self.calc_polytomy_fractions()
-        poly_fracs_by_pos = self.map_stats_to_genome(polytomy_fractions)
-        poly_fracs_means = []
-        poly_fracs_sd = []
-        genomic_positions = []
-        for poly_win in self.make_sliding_windows(
-            poly_fracs_by_pos, window_size, overlap
-        ):
-            poly_fracs_means.append(np.mean(poly_win))
-            poly_fracs_sd.append(np.std(poly_win))
-        for gen_win in self.make_sliding_windows(
-            np.arange(1, self.ts.sequence_length), window_size, overlap
-        ):
-            genomic_positions.append(gen_win[0] / 1_000_000)
-        ax.plot(
-            genomic_positions,
-            poly_fracs_means,
-            label="mean",
-            linewidth=0.5,
-        )
-        ax.fill_between(
-            genomic_positions,
-            np.array(poly_fracs_means) - np.array(poly_fracs_sd),
-            np.array(poly_fracs_means) + np.array(poly_fracs_sd),
-            alpha=0.3,
-            label="mean +/- std",
-        )
-        missing_vals = np.take(genomic_positions, np.where(np.isnan(poly_fracs_means)))
-        ax.plot(
-            missing_vals,
-            np.zeros(len(missing_vals)),
-            color="red",
-            marker="o",
-            label="missing data",
-        )
-        ax.set_xlabel(f"Position on chr {self.chr}(Mb)", fontsize=10)
-        ax.set_ylabel("Window mean", fontsize=10)
-        ax.set_title("Polytomy score", fontsize=10)
-        ax.set_ylim(0, 1)
-        ax.set_xlim(region_start / 1_000_000, region_end / 1_000_000)
-        handles, labels = ax.get_legend_handles_labels()
-        unique = [
-            (h, l)
-            for i, (h, l) in enumerate(zip(handles, labels))
-            if l not in labels[:i]
-        ]
-        ax.legend(*zip(*unique))
-        plt.show()
-
-    def plot_mutations_per_site_along_seq(
-        self, region_start=None, region_end=None, hist_bins=1000
-    ):
-        count = self.sites_num_mutations
-        pos = self.ts.sites_position
-        if region_start is None:
-            region_start = pos[0]
-        if region_end is None:
-            region_end = pos[-1]
-        grid = sns.jointplot(
-            x=pos / 1_000_000,
-            y=count,
-            kind="scatter",
-            marginal_ticks=True,
-            alpha=0.5,
-            marginal_kws=dict(bins=hist_bins),
-            xlim=(region_start / 1_000_000, region_end / 1_000_000),
-        )
-        grid.ax_marg_y.remove()
-        grid.fig.set_figwidth(20)
-        grid.fig.set_figheight(8)
-        grid.ax_joint.set_xlabel("Position on genome (Mb)")
-        grid.ax_joint.set_ylabel("Number of mutations")
-
-    def calc_mean_node_arity(self):
-        span_sums = np.bincount(
-            self.ts.edges_parent,
-            weights=self.ts.edges_right - self.ts.edges_left,
-            minlength=self.ts.num_nodes,
-        )
-        node_spans = self.ts.sample_count_stat(
-            [self.ts.samples()],
-            lambda x: (x > 0),
-            1,
-            polarised=True,
-            span_normalise=False,
-            strict=False,
-            mode="node",
-        )[:, 0]
-        return span_sums / node_spans
-
     def calc_site_tree_index(self):
         return (
             np.searchsorted(
@@ -558,73 +459,19 @@ class TreeInfo:
         mutations_per_tree[unique_values] = counts
         return mutations_per_tree
 
-    def plot_mutations_per_tree_along_seq(
-        self, region_start=None, region_end=None, hist_bins=1000
-    ):
-        tree_mutations = self.calc_mutations_per_tree()
-        tree_mutations = tree_mutations[1:-1]
-        breakpoints = self.ts.breakpoints(as_array=True)
-        tree_mids = breakpoints[1:] - ((breakpoints[1:] - breakpoints[:-1]) / 2)
-        tree_mids = tree_mids[1:-1]
-        if region_start is None or region_start < tree_mids[0]:
-            region_start = tree_mids[0]
-        if region_end is None or region_end > tree_mids[-1]:
-            region_end = tree_mids[-1]
-
-        grid = sns.jointplot(
-            x=tree_mids / 1_000_000,
-            y=tree_mutations,
-            kind="scatter",
-            marginal_ticks=True,
-            alpha=0.5,
-            marginal_kws=dict(bins=hist_bins),
-            xlim=(region_start / 1_000_000, region_end / 1_000_000),
-            # set ylim to the max number of sites in a tree in the region
-            ylim=(
-                0,
-                np.max(
-                    tree_mutations[
-                        (tree_mids >= region_start) & (tree_mids <= region_end)
-                    ]
-                ),
-            ),
+    def calc_mean_node_arity(self):
+        span_sums = np.bincount(
+            self.ts.edges_parent,
+            weights=self.ts.edges_right - self.ts.edges_left,
+            minlength=self.ts.num_nodes,
         )
-        grid.ax_marg_y.remove()
-        grid.fig.set_figwidth(20)
-        grid.fig.set_figheight(8)
-        grid.ax_joint.set_xlabel("Position on genome (Mb)")
-        grid.ax_joint.set_ylabel("Number of mutations per tree")
-
-    def plot_sites_per_tree_along_seq(
-        self, region_start=None, region_end=None, hist_bins=500
-    ):
-        tree_sites = self.calc_sites_per_tree()
-        tree_sites = tree_sites[1:-1]
-        breakpoints = self.ts.breakpoints(as_array=True)
-        tree_mids = breakpoints[1:] - ((breakpoints[1:] - breakpoints[:-1]) / 2)
-        tree_mids = tree_mids[1:-1]
-        if region_start is None or region_start < tree_mids[0]:
-            region_start = tree_mids[0]
-        if region_end is None or region_end > tree_mids[-1]:
-            region_end = tree_mids[-1]
-
-        grid = sns.jointplot(
-            x=tree_mids / 1_000_000,
-            y=tree_sites,
-            kind="scatter",
-            marginal_ticks=True,
-            alpha=0.5,
-            marginal_kws=dict(bins=hist_bins),
-            xlim=(region_start / 1_000_000, region_end / 1_000_000),
-            ylim=(
-                0,
-                np.max(
-                    tree_sites[(tree_mids >= region_start) & (tree_mids <= region_end)]
-                ),
-            ),
-        )
-        grid.ax_marg_y.remove()
-        grid.fig.set_figwidth(20)
-        grid.fig.set_figheight(8)
-        grid.ax_joint.set_xlabel("Position on genome (Mb)")
-        grid.ax_joint.set_ylabel("Number of sites per tree")
+        node_spans = self.ts.sample_count_stat(
+            [self.ts.samples()],
+            lambda x: (x > 0),
+            1,
+            polarised=True,
+            span_normalise=False,
+            strict=False,
+            mode="node",
+        )[:, 0]
+        return span_sums / node_spans
