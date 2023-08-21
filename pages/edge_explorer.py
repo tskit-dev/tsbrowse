@@ -1,7 +1,9 @@
-import panel as pn
-import holoviews as hv
 import bokeh.models as bkm
+import holoviews as hv
+import panel as pn
+
 import config
+
 
 def page(tsm):
     hv.extension("bokeh")

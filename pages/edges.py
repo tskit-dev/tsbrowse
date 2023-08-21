@@ -1,9 +1,12 @@
+import bokeh.models as bkm
 import holoviews as hv
 import holoviews.operation.datashader as hd
 import panel as pn
+
 import config
-import bokeh.models as bkm
-from plot_helpers import filter_points, hover_points
+from plot_helpers import filter_points
+from plot_helpers import hover_points
+
 
 def page(tsm):
     hv.extension("bokeh")

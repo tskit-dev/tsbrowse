@@ -1,7 +1,8 @@
 import numpy as np
-import model
 import numpy.testing as nt
 import tskit
+
+import model
 
 
 def single_tree_example_ts():

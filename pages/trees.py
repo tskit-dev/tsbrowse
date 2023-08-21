@@ -1,7 +1,8 @@
-import panel as pn
+import functools
+
 import holoviews as hv
 import numpy as np
-import functools
+import panel as pn
 
 from plot_helpers import make_hist_matplotlib
 
@@ -70,7 +71,7 @@ def page(tsm):
     mean_arity_hist_func = functools.partial(
         make_hist_matplotlib,
         df_trees.mean_internal_arity,
-        f"Mean arity per tree \n(not yet implemented)",
+        "Mean arity per tree \n(not yet implemented)",
         num_bins=bins,
         log_y=True,
     )

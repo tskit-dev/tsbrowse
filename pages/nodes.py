@@ -1,13 +1,15 @@
 import functools
 
-import numpy as np
-import hvplot.pandas  # noqa
 import holoviews as hv
 import holoviews.operation.datashader as hd
+import hvplot.pandas  # noqa
+import numpy as np
 import panel as pn
 
 import config
-from plot_helpers import filter_points, hover_points, make_hist_matplotlib
+from plot_helpers import filter_points
+from plot_helpers import hover_points
+from plot_helpers import make_hist_matplotlib
 
 
 def page(tsm):

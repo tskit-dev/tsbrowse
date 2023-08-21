@@ -1,9 +1,9 @@
 from functools import cached_property
 
-import tskit
-import numpy as np
 import numba
+import numpy as np
 import pandas as pd
+import tskit
 
 spec = [
     ("num_edges", numba.int64),
@@ -43,7 +43,7 @@ class TreePosition:
         self.in_range = np.zeros(2, dtype=np.int64)
         self.out_range = np.zeros(2, dtype=np.int64)
 
-    def next(self):
+    def next(self):  # noqa
         left = self.interval[1]
         j = self.in_range[1]
         k = self.out_range[1]
@@ -220,7 +220,7 @@ class TSModel:
         unknown = tskit.is_unknown_time(mutations_time)
         mutations_time[unknown] = self.ts.nodes_time[mutations_node[unknown]]
 
-        node_flag = ts.nodes_flags[mutations_node]
+        # node_flag = ts.nodes_flags[mutations_node]
         position = ts.sites_position[ts.mutations_site]
 
         tables = self.ts.tables
@@ -439,90 +439,6 @@ class TSModel:
             start += step
             end += step
         yield iterable[start:]
-
-    def plot_polytomy_fractions(
-        self, region_start=None, region_end=None, window_size=100_000, overlap=0
-    ):
-        """
-        Plots the fraction of polytomies in windows actoss the genomic sequence
-        """
-        if region_start is None:
-            region_start = max(0, self.ts.tables.sites.position[0] - 50_000)
-        if region_end is None:
-            region_end = self.ts.tables.sites.position[-1] + 50_000
-        fig, ax = plt.subplots(figsize=(20, 5))
-        polytomy_fractions = self.calc_polytomy_fractions()
-        poly_fracs_by_pos = self.map_stats_to_genome(polytomy_fractions)
-        poly_fracs_means = []
-        poly_fracs_sd = []
-        genomic_positions = []
-        for poly_win in self.make_sliding_windows(
-            poly_fracs_by_pos, window_size, overlap
-        ):
-            poly_fracs_means.append(np.mean(poly_win))
-            poly_fracs_sd.append(np.std(poly_win))
-        for gen_win in self.make_sliding_windows(
-            np.arange(1, self.ts.sequence_length), window_size, overlap
-        ):
-            genomic_positions.append(gen_win[0] / 1_000_000)
-        ax.plot(
-            genomic_positions,
-            poly_fracs_means,
-            label="mean",
-            linewidth=0.5,
-        )
-        ax.fill_between(
-            genomic_positions,
-            np.array(poly_fracs_means) - np.array(poly_fracs_sd),
-            np.array(poly_fracs_means) + np.array(poly_fracs_sd),
-            alpha=0.3,
-            label="mean +/- std",
-        )
-        missing_vals = np.take(genomic_positions, np.where(np.isnan(poly_fracs_means)))
-        ax.plot(
-            missing_vals,
-            np.zeros(len(missing_vals)),
-            color="red",
-            marker="o",
-            label="missing data",
-        )
-        ax.set_xlabel(f"Position on chr {self.chr}(Mb)", fontsize=10)
-        ax.set_ylabel("Window mean", fontsize=10)
-        ax.set_title("Polytomy score", fontsize=10)
-        ax.set_ylim(0, 1)
-        ax.set_xlim(region_start / 1_000_000, region_end / 1_000_000)
-        handles, labels = ax.get_legend_handles_labels()
-        unique = [
-            (h, l)
-            for i, (h, l) in enumerate(zip(handles, labels))
-            if l not in labels[:i]
-        ]
-        ax.legend(*zip(*unique))
-        plt.show()
-
-    def plot_mutations_per_site_along_seq(
-        self, region_start=None, region_end=None, hist_bins=1000
-    ):
-        count = self.sites_num_mutations
-        pos = self.ts.sites_position
-        if region_start is None:
-            region_start = pos[0]
-        if region_end is None:
-            region_end = pos[-1]
-        grid = sns.jointplot(
-            x=pos / 1_000_000,
-            y=count,
-            kind="scatter",
-            marginal_ticks=True,
-            alpha=0.5,
-            marginal_kws=dict(bins=hist_bins),
-            xlim=(region_start / 1_000_000, region_end / 1_000_000),
-        )
-        grid.ax_marg_y.remove()
-        grid.fig.set_figwidth(20)
-        grid.fig.set_figheight(8)
-        grid.ax_joint.set_xlabel("Position on genome (Mb)")
-        grid.ax_joint.set_ylabel("Number of mutations")
 
     def calc_mean_node_arity(self):
         span_sums = np.bincount(

@@ -1,6 +1,6 @@
-import sys
-import pathlib
 import logging
+import pathlib
+import sys
 
 import panel as pn
 import tskit
