@@ -3,21 +3,8 @@ import holoviews as hv
 import numpy as np
 import functools
 
+import plot_helpers
 
-def make_hist_matplotlib(data, title, num_bins, log_y=True, xlim=(None, None)):
-    ### Make histogram from given count data using parameters suitable for the matplotlib backend
-    if xlim[1] is not None:
-        data = data[data < xlim[1]]
-    if xlim[0] is not None:
-        data = data[data > xlim[0]]
-    count, bins = np.histogram(data, bins=num_bins)
-    ylabel = "log(Count)" if log_y else "Count"
-    np.seterr(divide="ignore")
-    if log_y:
-        count = np.log10(count)
-        count[count == -np.inf] = 0
-
-    return hv.Histogram((count, bins)).opts(title=title, ylabel=ylabel)
 
 def page(tsm):
     hv.extension("matplotlib")
@@ -32,7 +19,7 @@ def page(tsm):
     spans_default_num_bins = min(50, int(np.sqrt(max_span)))
 
     sites_hist_func = functools.partial(
-        make_hist_matplotlib,
+        plot_helpers.make_hist_matplotlib,
         trees_df.num_sites,
         "Sites per tree",
         num_bins=sites_default_num_bins,
@@ -41,7 +28,7 @@ def page(tsm):
     )
 
     spans_hist_func = functools.partial(
-        make_hist_matplotlib,
+        plot_helpers.make_hist_matplotlib,
         spans,
         "Genomic span per tree",
         num_bins=spans_default_num_bins,
@@ -159,11 +146,11 @@ def page(tsm):
             ),
         )
     else:
-        sites_hist_single_tree = make_hist_matplotlib(
+        sites_hist_single_tree = plot_helpers.make_hist_matplotlib(
             trees_df.num_sites, "Sites per tree", num_bins="auto", log_y=False
         )
         sites_hist_single_tree.opts(xticks=[trees_df.num_sites[0]], yticks=[1])
-        spans_hist_single_tree = make_hist_matplotlib(
+        spans_hist_single_tree = plot_helpers.make_hist_matplotlib(
             spans, "Genomic span per tree", num_bins="auto", log_y=False
         )
         spans_hist_single_tree.opts(xticks=[spans[0]], yticks=[1])

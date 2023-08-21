@@ -1,11 +1,13 @@
 import functools
+
 import numpy as np
+import hvplot.pandas  # noqa
 import holoviews as hv
 import holoviews.operation.datashader as hd
 import panel as pn
+
 import config
-import bokeh.models as bkm
-from plot_helpers import filter_points, hover_points
+from plot_helpers import filter_points, hover_points, make_hist_matplotlib
 
 
 def page(tsm):
@@ -40,12 +42,12 @@ def page(tsm):
         x="ancestors_span",
         y="time",
         hover_cols=["ancestors_span", "time"],
-    ).opts(width=plot_width, height=plot_height)
+    ).opts(width=config.PLOT_WIDTH, height=config.PLOT_HEIGHT)
 
     range_stream = hv.streams.RangeXY(source=points)
     streams = [range_stream]
     filtered = points.apply(filter_points, streams=streams)
-    hover = filtered.apply(hover_points, threshold=threshold)
+    hover = filtered.apply(hover_points, threshold=config.THRESHOLD)
     shaded = hd.datashade(filtered, width=400, height=400, streams=streams)
 
     main = (shaded * hover).opts(

@@ -1,9 +1,12 @@
 import panel as pn
 import holoviews as hv
-import config
 import holoviews.operation.datashader as hd
+import hvplot.pandas  # noqa
 import numpy as np
+
+import config
 from plot_helpers import filter_points, hover_points
+
 
 def make_hist_on_axis(dimension, points, num_bins=30):
     ### Make histogram function for a specified axis of a scatter plot
@@ -15,7 +18,6 @@ def make_hist_on_axis(dimension, points, num_bins=30):
         return hist
 
     return compute_hist
-
 
 
 def make_hist(data, title, bins_range, log_y=True, plot_width=800):
@@ -50,6 +52,7 @@ def make_hist_panel(tsm, log_y):
         plot_width=config.PLOT_WIDTH,
     )
     return pn.Row(overall_site_hist, overall_node_hist)
+
 
 def page(tsm):
     hv.extension("bokeh")
