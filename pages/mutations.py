@@ -1,12 +1,19 @@
-import panel as pn
 import holoviews as hv
-import config
 import holoviews.operation.datashader as hd
+import hvplot.pandas  # noqa
 import numpy as np
-from plot_helpers import filter_points, hover_points
+import panel as pn
+
+import config
+from plot_helpers import filter_points
+from plot_helpers import hover_points
+
 
 def make_hist_on_axis(dimension, points, num_bins=30):
-    ### Make histogram function for a specified axis of a scatter plot
+    """
+    Make histogram function for a specified axis of a scatter plot
+    """
+
     def compute_hist(x_range, y_range):
         filtered_points = filter_points(points, x_range, y_range)
         hist = hv.operation.histogram(
@@ -17,9 +24,10 @@ def make_hist_on_axis(dimension, points, num_bins=30):
     return compute_hist
 
 
-
 def make_hist(data, title, bins_range, log_y=True, plot_width=800):
-    ### Make histogram from given count data
+    """
+    Make histogram from given count data
+    """
     count, bins = np.histogram(data, bins=bins_range)
     ylabel = "log(Count)" if log_y else "Count"
     np.seterr(divide="ignore")
@@ -34,7 +42,9 @@ def make_hist(data, title, bins_range, log_y=True, plot_width=800):
 
 
 def make_hist_panel(tsm, log_y):
-    ### Make row of histograms for holoviews panel
+    """
+    Make row of histograms for holoviews panel
+    """
     overall_site_hist = make_hist(
         tsm.sites_num_mutations,
         "Mutations per site",
@@ -50,6 +60,7 @@ def make_hist_panel(tsm, log_y):
         plot_width=config.PLOT_WIDTH,
     )
     return pn.Row(overall_site_hist, overall_node_hist)
+
 
 def page(tsm):
     hv.extension("bokeh")

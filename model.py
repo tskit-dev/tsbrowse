@@ -1,10 +1,9 @@
 from functools import cached_property
 
-import tskit
+import numba
 import numpy as np
-import numba
 import pandas as pd
-import numba
+import tskit
 
 spec = [
     ("num_edges", numba.int64),
@@ -44,7 +43,7 @@ class TreePosition:
         self.in_range = np.zeros(2, dtype=np.int64)
         self.out_range = np.zeros(2, dtype=np.int64)
 
-    def next(self):
+    def next(self):  # noqa
         left = self.interval[1]
         j = self.in_range[1]
         k = self.out_range[1]
@@ -221,7 +220,7 @@ class TSModel:
         unknown = tskit.is_unknown_time(mutations_time)
         mutations_time[unknown] = self.ts.nodes_time[mutations_node[unknown]]
 
-        node_flag = ts.nodes_flags[mutations_node]
+        # node_flag = ts.nodes_flags[mutations_node]
         position = ts.sites_position[ts.mutations_site]
 
         tables = self.ts.tables
@@ -341,11 +340,14 @@ class TSModel:
         child_left, child_right = self.child_bounds(
             ts.num_nodes, ts.edges_left, ts.edges_right, ts.edges_child
         )
+        is_sample = np.zeros(ts.num_nodes)
+        is_sample[ts.samples()] = 1
         df = pd.DataFrame(
             {
                 "time": ts.nodes_time,
                 "num_mutations": self.nodes_num_mutations,
                 "ancestors_span": child_right - child_left,
+                "is_sample": is_sample,
             }
         )
         return df.astype(
@@ -353,6 +355,7 @@ class TSModel:
                 "time": "float64",
                 "num_mutations": "int",
                 "ancestors_span": "float64",
+                "is_sample": "bool",
             }
         )
 
@@ -437,6 +440,23 @@ class TSModel:
             end += step
         yield iterable[start:]
 
+    def calc_mean_node_arity(self):
+        span_sums = np.bincount(
+            self.ts.edges_parent,
+            weights=self.ts.edges_right - self.ts.edges_left,
+            minlength=self.ts.num_nodes,
+        )
+        node_spans = self.ts.sample_count_stat(
+            [self.ts.samples()],
+            lambda x: (x > 0),
+            1,
+            polarised=True,
+            span_normalise=False,
+            strict=False,
+            mode="node",
+        )[:, 0]
+        return span_sums / node_spans
+
     def calc_site_tree_index(self):
         return (
             np.searchsorted(
@@ -459,20 +479,3 @@ class TSModel:
         mutations_per_tree = np.zeros(self.ts.num_trees, dtype=np.int64)
         mutations_per_tree[unique_values] = counts
         return mutations_per_tree
-
-    def calc_mean_node_arity(self):
-        span_sums = np.bincount(
-            self.ts.edges_parent,
-            weights=self.ts.edges_right - self.ts.edges_left,
-            minlength=self.ts.num_nodes,
-        )
-        node_spans = self.ts.sample_count_stat(
-            [self.ts.samples()],
-            lambda x: (x > 0),
-            1,
-            polarised=True,
-            span_normalise=False,
-            strict=False,
-            mode="node",
-        )[:, 0]
-        return span_sums / node_spans

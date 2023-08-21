@@ -1,174 +1,111 @@
-import panel as pn
-import holoviews as hv
-import numpy as np
 import functools
 
+import holoviews as hv
+import numpy as np
+import panel as pn
 
-def make_hist_matplotlib(data, title, num_bins, log_y=True, xlim=(None, None)):
-    ### Make histogram from given count data using parameters suitable for the matplotlib backend
-    if xlim[1] is not None:
-        data = data[data < xlim[1]]
-    if xlim[0] is not None:
-        data = data[data > xlim[0]]
-    count, bins = np.histogram(data, bins=num_bins)
-    ylabel = "log(Count)" if log_y else "Count"
-    np.seterr(divide="ignore")
-    if log_y:
-        count = np.log10(count)
-        count[count == -np.inf] = 0
+from plot_helpers import make_hist_matplotlib
 
-    return hv.Histogram((count, bins)).opts(title=title, ylabel=ylabel)
 
 def page(tsm):
     hv.extension("matplotlib")
-    trees_df = tsm.trees_df
-    max_num_sites = int(trees_df.num_sites.max())
-    min_num_sites = int(trees_df.num_sites.min())
-    sites_default_num_bins = min(int(np.sqrt(max_num_sites)), 50)
-
-    spans = trees_df.right - trees_df.left
-    min_span = int(np.min(spans))
-    max_span = int(np.max(spans))
-    spans_default_num_bins = min(50, int(np.sqrt(max_span)))
+    df_trees = tsm.trees_df
+    bins = min(50, int(np.sqrt(len(df_trees))))
 
     sites_hist_func = functools.partial(
         make_hist_matplotlib,
-        trees_df.num_sites,
+        df_trees.num_sites,
         "Sites per tree",
-        num_bins=sites_default_num_bins,
+        num_bins=bins,
         log_y=True,
-        xlim=(min_num_sites, max_num_sites),
     )
+
+    log_y_checkbox = pn.widgets.Checkbox(name="log y-axis", value=True)
+
+    sites_hist_panel = pn.bind(
+        sites_hist_func,
+        log_y=log_y_checkbox,
+    )
+
+    spans = df_trees.right - df_trees.left
 
     spans_hist_func = functools.partial(
         make_hist_matplotlib,
         spans,
         "Genomic span per tree",
-        num_bins=spans_default_num_bins,
+        num_bins=bins,
         log_y=True,
-        xlim=(min_span, max_span),
     )
 
-    if len(trees_df) > 1:
-        sites_log_checkbox = pn.widgets.Checkbox(
-            name="log y-axis", value=True, align=("center")
-        )
+    spans_hist_panel = pn.bind(
+        spans_hist_func,
+        log_y=log_y_checkbox,
+    )
 
-        sites_xlim_slider = pn.widgets.IntRangeSlider(
-            name="x limits",
-            start=min_num_sites,
-            value=(min_num_sites, max_num_sites),
-            end=max_num_sites,
-            step=10,  # TODO set a sensible step size
-            align=("center"),
-        )
+    muts_hist_func = functools.partial(
+        make_hist_matplotlib,
+        df_trees.num_mutations,
+        "Mutations per tree",
+        num_bins=bins,
+        log_y=True,
+    )
 
-        sites_bins_slider = pn.widgets.IntSlider(
-            name="Number of bins",
-            start=1,
-            end=max(500, int(max_num_sites)),  # TODO set a sensible end value
-            value=sites_default_num_bins,
-            step=1,  # TODO set a sensible step size
-            align=("center"),
-        )
+    muts_hist_panel = pn.bind(
+        muts_hist_func,
+        log_y=log_y_checkbox,
+    )
 
-        sites_reset_checkbox = pn.widgets.Checkbox(
-            name="reset", value=True, align=("center")
-        )
+    tbl_hist_func = functools.partial(
+        make_hist_matplotlib,
+        df_trees.total_branch_length,
+        "Total branch length per tree",
+        num_bins=bins,
+        log_y=True,
+    )
 
-        def reset_sites(reset=False):
-            if reset:
-                sites_log_checkbox.value = True
-                sites_xlim_slider.value = (min_num_sites, max_num_sites)
-                sites_bins_slider.value = sites_default_num_bins
-                sites_reset_checkbox.value = False
+    tbl_hist_panel = pn.bind(
+        tbl_hist_func,
+        log_y=log_y_checkbox,
+    )
 
-        sites_reset_panel = pn.bind(reset_sites, reset=sites_reset_checkbox)
+    mean_arity_hist_func = functools.partial(
+        make_hist_matplotlib,
+        df_trees.mean_internal_arity,
+        "Mean arity per tree \n(not yet implemented)",
+        num_bins=bins,
+        log_y=True,
+    )
 
-        sites_hist_panel = pn.bind(
-            sites_hist_func,
-            log_y=sites_log_checkbox,
-            xlim=sites_xlim_slider,
-            num_bins=sites_bins_slider,
-        )
+    mean_arity_hist_panel = pn.bind(
+        mean_arity_hist_func,
+        log_y=log_y_checkbox,
+    )
 
-        spans_log_checkbox = pn.widgets.Checkbox(
-            name="log y-axis", value=True, align=("center")
-        )
+    max_arity_hist_func = functools.partial(
+        make_hist_matplotlib,
+        df_trees.max_internal_arity,
+        "Max arity per tree",
+        num_bins=bins,
+        log_y=True,
+    )
 
-        spans_xlim_slider = pn.widgets.IntRangeSlider(
-            name="Maximum tree span",
-            start=min_span,
-            value=(min_span, max_span),
-            end=max_span,
-            step=1_000,  # TODO set a sensible step size
-            align=("center"),
-        )
+    max_arity_hist_panel = pn.bind(
+        max_arity_hist_func,
+        log_y=log_y_checkbox,
+    )
 
-        spans_bins_slider = pn.widgets.IntSlider(
-            name="Number of bins",
-            start=1,
-            end=min(int(max_span), 500),  # TODO set a sensible end value
-            value=spans_default_num_bins,
-            step=1,  # TODO set a sensible step size
-            align=("center"),
-        )
+    plot_options = pn.Column(
+        pn.pane.Markdown("# Plot Options"),
+        log_y_checkbox,
+    )
 
-        spans_reset_checkbox = pn.widgets.Checkbox(
-            name="reset", value=True, align=("center")
-        )
+    hist_panel = pn.Column(
+        pn.Row(
+            sites_hist_panel,
+            spans_hist_panel,
+            muts_hist_panel,
+        ),
+        pn.Row(tbl_hist_panel, mean_arity_hist_panel, max_arity_hist_panel),
+    )
 
-        def reset_spans(reset=False):
-            if reset:
-                spans_log_checkbox.value = True
-                spans_xlim_slider.value = (min_span, max_span)
-                spans_bins_slider.value = spans_default_num_bins
-                spans_reset_checkbox.value = False
-
-        spans_reset_panel = pn.bind(reset_spans, reset=spans_reset_checkbox)
-
-        spans_hist_panel = pn.bind(
-            spans_hist_func,
-            log_y=spans_log_checkbox,
-            xlim=spans_xlim_slider,
-            num_bins=spans_bins_slider,
-        )
-
-        hist_panel = pn.Row(
-            pn.Column(
-                sites_reset_panel,
-                sites_hist_panel,
-                pn.Column(
-                    pn.pane.Markdown("Plot Options:", align=("center")),
-                    sites_reset_checkbox,
-                    sites_log_checkbox,
-                    sites_xlim_slider,
-                    sites_bins_slider,
-                ),
-            ),
-            pn.Column(
-                spans_reset_panel,
-                spans_hist_panel,
-                pn.Column(
-                    pn.pane.Markdown("Plot Options:", align=("center")),
-                    spans_reset_checkbox,
-                    spans_log_checkbox,
-                    spans_xlim_slider,
-                    spans_bins_slider,
-                ),
-            ),
-        )
-    else:
-        sites_hist_single_tree = make_hist_matplotlib(
-            trees_df.num_sites, "Sites per tree", num_bins="auto", log_y=False
-        )
-        sites_hist_single_tree.opts(xticks=[trees_df.num_sites[0]], yticks=[1])
-        spans_hist_single_tree = make_hist_matplotlib(
-            spans, "Genomic span per tree", num_bins="auto", log_y=False
-        )
-        spans_hist_single_tree.opts(xticks=[spans[0]], yticks=[1])
-        hist_panel = pn.Row(
-            pn.Column(sites_hist_single_tree), pn.Column(spans_hist_single_tree)
-        )
-
-    return hist_panel
+    return pn.Column(hist_panel, plot_options)

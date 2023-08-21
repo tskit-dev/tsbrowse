@@ -1,8 +1,8 @@
 import numpy as np
-import model
 import numpy.testing as nt
 import tskit
 
+import model
 
 
 def single_tree_example_ts():
@@ -162,6 +162,7 @@ class TestNodeDataTable:
         nt.assert_array_equal(df.time, [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 2.0])
         nt.assert_array_equal(df.num_mutations, [1, 1, 1, 1, 1, 1, 0])
         nt.assert_array_equal(df.ancestors_span, [10, 10, 10, 10, 10, 10, -np.inf])
+        nt.assert_array_equal(df.is_sample, [1, 1, 1, 1, 0, 0, 0])
 
     def test_multiple_tree_example(self):
         ts = multiple_trees_example_ts()
@@ -171,6 +172,7 @@ class TestNodeDataTable:
         nt.assert_array_equal(df.time, [0.0, 0.0, 0.0, 1.0, 2.0])
         nt.assert_array_equal(df.num_mutations, [0, 0, 0, 0, 0])
         nt.assert_array_equal(df.ancestors_span, [10, 10, 10, 10, -np.inf])
+        nt.assert_array_equal(df.is_sample, [1, 1, 1, 0, 0])
 
 
 class TestTreesDataTable:
