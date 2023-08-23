@@ -10,7 +10,7 @@ import config
 from plot_helpers import filter_points
 from plot_helpers import hover_points
 from plot_helpers import make_hist_matplotlib
-
+import model
 
 def page(tsm):
     hv.extension("matplotlib")
@@ -60,4 +60,11 @@ def page(tsm):
         pn.pane.Markdown("# Plot Options"),
         log_y_checkbox,
     )
-    return pn.Column(main, hist_panel, plot_options)
+
+    anc_span_data = tsm.calc_anc_spans(win_size_x=100_000, win_size_y=5_000)
+    #nc_span_data = tsm.calc_anc_spans(win_size_x=1, win_size_y=1)
+    heatmap = hv.HeatMap(
+        anc_span_data
+    ).opts(width=config.PLOT_WIDTH, height=config.PLOT_HEIGHT, tools=['hover'], colorbar=True)
+
+    return pn.Column(main, hist_panel, heatmap, plot_options)

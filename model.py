@@ -479,3 +479,35 @@ class TSModel:
         mutations_per_tree = np.zeros(self.ts.num_trees, dtype=np.int64)
         mutations_per_tree[unique_values] = counts
         return mutations_per_tree
+
+    def calc_anc_spans(self, win_size_x=1, win_size_y=1):
+        edges_df = self.edges_df
+        num_x = int(np.ceil(edges_df.right.max() / win_size_x))
+        num_y = int(np.ceil(edges_df.child_time.max() / win_size_y))
+        anc_spans=[]
+        x_start = 0 # redo start to ts.start, set span to min and max of win/span
+        x=[]
+        y=[]
+        for i in range(num_x):
+            x_start = i * win_size_x
+            x_end = x_start + win_size_x
+            
+            for j in range(num_y):
+                y_start = j * win_size_y
+                y_end = y_start + win_size_y
+                x.append(x_end)
+                y.append(y_start)
+                anc_spans.append(edges_df[(((x_start >= edges_df.left) &
+                                    (x_start < edges_df.right)) |
+                                        ((x_end > edges_df.left) &
+                                        (x_end <= edges_df.right))) &
+                                    (edges_df.child_time >= y_start) &
+                                    (edges_df.child_time < y_end)].span.mean())
+        df = pd.DataFrame(
+            {
+                "Genomic position": x,
+                "Time": y,
+                "Mean ancestor span": anc_spans,
+            }
+        )
+        return df
