@@ -1,3 +1,4 @@
+import dataclasses
 from functools import cached_property
 
 import numba
@@ -155,6 +156,101 @@ def compute_per_tree_stats(ts):
     )
 
 
+@numba.njit
+def _compute_mutation_parent_counts(mutations_parent):
+    N = mutations_parent.shape[0]
+    num_parents = np.zeros(N, dtype=np.int32)
+
+    for j in range(N):
+        u = j
+        while mutations_parent[u] != -1:
+            num_parents[j] += 1
+            u = mutations_parent[u]
+    return num_parents
+
+
+@numba.njit
+def _compute_mutation_inheritance_counts(
+    tree_pos,
+    num_nodes,
+    num_mutations,
+    edges_parent,
+    edges_child,
+    samples,
+    mutations_position,
+    mutations_node,
+    mutations_parent,
+):
+    parent = np.zeros(num_nodes, dtype=np.int32) - 1
+    num_samples = np.zeros(num_nodes, dtype=np.int32)
+    num_samples[samples] = 1
+    mutations_num_descendants = np.zeros(num_mutations, dtype=np.int32)
+    mutations_num_inheritors = np.zeros(num_mutations, dtype=np.int32)
+
+    mut_id = 0
+
+    while tree_pos.next():
+        for j in range(tree_pos.out_range[0], tree_pos.out_range[1]):
+            e = tree_pos.edge_removal_order[j]
+            c = edges_child[e]
+            p = edges_parent[e]
+            parent[c] = -1
+            u = p
+            while u != -1:
+                num_samples[u] -= num_samples[c]
+                u = parent[u]
+
+        for j in range(tree_pos.in_range[0], tree_pos.in_range[1]):
+            e = tree_pos.edge_insertion_order[j]
+            p = edges_parent[e]
+            c = edges_child[e]
+            parent[c] = p
+            u = p
+            while u != -1:
+                num_samples[u] += num_samples[c]
+                u = parent[u]
+        left, right = tree_pos.interval
+        while mut_id < num_mutations and mutations_position[mut_id] < right:
+            assert mutations_position[mut_id] >= left
+            mutation_node = mutations_node[mut_id]
+            descendants = num_samples[mutation_node]
+            mutations_num_descendants[mut_id] = descendants
+            mutations_num_inheritors[mut_id] = descendants
+            # Subtract this number of descendants from the parent mutation. We are
+            # guaranteed to list parents mutations before their children
+            mut_parent = mutations_parent[mut_id]
+            if mut_parent != -1:
+                mutations_num_inheritors[mut_parent] -= descendants
+            mut_id += 1
+
+    return mutations_num_descendants, mutations_num_inheritors
+
+
+@dataclasses.dataclass
+class MutationCounts:
+    num_parents: np.ndarray
+    num_inheritors: np.ndarray
+    num_descendants: np.ndarray
+
+
+def compute_mutation_counts(ts):
+    tree_pos = alloc_tree_position(ts)
+    mutations_position = ts.sites_position[ts.mutations_site].astype(int)
+    num_descendants, num_inheritors = _compute_mutation_inheritance_counts(
+        tree_pos,
+        ts.num_nodes,
+        ts.num_mutations,
+        ts.edges_parent,
+        ts.edges_child,
+        ts.samples(),
+        mutations_position,
+        ts.mutations_node,
+        ts.mutations_parent,
+    )
+    num_parents = _compute_mutation_parent_counts(ts.mutations_parent)
+    return MutationCounts(num_parents, num_inheritors, num_descendants)
+
+
 class TSModel:
     """
     A wrapper around a tskit.TreeSequence object that provides some
@@ -243,31 +339,7 @@ class TSModel:
         self.mutations_derived_state = derived_state
         self.mutations_inherited_state = inherited_state
 
-        self.mutations_position = ts.sites_position[ts.mutations_site].astype(int)
-        N = ts.num_mutations
-        mutations_num_descendants = np.zeros(N, dtype=int)
-        mutations_num_inheritors = np.zeros(N, dtype=int)
-        mutations_num_parents = np.zeros(N, dtype=int)
-
-        tree = ts.first()
-
-        for mut_id in np.arange(N):
-            tree.seek(self.mutations_position[mut_id])
-            mutation_node = ts.mutations_node[mut_id]
-            descendants = tree.num_samples(mutation_node)
-            mutations_num_descendants[mut_id] = descendants
-            mutations_num_inheritors[mut_id] = descendants
-            # Subtract this number of descendants from the parent mutation. We are
-            # guaranteed to list parents mutations before their children
-            parent = ts.mutations_parent[mut_id]
-            if parent != -1:
-                mutations_num_inheritors[parent] -= descendants
-
-            num_parents = 0
-            while parent != -1:
-                num_parents += 1
-                parent = ts.mutations_parent[parent]
-            mutations_num_parents[mut_id] = num_parents
+        counts = compute_mutation_counts(ts)
 
         df = pd.DataFrame(
             {
@@ -276,9 +348,9 @@ class TSModel:
                 "time": mutations_time,
                 "derived_state": self.mutations_derived_state,
                 "inherited_state": self.mutations_inherited_state,
-                "num_descendants": mutations_num_descendants,
-                "num_inheritors": mutations_num_inheritors,
-                "num_parents": mutations_num_parents,
+                "num_descendants": counts.num_descendants,
+                "num_inheritors": counts.num_inheritors,
+                "num_parents": counts.num_parents,
             }
         )
 
