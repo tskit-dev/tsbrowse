@@ -57,4 +57,13 @@ def page(tsm):
         pn.pane.Markdown("# Plot Options"),
         log_y_checkbox,
     )
-    return pn.Column(main, hist_panel, plot_options)
+
+    anc_span_data = tsm.compute_ancestor_spans_heatmap_data()
+    heatmap = hv.HeatMap(anc_span_data).opts(
+        width=config.PLOT_WIDTH,
+        height=config.PLOT_HEIGHT,
+        tools=["hover"],
+        colorbar=True,
+    )
+
+    return pn.Column(main, hist_panel, heatmap, plot_options)

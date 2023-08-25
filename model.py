@@ -449,6 +449,8 @@ class TSModel:
                 "time": ts.nodes_time,
                 "num_mutations": self.nodes_num_mutations,
                 "ancestors_span": child_right - child_left,
+                "child_left": child_left,  # FIXME add test for this
+                "child_right": child_right,  # FIXME add test for this
                 "is_sample": is_sample,
             }
         )
@@ -458,6 +460,8 @@ class TSModel:
                 "time": "float64",
                 "num_mutations": "int",
                 "ancestors_span": "float64",
+                "child_left": "float64",
+                "child_right": "float64",
                 "is_sample": "bool",
             }
         )
@@ -584,3 +588,48 @@ class TSModel:
         mutations_per_tree = np.zeros(self.ts.num_trees, dtype=np.int64)
         mutations_per_tree[unique_values] = counts
         return mutations_per_tree
+
+    def compute_ancestor_spans_heatmap_data(self, win_x_size=1_000_000, win_y_size=500):
+        """
+        Calculates the average ancestor span in a genomic-time window
+        """
+        nodes_df = self.nodes_df[self.nodes_df.ancestors_span != -np.inf]
+        nodes_df = nodes_df.reset_index(drop=True)
+        nodes_left = nodes_df.child_left
+        nodes_right = nodes_df.child_right
+        nodes_time = nodes_df.time
+        ancestors_span = nodes_df.ancestors_span
+
+        num_x_wins = int(np.ceil(nodes_right.max() - nodes_left.min()) / win_x_size)
+        num_y_wins = int(np.ceil(nodes_time.max() / win_y_size))
+        heatmap_sums = np.zeros((num_x_wins, num_y_wins))
+        heatmap_counts = np.zeros((num_x_wins, num_y_wins))
+
+        for u in range(len(nodes_left)):
+            x_start = int(
+                np.floor(nodes_left[u] / win_x_size)
+            )  # map the node span to the x-axis bins it overlaps
+            x_end = int(np.floor(nodes_right[u] / win_x_size))
+            y = max(0, int(np.floor(nodes_time[u] / win_y_size)) - 1)
+            heatmap_sums[x_start:x_end, y] += min(ancestors_span[u], win_x_size)
+            heatmap_counts[x_start:x_end, y] += 1
+
+        avg_spans = heatmap_sums / heatmap_counts
+        indices = np.indices((num_x_wins, num_y_wins))
+        x_coords = indices[0] * win_x_size
+        y_coords = indices[1] * win_y_size
+
+        df = pd.DataFrame(
+            {
+                "genomic_position": x_coords.flatten(),
+                "time": y_coords.flatten(),
+                "average_ancestor_span": avg_spans.flatten(),
+            }
+        )
+        return df.astype(
+            {
+                "genomic_position": "int",
+                "time": "int",
+                "average_ancestor_span": "float64",
+            }
+        )
