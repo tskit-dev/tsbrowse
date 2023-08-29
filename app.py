@@ -1,6 +1,7 @@
 import logging
 import pathlib
 import sys
+import traceback
 
 import panel as pn
 import tskit
@@ -30,7 +31,17 @@ pages = {
 
 def show(page):
     yield pn.indicators.LoadingSpinner(value=True, width=50, height=50)
-    content = pages[page](tsm)
+    try:
+        content = pages[page](tsm)
+    except Exception as e:
+        error_message = f"An error occurred: {str(e)}"
+        error_traceback = traceback.format_exc().replace("\n", "<br>")
+        error_traceback = f"<pre>{error_traceback}</pre>"
+        error_panel = pn.pane.Markdown(
+            f"## Error\n\n{error_message}\n\n{error_traceback}", style={"color": "red"}
+        )
+        yield error_panel
+        return
     yield content
 
 
