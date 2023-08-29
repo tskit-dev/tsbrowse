@@ -29,7 +29,9 @@ pages = {
 
 
 def show(page):
-    return pages[page](tsm)
+    yield pn.indicators.LoadingSpinner(value=True, width=50, height=50)
+    content = pages[page](tsm)
+    yield content
 
 
 starting_page = pn.state.session_args.get("page", [b"Overview"])[0].decode()
