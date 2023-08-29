@@ -2,6 +2,7 @@ import holoviews as hv
 import holoviews.operation.datashader as hd
 import hvplot.pandas  # noqa
 import panel as pn
+from bokeh.models import HoverTool
 
 import config
 from plot_helpers import filter_points
@@ -37,18 +38,36 @@ def page(tsm):
     log_y_checkbox = pn.widgets.Checkbox(
         name="Log y-axis of Mutations per site/node plots", value=False
     )
-
     points = tsm.mutations_df.hvplot.scatter(
         x="position",
         y="time",
-        hover_cols=["position", "time", "mutation_node", "node_flag"],
-    ).opts(width=plot_width, height=config.PLOT_HEIGHT)
+        hover_cols=["index", "num_parents", "num_descendants", "num_inheritors"],
+    )
+    points.opts(
+        width=plot_width,
+        height=config.PLOT_HEIGHT,
+    )
 
     range_stream = hv.streams.RangeXY(source=points)
     streams = [range_stream]
 
     filtered = points.apply(filter_points, streams=streams)
 
+    tooltips = [
+        ("ID", "@index"),
+        ("parents", "@num_parents"),
+        ("descendants", "@num_descendants"),
+        ("inheritors", "@num_inheritors"),
+    ]
+    hover = HoverTool(tooltips=tooltips)
+    filtered.opts(
+        color="num_descendants",
+        alpha="num_descendants",
+        colorbar=True,
+        colorbar_position="left",
+        clabel="descendants",
+        tools=[hover],
+    )
     time_hist = hv.DynamicMap(
         make_hist_on_axis(dimension="time", points=points, num_bins=10), streams=streams
     )

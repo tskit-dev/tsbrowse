@@ -353,9 +353,10 @@ class TSModel:
                 "num_parents": counts.num_parents,
             }
         )
-
+        df.reset_index(inplace=True)
         return df.astype(
             {
+                "index": "int",
                 "position": "float64",
                 "node": "int",
                 "time": "float64",

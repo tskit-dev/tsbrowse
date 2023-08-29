@@ -103,6 +103,7 @@ class TestMutationDataTable:
         tsm = model.TSModel(ts)
         df = tsm.mutations_df
         assert len(df) == 6
+        nt.assert_array_equal(df.index, list(range(6)))
         nt.assert_array_equal(df.node, list(range(6)))
         nt.assert_array_equal(df.position, list(range(1, 7)))
         nt.assert_array_equal(df.time, [0, 0, 0, 0, 1, 1])
@@ -117,6 +118,7 @@ class TestMutationDataTable:
         tsm = model.TSModel(ts)
         df = tsm.mutations_df
         assert len(df) == 7
+        nt.assert_array_equal(df.index, list(range(7)))
         nt.assert_array_equal(df.node, [0, 1, 2, 3, 4, 5, 5])
         nt.assert_array_equal(df.position, [1, 2, 3, 4, 5, 6, 6])
         nt.assert_array_equal(df.time, [0, 0, 0, 0, 1, 1, 1])
