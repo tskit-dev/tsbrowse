@@ -26,6 +26,7 @@ pages = {
     "Edge Explorer": pages.edge_explorer,
     "Trees": pages.trees,
     "Nodes": pages.nodes,
+    "Popgen": pages.popgen,
 }
 
 

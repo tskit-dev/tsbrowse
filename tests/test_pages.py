@@ -23,6 +23,7 @@ display_pages = [
     pages.edge_explorer,
     pages.trees,
     pages.nodes,
+    pages.popgen,
 ]
 
 
