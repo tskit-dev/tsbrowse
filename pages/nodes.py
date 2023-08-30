@@ -1,5 +1,3 @@
-import functools
-
 import holoviews as hv
 import holoviews.operation.datashader as hd
 import hvplot.pandas  # noqa
@@ -9,37 +7,36 @@ import panel as pn
 import config
 from plot_helpers import filter_points
 from plot_helpers import hover_points
-from plot_helpers import make_hist_matplotlib
+from plot_helpers import make_hist
 
 
 def page(tsm):
-    hv.extension("matplotlib")
+    hv.extension("bokeh")
     df_nodes = tsm.nodes_df
     df_internal_nodes = df_nodes[
         (df_nodes.is_sample == 0) & (df_nodes.ancestors_span != -np.inf)
     ]
     bins = min(50, int(np.sqrt(len(df_internal_nodes))))
 
-    ancestor_spans_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_internal_nodes.ancestors_span,
-        "Ancestor spans per node",
-        num_bins=bins,
-        log_y=True,
-    )
-
     log_y_checkbox = pn.widgets.Checkbox(name="log y-axis of histogram", value=True)
-
-    ancestor_spans_hist_panel = pn.bind(
-        ancestor_spans_hist_func,
-        log_y=log_y_checkbox,
+    plot_options = pn.Column(
+        pn.pane.Markdown("# Plot Options"),
+        log_y_checkbox,
     )
 
-    hist_panel = pn.Column(
-        ancestor_spans_hist_panel,
-    )
+    def make_node_hist_panel(tsm, log_y):
+        nodes_hist = make_hist(
+            df_internal_nodes.ancestors_span,
+            "Ancestor spans per node",
+            bins,
+            log_y=log_y,
+            plot_width=config.PLOT_WIDTH,
+        )
 
-    hv.extension("bokeh")
+        return pn.Column(pn.Row(nodes_hist))
+
+    hist_panel = pn.bind(make_node_hist_panel, log_y=log_y_checkbox, tsm=tsm)
+
     points = df_nodes.hvplot.scatter(
         x="ancestors_span",
         y="time",

@@ -1,111 +1,85 @@
-import functools
-
 import holoviews as hv
 import numpy as np
 import panel as pn
 
-from plot_helpers import make_hist_matplotlib
+import config
+from plot_helpers import make_hist
 
 
 def page(tsm):
-    hv.extension("matplotlib")
+    hv.extension("bokeh")
     df_trees = tsm.trees_df
     bins = min(50, int(np.sqrt(len(df_trees))))
 
-    sites_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.num_sites,
-        "Sites per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    log_y_checkbox = pn.widgets.Checkbox(name="log y-axis", value=True)
-
-    sites_hist_panel = pn.bind(
-        sites_hist_func,
-        log_y=log_y_checkbox,
-    )
-
     spans = df_trees.right - df_trees.left
 
-    spans_hist_func = functools.partial(
-        make_hist_matplotlib,
-        spans,
-        "Genomic span per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    spans_hist_panel = pn.bind(
-        spans_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    muts_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.num_mutations,
-        "Mutations per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    muts_hist_panel = pn.bind(
-        muts_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    tbl_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.total_branch_length,
-        "Total branch length per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    tbl_hist_panel = pn.bind(
-        tbl_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    mean_arity_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.mean_internal_arity,
-        "Mean arity per tree \n(not yet implemented)",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    mean_arity_hist_panel = pn.bind(
-        mean_arity_hist_func,
-        log_y=log_y_checkbox,
-    )
-
-    max_arity_hist_func = functools.partial(
-        make_hist_matplotlib,
-        df_trees.max_internal_arity,
-        "Max arity per tree",
-        num_bins=bins,
-        log_y=True,
-    )
-
-    max_arity_hist_panel = pn.bind(
-        max_arity_hist_func,
-        log_y=log_y_checkbox,
-    )
+    log_y_checkbox = pn.widgets.Checkbox(name="log y-axis", value=True)
 
     plot_options = pn.Column(
         pn.pane.Markdown("# Plot Options"),
         log_y_checkbox,
     )
 
-    hist_panel = pn.Column(
-        pn.Row(
-            sites_hist_panel,
-            spans_hist_panel,
-            muts_hist_panel,
-        ),
-        pn.Row(tbl_hist_panel, mean_arity_hist_panel, max_arity_hist_panel),
-    )
+    def make_tree_hist_panel(tsm, log_y):
+        sites_hist = make_hist(
+            df_trees.num_sites,
+            "Sites per tree",
+            bins,
+            log_y=log_y,
+            plot_width=config.PLOT_WIDTH,
+        )
+
+        spans_hist = make_hist(
+            spans,
+            "Genomic span per tree",
+            bins,
+            log_y=log_y,
+            plot_width=config.PLOT_WIDTH,
+        )
+
+        muts_hist = make_hist(
+            df_trees.num_mutations,
+            "Mutations per tree",
+            bins,
+            log_y=log_y,
+            plot_width=config.PLOT_WIDTH,
+        )
+
+        tbl_hist = make_hist(
+            df_trees.total_branch_length,
+            "Total branch length per tree",
+            bins,
+            log_y=log_y,
+            plot_width=config.PLOT_WIDTH,
+        )
+
+        mean_arity_hist = make_hist(
+            df_trees.mean_internal_arity,
+            "Mean arity per tree \n(not yet implemented)",
+            bins,
+            log_y=log_y,
+            plot_width=config.PLOT_WIDTH,
+        )
+
+        max_arity_hist = make_hist(
+            df_trees.max_internal_arity,
+            "Max arity per tree",
+            bins,
+            log_y=log_y,
+            plot_width=config.PLOT_WIDTH,
+        )
+        return pn.Column(
+            pn.Row(
+                sites_hist,
+                spans_hist,
+            ),
+            pn.Row(
+                muts_hist,
+                tbl_hist,
+            ),
+            pn.Row(mean_arity_hist, max_arity_hist),
+        )
+
+    hist_panel = pn.bind(make_tree_hist_panel, log_y=log_y_checkbox, tsm=tsm)
 
     return pn.Column(hist_panel, plot_options)
