@@ -41,7 +41,7 @@ def page(tsm):
     points = tsm.mutations_df.hvplot.scatter(
         x="position",
         y="time",
-        hover_cols=["index", "num_parents", "num_descendants", "num_inheritors"],
+        hover_cols=["id", "num_parents", "num_descendants", "num_inheritors"],
     )
     points.opts(
         width=plot_width,
@@ -54,18 +54,19 @@ def page(tsm):
     filtered = points.apply(filter_points, streams=streams)
 
     tooltips = [
-        ("ID", "@index"),
+        ("ID", "@id"),
         ("parents", "@num_parents"),
         ("descendants", "@num_descendants"),
         ("inheritors", "@num_inheritors"),
     ]
     hover = HoverTool(tooltips=tooltips)
     filtered.opts(
-        color="num_descendants",
-        alpha="num_descendants",
+        color="num_inheritors",
+        alpha="num_inheritors",
         colorbar=True,
+        cmap="kgy",
         colorbar_position="left",
-        clabel="descendants",
+        clabel="inheritors",
         tools=[hover],
     )
     time_hist = hv.DynamicMap(

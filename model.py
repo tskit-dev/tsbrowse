@@ -343,6 +343,7 @@ class TSModel:
 
         df = pd.DataFrame(
             {
+                "id": np.arange(ts.num_mutations),
                 "position": position,
                 "node": ts.mutations_node,
                 "time": mutations_time,
@@ -353,10 +354,10 @@ class TSModel:
                 "num_parents": counts.num_parents,
             }
         )
-        df.reset_index(inplace=True)
+
         return df.astype(
             {
-                "index": "int",
+                "id": "int",
                 "position": "float64",
                 "node": "int",
                 "time": "float64",
