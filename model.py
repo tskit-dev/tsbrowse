@@ -343,6 +343,7 @@ class TSModel:
 
         df = pd.DataFrame(
             {
+                "id": np.arange(ts.num_mutations),
                 "position": position,
                 "node": ts.mutations_node,
                 "time": mutations_time,
@@ -356,6 +357,7 @@ class TSModel:
 
         return df.astype(
             {
+                "id": "int",
                 "position": "float64",
                 "node": "int",
                 "time": "float64",
