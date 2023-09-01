@@ -1,44 +1,13 @@
 import holoviews as hv
 import holoviews.operation.datashader as hd
 import hvplot.pandas  # noqa
-import numpy as np
 import panel as pn
 
 import config
 from plot_helpers import filter_points
 from plot_helpers import hover_points
-
-
-def make_hist_on_axis(dimension, points, num_bins=30):
-    """
-    Make histogram function for a specified axis of a scatter plot
-    """
-
-    def compute_hist(x_range, y_range):
-        filtered_points = filter_points(points, x_range, y_range)
-        hist = hv.operation.histogram(
-            filtered_points, dimension=dimension, num_bins=num_bins, normed="height"
-        )
-        return hist
-
-    return compute_hist
-
-
-def make_hist(data, title, bins_range, log_y=True, plot_width=800):
-    """
-    Make histogram from given count data
-    """
-    count, bins = np.histogram(data, bins=bins_range)
-    ylabel = "log(Count)" if log_y else "Count"
-    np.seterr(divide="ignore")
-    if log_y:
-        count = np.log10(count)
-        count[count == -np.inf] = 0
-    histogram = hv.Histogram((count, bins)).opts(
-        title=title, ylabel=ylabel, tools=["hover"]
-    )
-    histogram = histogram.opts(shared_axes=False, width=round(plot_width / 2))
-    return histogram
+from plot_helpers import make_hist
+from plot_helpers import make_hist_on_axis
 
 
 def make_hist_panel(tsm, log_y):
@@ -79,6 +48,7 @@ def page(tsm):
     streams = [range_stream]
 
     filtered = points.apply(filter_points, streams=streams)
+
     time_hist = hv.DynamicMap(
         make_hist_on_axis(dimension="time", points=points, num_bins=10), streams=streams
     )
