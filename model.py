@@ -451,6 +451,8 @@ class TSModel:
                 "ancestors_span": child_right - child_left,
                 "child_left": child_left,  # FIXME add test for this
                 "child_right": child_right,  # FIXME add test for this
+                "child_left": child_left,  # FIXME add test for this
+                "child_right": child_right,  # FIXME add test for this
                 "is_sample": is_sample,
             }
         )
@@ -589,7 +591,7 @@ class TSModel:
         mutations_per_tree[unique_values] = counts
         return mutations_per_tree
 
-    def compute_ancestor_spans_heatmap_data(self, win_x_size=1_000_000, win_y_size=500):
+    def compute_ancestor_spans_heatmap_data(self, num_x_bins, num_y_bins):
         """
         Calculates the average ancestor span in a genomic-time window
         """
@@ -598,38 +600,38 @@ class TSModel:
         nodes_left = nodes_df.child_left
         nodes_right = nodes_df.child_right
         nodes_time = nodes_df.time
-        ancestors_span = nodes_df.ancestors_span
 
-        num_x_wins = int(np.ceil(nodes_right.max() - nodes_left.min()) / win_x_size)
-        num_y_wins = int(np.ceil(nodes_time.max() / win_y_size))
-        heatmap_sums = np.zeros((num_x_wins, num_y_wins))
-        heatmap_counts = np.zeros((num_x_wins, num_y_wins))
+        x_bins = np.linspace(nodes_left.min(), nodes_right.max(), num_x_bins + 1)
+        y_bins = np.linspace(0, nodes_time.max(), num_y_bins + 1)
+        heatmap_counts = np.zeros((num_x_bins, num_y_bins))
+
+        x_starts = np.digitize(nodes_left, x_bins, right=True)
+        x_ends = np.digitize(nodes_right, x_bins, right=True)
+        y_starts = np.digitize(nodes_time, y_bins, right=True)
 
         for u in range(len(nodes_left)):
-            x_start = int(
-                np.floor(nodes_left[u] / win_x_size)
-            )  # map the node span to the x-axis bins it overlaps
-            x_end = int(np.floor(nodes_right[u] / win_x_size))
-            y = max(0, int(np.floor(nodes_time[u] / win_y_size)) - 1)
-            heatmap_sums[x_start:x_end, y] += min(ancestors_span[u], win_x_size)
-            heatmap_counts[x_start:x_end, y] += 1
+            x_start = max(0, x_starts[u] - 1)
+            x_end = max(0, x_ends[u] - 1)
+            y_bin = max(0, y_starts[u] - 1)
+            heatmap_counts[x_start : x_end + 1, y_bin] += 1
 
-        avg_spans = heatmap_sums / heatmap_counts
-        indices = np.indices((num_x_wins, num_y_wins))
-        x_coords = indices[0] * win_x_size
-        y_coords = indices[1] * win_y_size
-
+        x_coords = np.repeat(x_bins[:-1], num_y_bins)
+        y_coords = np.tile(y_bins[:-1], num_x_bins)
+        overlapping_node_count = heatmap_counts.flatten()
+        overlapping_node_count[overlapping_node_count == 0] = 1
+        # FIXME - better way to avoid log 0 above?
         df = pd.DataFrame(
             {
-                "genomic_position": x_coords.flatten(),
+                "position": x_coords.flatten(),
                 "time": y_coords.flatten(),
-                "average_ancestor_span": avg_spans.flatten(),
+                "overlapping_node_count_log10": np.log10(overlapping_node_count),
+                "overlapping_node_count": overlapping_node_count,
             }
         )
         return df.astype(
             {
-                "genomic_position": "int",
+                "position": "int",
                 "time": "int",
-                "average_ancestor_span": "float64",
+                "overlapping_node_count": "int",
             }
         )
