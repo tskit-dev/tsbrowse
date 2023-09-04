@@ -1,3 +1,4 @@
+daiquiri
 panel
 hvplot
 xarray

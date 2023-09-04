@@ -1,8 +1,9 @@
-import logging
 import pathlib
 import sys
+import time
 import traceback
 
+import daiquiri
 import panel as pn
 import tskit
 
@@ -10,10 +11,13 @@ import model
 import pages
 
 
-logger = logging.Logger(__file__)
+daiquiri.setup(level="INFO")
+logger = daiquiri.getLogger("app")
+
 
 # Usage: panel serve app.py --args /path/to/trees-file
 path = pathlib.Path(sys.argv[1])
+logger.info(f"Loading {path}")
 tsm = model.TSModel(tskit.load(path), path.name)
 
 pn.extension(sizing_mode="stretch_width")
@@ -31,9 +35,13 @@ pages = {
 
 
 def show(page):
+    logger.info(f"Showing page {page}")
     yield pn.indicators.LoadingSpinner(value=True, width=50, height=50)
     try:
+        before = time.time()
         content = pages[page](tsm)
+        duration = time.time() - before
+        logger.info(f"Loaded page {page} in {duration:.2f}s")
     except Exception as e:
         error_message = f"An error occurred: {str(e)}"
         error_traceback = traceback.format_exc().replace("\n", "<br>")

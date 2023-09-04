@@ -1,10 +1,13 @@
 import dataclasses
 from functools import cached_property
 
+import daiquiri
 import numba
 import numpy as np
 import pandas as pd
 import tskit
+
+logger = daiquiri.getLogger("model")
 
 spec = [
     ("num_edges", numba.int64),
@@ -287,6 +290,7 @@ class TSModel:
         df = pd.DataFrame(
             {"property": [d[0] for d in data], "value": [d[1] for d in data]}
         )
+        logger.info("Computed summary dataframe")
         return df.set_index("property")
 
     def _repr_html_(self):
@@ -355,6 +359,7 @@ class TSModel:
             }
         )
 
+        logger.info("Computed mutations dataframe")
         return df.astype(
             {
                 "id": "int",
@@ -395,6 +400,7 @@ class TSModel:
             }
         )
 
+        logger.info("Computed edges dataframe")
         return df.astype(
             {
                 "left": "float64",
@@ -424,6 +430,7 @@ class TSModel:
                 "is_sample": is_sample,
             }
         )
+        logger.info("Computed nodes dataframe")
         return df.astype(
             {
                 "time": "float64",
@@ -460,6 +467,7 @@ class TSModel:
             }
         )
 
+        logger.info("Computed trees dataframe")
         return df.astype(
             {
                 "left": "int",
