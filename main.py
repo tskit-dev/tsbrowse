@@ -1,8 +1,8 @@
 import pathlib
-import sys
 import time
 import traceback
 
+import click
 import daiquiri
 import panel as pn
 import tskit
@@ -12,7 +12,6 @@ import model
 import pages
 
 
-daiquiri.setup(level="INFO")
 logger = daiquiri.getLogger("app")
 
 
@@ -89,16 +88,21 @@ def get_app(tsm):
     )
 
 
-def main():
-    # usage (for now) python main.py tsfile
-    path = pathlib.Path(sys.argv[1])
-    tsm = load_data(path)
+@click.command()
+@click.argument("path", type=click.Path(exists=True, dir_okay=False))
+@click.option("--port", default=8080, help="Port to serve on")
+def main(path, port):
+    """
+    Run the tsqc server.
+    """
+    daiquiri.setup(level="INFO")
+    tsm = load_data(pathlib.Path(path))
 
     # Note: functools.partial doesn't work here
     def app():
         return get_app(tsm)
 
-    pn.serve(app, port=8080, location=True, verbose=True)
+    pn.serve(app, port=port, location=True, verbose=True)
 
 
 if __name__ == "__main__":
