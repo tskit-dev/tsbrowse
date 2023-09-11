@@ -15,10 +15,17 @@ daiquiri.setup(level="INFO")
 logger = daiquiri.getLogger("app")
 
 
+@pn.cache()
+def load_data(path):
+    logger.info(f"Loading {path}")
+    ts = tskit.load(path)
+    tsm = model.TSModel(ts, path.name)
+    return tsm
+
+
 # Usage: panel serve app.py --args /path/to/trees-file
 path = pathlib.Path(sys.argv[1])
-logger.info(f"Loading {path}")
-tsm = model.TSModel(tskit.load(path), path.name)
+tsm = load_data(path)
 
 pn.extension(sizing_mode="stretch_width")
 pn.extension("tabulator")
