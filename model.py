@@ -324,15 +324,26 @@ class TSModel:
         position = ts.sites_position[ts.mutations_site]
 
         tables = self.ts.tables
-        assert np.all(
-            tables.mutations.derived_state_offset == np.arange(ts.num_mutations + 1)
+        derived_state = tables.mutations.derived_state
+        offsets = tables.mutations.derived_state_offset
+        derived_state = np.array(
+            [
+                derived_state[s].tobytes().decode("utf-8")
+                for s in (
+                    slice(start, end) for start, end in zip(offsets[:-1], offsets[1:])
+                )
+            ]
         )
-        derived_state = tables.mutations.derived_state.view("S1").astype(str)
-
-        assert np.all(
-            tables.sites.ancestral_state_offset == np.arange(ts.num_sites + 1)
+        ancestral_state = tables.sites.ancestral_state
+        offsets = tables.sites.ancestral_state_offset
+        ancestral_state = np.array(
+            [
+                ancestral_state[s].tobytes().decode("utf-8")
+                for s in (
+                    slice(start, end) for start, end in zip(offsets[:-1], offsets[1:])
+                )
+            ]
         )
-        ancestral_state = tables.sites.ancestral_state.view("S1").astype(str)
         del tables
         inherited_state = ancestral_state[ts.mutations_site]
         mutations_with_parent = ts.mutations_parent != -1
