@@ -7,6 +7,9 @@ import numpy as np
 import pandas as pd
 import tskit
 
+from cache import disk_cache
+
+
 logger = daiquiri.getLogger("model")
 
 spec = [
@@ -271,7 +274,12 @@ class TSModel:
             self.ts.mutations_node, minlength=self.ts.num_nodes
         )
 
+    @property
+    def file_uuid(self):
+        return self.ts.file_uuid
+
     @cached_property
+    @disk_cache("v1")
     def summary_df(self):
         nodes_with_zero_muts = np.sum(self.nodes_num_mutations == 0)
         sites_with_zero_muts = np.sum(self.sites_num_mutations == 0)
@@ -312,6 +320,7 @@ class TSModel:
         return child_left, child_right
 
     @cached_property
+    @disk_cache("v1")
     def mutations_df(self):
         # FIXME use tskit's impute mutations time
         ts = self.ts
@@ -386,6 +395,7 @@ class TSModel:
         )
 
     @cached_property
+    @disk_cache("v1")
     def edges_df(self):
         ts = self.ts
         left = ts.edges_left
@@ -426,6 +436,7 @@ class TSModel:
         )
 
     @cached_property
+    @disk_cache("v1")
     def nodes_df(self):
         ts = self.ts
         child_left, child_right = self.child_bounds(
@@ -452,6 +463,7 @@ class TSModel:
         )
 
     @cached_property
+    @disk_cache("v1")
     def trees_df(self):
         ts = self.ts
         num_trees = ts.num_trees
