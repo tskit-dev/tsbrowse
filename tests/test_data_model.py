@@ -17,6 +17,8 @@ def single_tree_example_ts():
     for j in range(6):
         tables.sites.add_row(position=j + 1, ancestral_state="A")
         tables.mutations.add_row(site=j, derived_state="T", node=j)
+    tables.sites.add_row(position=7, ancestral_state="FOOBAR")
+    tables.mutations.add_row(site=6, derived_state="FOOBARD", node=6)
     return tables.tree_sequence()
 
 
@@ -102,16 +104,16 @@ class TestMutationDataTable:
         ts = single_tree_example_ts()
         tsm = model.TSModel(ts)
         df = tsm.mutations_df
-        assert len(df) == 6
-        nt.assert_array_equal(df.id, list(range(6)))
-        nt.assert_array_equal(df.node, list(range(6)))
-        nt.assert_array_equal(df.position, list(range(1, 7)))
-        nt.assert_array_equal(df.time, [0, 0, 0, 0, 1, 1])
-        nt.assert_array_equal(df.derived_state, ["T"] * 6)
-        nt.assert_array_equal(df.inherited_state, ["A"] * 6)
-        nt.assert_array_equal(df.num_parents, [0] * 6)
-        nt.assert_array_equal(df.num_descendants, [1] * 4 + [2] * 2)
-        nt.assert_array_equal(df.num_inheritors, [1] * 4 + [2] * 2)
+        assert len(df) == 7
+        nt.assert_array_equal(df.id, list(range(7)))
+        nt.assert_array_equal(df.node, list(range(7)))
+        nt.assert_array_equal(df.position, list(range(1, 8)))
+        nt.assert_array_equal(df.time, [0, 0, 0, 0, 1, 1, 2])
+        nt.assert_array_equal(df.derived_state, ["T"] * 6 + ["FOOBARD"])
+        nt.assert_array_equal(df.inherited_state, ["A"] * 6 + ["FOOBAR"])
+        nt.assert_array_equal(df.num_parents, [0] * 7)
+        nt.assert_array_equal(df.num_descendants, [1] * 4 + [2] * 2 + [4])
+        nt.assert_array_equal(df.num_inheritors, [1] * 4 + [2] * 2 + [4])
 
     def test_single_tree_recurrent_mutation_example(self):
         ts = single_tree_recurrent_mutation_example_ts()
@@ -162,7 +164,7 @@ class TestNodeDataTable:
         df = tsm.nodes_df
         assert len(df) == 7
         nt.assert_array_equal(df.time, [0.0, 0.0, 0.0, 0.0, 1.0, 1.0, 2.0])
-        nt.assert_array_equal(df.num_mutations, [1, 1, 1, 1, 1, 1, 0])
+        nt.assert_array_equal(df.num_mutations, [1, 1, 1, 1, 1, 1, 1])
         nt.assert_array_equal(df.ancestors_span, [10, 10, 10, 10, 10, 10, -np.inf])
         nt.assert_array_equal(df.is_sample, [1, 1, 1, 1, 0, 0, 0])
 
