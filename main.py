@@ -4,15 +4,19 @@ import traceback
 
 import click
 import daiquiri
-import panel as pn
 import tskit
 import tszip
 
-import model
-import pages
+# Need to import daiquiri and set up logging before importing panel
+# and bokeh, so we can set logging up correctly
+daiquiri.setup(level="WARN")  # noqa
+import panel as pn  # noqa
+
+import model  # noqa
+import pages  # noqa
 
 
-logger = daiquiri.getLogger("app")
+logger = daiquiri.getLogger("tsqc")
 
 
 def load_data(path):
@@ -88,21 +92,59 @@ def get_app(tsm):
     )
 
 
+def setup_logging(log_level, no_log_filter):
+    if no_log_filter:
+        logger = daiquiri.getLogger("root")
+        logger.setLevel(log_level)
+    else:
+        # FIXME we can remove the "model" and "pages" bit when we've
+        # structured as a package, as these should all have the prefix
+        # tsqc
+        # TODO figure out what's useful for users to track here, including
+        # bokeh and tornado for now for dev
+        loggers = ["tsqc", "model", "pages", "bokeh", "tornado"]
+        for logname in loggers:
+            logger = daiquiri.getLogger(logname)
+            logger.setLevel(log_level)
+
+        # Suppress traceback messages in the log like:
+        # bokeh.core.serialization.DeserializationError: can't resolve reference 'p2091'
+        # These pop up when the user clicks around between screens quickly,
+        # and seems to occur when leaving a screen before it's fully rendered.
+        # Some googling indicates that the messages are harmless, so simplest
+        # to filter.
+        logger = daiquiri.getLogger("bokeh.server.protocol_handler")
+        logger.setLevel("CRITICAL")
+
+
 @click.command()
 @click.argument("path", type=click.Path(exists=True, dir_okay=False))
 @click.option("--port", default=8080, help="Port to serve on")
-def main(path, port):
+@click.option(
+    "--show/--no-show",
+    default=True,
+    help="Launch a web-browser showing the app",
+)
+@click.option("--log-level", default="INFO", help="Logging level")
+@click.option(
+    "--no-log-filter",
+    default=False,
+    is_flag=True,
+    help="Do not filter the output log (advanced debugging only)",
+)
+def main(path, port, show, log_level, no_log_filter):
     """
     Run the tsqc server.
     """
-    daiquiri.setup(level="INFO")
+    setup_logging(log_level, no_log_filter)
     tsm = load_data(pathlib.Path(path))
 
     # Note: functools.partial doesn't work here
     def app():
         return get_app(tsm)
 
-    pn.serve(app, port=port, location=True, verbose=True)
+    logger.info("Starting panel server")
+    pn.serve(app, port=port, show=show, verbose=False)
 
 
 if __name__ == "__main__":
