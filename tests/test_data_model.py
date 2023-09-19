@@ -1,3 +1,5 @@
+import logging
+
 import numpy as np
 import numpy.testing as nt
 import tskit
@@ -212,3 +214,29 @@ class TestTreesDataTable:
         nt.assert_array_equal(df.total_branch_length, [11.0, 12.0])
         # nt.assert_array_equal(df.mean_internal_arity, [2.25, 2.25])
         nt.assert_array_equal(df.max_internal_arity, [3.0, 3.0])
+
+
+def test_cache(caplog, tmpdir):
+    caplog.set_level(logging.INFO)
+    ts = multiple_trees_example_ts()
+    tsm = model.TSModel(ts)
+    # Use the logging out put to determine cache usage
+    t1 = tsm.trees_df
+    t2 = tsm.trees_df
+    assert t1.equals(t2)
+    assert "No uuid, not caching trees_df" in caplog.text
+
+    ts.dump(tmpdir / "cache.trees")
+    ts = tskit.load(tmpdir / "cache.trees")
+    tsm = model.TSModel(ts)
+    # Use the logging out put to determine cache usage
+    caplog.clear()
+    t1 = tsm.trees_df
+    assert "Calculating" in caplog.text
+    caplog.clear()
+
+    ts2 = tskit.load(tmpdir / "cache.trees")
+    tsm2 = model.TSModel(ts2)
+    t2 = tsm2.trees_df
+    assert "Fetching" in caplog.text
+    assert t1.equals(t2)
