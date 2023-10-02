@@ -436,7 +436,7 @@ class TSModel:
         )
 
     @cached_property
-    @disk_cache("v1")
+    @disk_cache("v2")
     def nodes_df(self):
         ts = self.ts
         child_left, child_right = self.child_bounds(
@@ -449,6 +449,10 @@ class TSModel:
                 "time": ts.nodes_time,
                 "num_mutations": self.nodes_num_mutations,
                 "ancestors_span": child_right - child_left,
+                "child_left": child_left,  # FIXME add test for this
+                "child_right": child_right,  # FIXME add test for this
+                "child_left": child_left,  # FIXME add test for this
+                "child_right": child_right,  # FIXME add test for this
                 "is_sample": is_sample,
             }
         )
@@ -458,6 +462,8 @@ class TSModel:
                 "time": "float64",
                 "num_mutations": "int",
                 "ancestors_span": "float64",
+                "child_left": "float64",
+                "child_right": "float64",
                 "is_sample": "bool",
             }
         )
@@ -584,3 +590,62 @@ class TSModel:
         mutations_per_tree = np.zeros(self.ts.num_trees, dtype=np.int64)
         mutations_per_tree[unique_values] = counts
         return mutations_per_tree
+
+    def compute_ancestor_spans_heatmap_data(self, num_x_bins, num_y_bins):
+        """
+        Calculates the average ancestor span in a genomic-time window
+        """
+        if self.ts.time_units == tskit.TIME_UNITS_UNCALIBRATED:
+            logger.warning(
+                "Cannot compute ancestor spans for uncalibrated tree sequence"
+            )
+            return pd.DataFrame(
+                {
+                    "position": [],
+                    "time": [],
+                    "overlapping_node_count_log10": [],
+                    "overlapping_node_count": [],
+                }
+            )
+        else:
+            nodes_df = self.nodes_df[self.nodes_df.ancestors_span != -np.inf]
+            nodes_df = nodes_df.reset_index(drop=True)
+            nodes_left = nodes_df.child_left
+            nodes_right = nodes_df.child_right
+            nodes_time = nodes_df.time
+
+            x_bins = np.linspace(nodes_left.min(), nodes_right.max(), num_x_bins + 1)
+            y_bins = np.linspace(0, nodes_time.max(), num_y_bins + 1)
+            heatmap_counts = np.zeros((num_x_bins, num_y_bins))
+
+            x_starts = np.digitize(nodes_left, x_bins, right=True)
+            x_ends = np.digitize(nodes_right, x_bins, right=True)
+            y_starts = np.digitize(nodes_time, y_bins, right=True)
+
+            for u in range(len(nodes_left)):
+                x_start = max(0, x_starts[u] - 1)
+                x_end = max(0, x_ends[u] - 1)
+                y_bin = max(0, y_starts[u] - 1)
+                heatmap_counts[x_start : x_end + 1, y_bin] += 1
+
+            x_coords = np.repeat(x_bins[:-1], num_y_bins)
+            y_coords = np.tile(y_bins[:-1], num_x_bins)
+            overlapping_node_count = heatmap_counts.flatten()
+            overlapping_node_count[overlapping_node_count == 0] = 1
+            # FIXME - better way to avoid log 0 above?
+            df = pd.DataFrame(
+                {
+                    "position": x_coords.flatten(),
+                    "time": y_coords.flatten(),
+                    "overlapping_node_count_log10": np.log10(overlapping_node_count),
+                    "overlapping_node_count": overlapping_node_count,
+                }
+            )
+            return df.astype(
+                {
+                    "position": "int",
+                    "time": "int",
+                    "overlapping_node_count_log10": "int",
+                    "overlapping_node_count": "int",
+                }
+            )

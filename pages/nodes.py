@@ -3,6 +3,7 @@ import holoviews.operation.datashader as hd
 import hvplot.pandas  # noqa
 import numpy as np
 import panel as pn
+from bokeh.models import HoverTool
 
 import config
 from plot_helpers import filter_points
@@ -40,8 +41,15 @@ def page(tsm):
     points = df_nodes.hvplot.scatter(
         x="ancestors_span",
         y="time",
-        hover_cols=["ancestors_span", "time"],
-    ).opts(width=config.PLOT_WIDTH, height=config.PLOT_HEIGHT)
+        hover_cols=["ancestors_span", "time"],  # add node ID
+    ).opts(
+        width=config.PLOT_WIDTH,
+        height=config.PLOT_HEIGHT,
+        title="Node span by time",
+        xlabel="width of genome spanned by node ancestors",
+        ylabel="node time",
+        axiswise=True,
+    )
 
     range_stream = hv.streams.RangeXY(source=points)
     streams = [range_stream]
@@ -54,7 +62,48 @@ def page(tsm):
     )
 
     plot_options = pn.Column(
-        pn.pane.Markdown("# Plot Options"),
         log_y_checkbox,
     )
-    return pn.Column(main, hist_panel, plot_options)
+
+    def make_heatmap(num_x_bins, num_y_bins):
+        anc_span_data = tsm.compute_ancestor_spans_heatmap_data(num_x_bins, num_y_bins)
+        tooltips = [
+            ("position", "@position"),
+            ("time", "@time"),
+            ("overlapping_nodes", "@overlapping_node_count"),
+        ]
+        hover = HoverTool(tooltips=tooltips)
+        heatmap = hv.HeatMap(anc_span_data).opts(
+            width=config.PLOT_WIDTH,
+            height=config.PLOT_HEIGHT,
+            tools=[hover],
+            colorbar=True,
+            title="Average ancestor length in time and genome bins",
+            axiswise=True,
+        )
+        return heatmap
+
+    max_x_bins = int(np.sqrt(df_nodes.child_right.max()))
+    x_bin_input = pn.widgets.IntInput(
+        name="genome bins",
+        value=min(50, max_x_bins),
+        start=1,
+        end=max_x_bins,
+    )
+    max_y_bins = int(np.sqrt(df_nodes.time.max()))
+    y_bin_input = pn.widgets.IntInput(
+        name="time bins", value=min(50, int(max_y_bins)), start=1, end=max_y_bins
+    )
+    hm_options = pn.Column(x_bin_input, y_bin_input)
+
+    hm_panel = pn.bind(
+        make_heatmap,
+        num_x_bins=x_bin_input,
+        num_y_bins=y_bin_input,
+    )
+
+    return pn.Column(
+        pn.Column(main),
+        pn.Column(hist_panel, plot_options),
+        pn.Column(hm_panel, hm_options),
+    )
