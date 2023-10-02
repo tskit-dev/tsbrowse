@@ -103,6 +103,7 @@ def page(tsm):
     )
 
     return pn.Column(
-        pn.Row(main, pn.Column(hist_panel, plot_options)),
+        pn.Column(main),
+        pn.Column(hist_panel, plot_options),
         pn.Column(hm_panel, hm_options),
     )
