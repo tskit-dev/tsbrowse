@@ -436,7 +436,7 @@ class TSModel:
         )
 
     @cached_property
-    @disk_cache("v1")
+    @disk_cache("v2")
     def nodes_df(self):
         ts = self.ts
         child_left, child_right = self.child_bounds(
