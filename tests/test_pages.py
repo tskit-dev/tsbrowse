@@ -2,9 +2,9 @@ import panel
 import pytest
 import tskit
 
-import model
-import pages
 from tests import test_data_model
+from tsqc import model
+from tsqc import pages
 
 # TODO give these some pytest metadata so they are named.
 examples = [
@@ -32,5 +32,5 @@ class TestPages:
     @pytest.mark.parametrize("page", display_pages)
     def test_is_panel_layout_instance(self, ts, page):
         tsm = model.TSModel(ts)
-        ui = page(tsm)
+        ui = page.page(tsm)
         assert isinstance(ui, panel.layout.base.Panel)

@@ -3,9 +3,9 @@ import holoviews as hv
 import holoviews.operation.datashader as hd
 import panel as pn
 
-import config
-from plot_helpers import filter_points
-from plot_helpers import hover_points
+from .. import config
+from ..plot_helpers import filter_points
+from ..plot_helpers import hover_points
 
 
 def page(tsm):

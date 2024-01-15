@@ -2,7 +2,7 @@ import holoviews as hv
 import numpy as np
 import panel as pn
 
-import config
+from . import config
 
 
 def hover_points(points, threshold=config.THRESHOLD):

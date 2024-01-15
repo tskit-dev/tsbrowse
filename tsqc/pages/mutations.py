@@ -4,11 +4,11 @@ import hvplot.pandas  # noqa
 import panel as pn
 from bokeh.models import HoverTool
 
-import config
-from plot_helpers import filter_points
-from plot_helpers import hover_points
-from plot_helpers import make_hist
-from plot_helpers import make_hist_on_axis
+from .. import config
+from ..plot_helpers import filter_points
+from ..plot_helpers import hover_points
+from ..plot_helpers import make_hist
+from ..plot_helpers import make_hist_on_axis
 
 
 def make_hist_panel(tsm, log_y):

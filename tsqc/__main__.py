@@ -12,9 +12,8 @@ import tszip
 daiquiri.setup(level="WARN")  # noqa
 import panel as pn  # noqa
 
-import model  # noqa
-import pages  # noqa
-
+from . import model  # noqa
+from . import pages  # noqa
 
 logger = daiquiri.getLogger("tsqc")
 
@@ -45,14 +44,14 @@ def get_app(tsm):
     pn.extension(sizing_mode="stretch_width")
     pn.extension("tabulator")
 
-    def show(page):
-        logger.info(f"Showing page {page}")
+    def show(page_name):
+        logger.info(f"Showing page {page_name}")
         yield pn.indicators.LoadingSpinner(value=True, width=50, height=50)
         try:
             before = time.time()
-            content = page_map[page](tsm)
+            content = page_map[page_name].page(tsm)
             duration = time.time() - before
-            logger.info(f"Loaded page {page} in {duration:.2f}s")
+            logger.info(f"Loaded page {page_name} in {duration:.2f}s")
         except Exception as e:
             error_message = f"An error occurred: {str(e)}"
             error_traceback = traceback.format_exc().replace("\n", "<br>")
@@ -66,7 +65,7 @@ def get_app(tsm):
         yield content
 
     starting_page = pn.state.session_args.get("page", [b"Overview"])[0].decode()
-    page = pn.widgets.RadioButtonGroup(
+    page_options = pn.widgets.RadioButtonGroup(
         value=starting_page,
         options=list(page_map.keys()),
         name="Page",
@@ -74,8 +73,8 @@ def get_app(tsm):
         button_type="success",
         orientation="vertical",
     )
-    ishow = pn.bind(show, page=page)
-    pn.state.location.sync(page, {"value": "page"})
+    ishow = pn.bind(show, page_name=page_options)
+    pn.state.location.sync(page_options, {"value": "page"})
 
     ACCENT_COLOR = "#0072B5"
     DEFAULT_PARAMS = {
@@ -86,7 +85,7 @@ def get_app(tsm):
 
     return pn.template.FastListTemplate(
         title=tsm.name,
-        sidebar=[page],
+        sidebar=[page_options],
         main=[ishow],
         **DEFAULT_PARAMS,
     )
@@ -97,12 +96,9 @@ def setup_logging(log_level, no_log_filter):
         logger = daiquiri.getLogger("root")
         logger.setLevel(log_level)
     else:
-        # FIXME we can remove the "model" and "pages" bit when we've
-        # structured as a package, as these should all have the prefix
-        # tsqc
         # TODO figure out what's useful for users to track here, including
         # bokeh and tornado for now for dev
-        loggers = ["tsqc", "model", "pages", "bokeh", "tornado"]
+        loggers = ["tsqc", "cache", "bokeh", "tornado"]
         for logname in loggers:
             logger = daiquiri.getLogger(logname)
             logger.setLevel(log_level)

@@ -4,10 +4,10 @@ import hvplot.pandas  # noqa
 import numpy as np
 import panel as pn
 
-import config
-from plot_helpers import filter_points
-from plot_helpers import hover_points
-from plot_helpers import make_hist
+from .. import config
+from ..plot_helpers import filter_points
+from ..plot_helpers import hover_points
+from ..plot_helpers import make_hist
 
 
 def page(tsm):

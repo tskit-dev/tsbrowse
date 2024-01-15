@@ -4,7 +4,7 @@ import numpy as np
 import numpy.testing as nt
 import tskit
 
-import model
+from tsqc import model
 
 
 def single_tree_example_ts():
