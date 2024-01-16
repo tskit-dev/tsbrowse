@@ -39,7 +39,7 @@ def page(tsm):
     ts = tsm.ts
     windows_trees = pn.widgets.Checkbox(name="Tree-based windows", value=False)
     windows_count = pn.widgets.IntSlider(
-        name="Window count", start=1, end=100_000, value=1000, disable=windows_trees
+        name="Window count", start=1, end=100_000, value=1000
     )
     span_normalise = pn.widgets.Checkbox(name="Span normalise", value=True)
     mode = pn.widgets.RadioButtonGroup(

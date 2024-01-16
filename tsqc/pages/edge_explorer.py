@@ -2,7 +2,7 @@ import bokeh.models as bkm
 import holoviews as hv
 import panel as pn
 
-import config
+from .. import config
 
 
 def page(tsm):

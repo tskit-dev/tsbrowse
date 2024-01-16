@@ -2,8 +2,8 @@ import holoviews as hv
 import numpy as np
 import panel as pn
 
-import config
-from plot_helpers import make_hist
+from .. import config
+from ..plot_helpers import make_hist
 
 
 def page(tsm):

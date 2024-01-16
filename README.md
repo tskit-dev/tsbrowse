@@ -5,8 +5,8 @@ This is targetted at ARGs that have been inferred using a variety of inference t
 
 To launch the app use:
 
-`python main.py /path/to/trees-file`
+`python -m tsqc /path/to/trees-file`
 
 On WSL, it may be necessary to disable Numba's CUDA support:
 
-`NUMBA_DISABLE_CUDA=1 python main.py /path/to/trees-file`
+`NUMBA_DISABLE_CUDA=1 python -m tsqc /path/to/trees-file`

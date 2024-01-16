@@ -7,10 +7,10 @@ import numpy as np
 import pandas as pd
 import tskit
 
-from cache import disk_cache
+from .cache import disk_cache
 
 
-logger = daiquiri.getLogger("model")
+logger = daiquiri.getLogger("tsqc")
 
 spec = [
     ("num_edges", numba.int64),
