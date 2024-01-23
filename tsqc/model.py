@@ -436,20 +436,18 @@ class TSModel:
         )
 
     @cached_property
-    @disk_cache("v1")
+    @disk_cache("v2")
     def nodes_df(self):
         ts = self.ts
         child_left, child_right = self.child_bounds(
             ts.num_nodes, ts.edges_left, ts.edges_right, ts.edges_child
         )
-        is_sample = np.zeros(ts.num_nodes)
-        is_sample[ts.samples()] = 1
         df = pd.DataFrame(
             {
                 "time": ts.nodes_time,
                 "num_mutations": self.nodes_num_mutations,
                 "ancestors_span": child_right - child_left,
-                "is_sample": is_sample,
+                "node_flags": ts.nodes_flags,
             }
         )
         logger.info("Computed nodes dataframe")
@@ -458,7 +456,7 @@ class TSModel:
                 "time": "float64",
                 "num_mutations": "int",
                 "ancestors_span": "float64",
-                "is_sample": "bool",
+                "node_flags": "int",
             }
         )
 
