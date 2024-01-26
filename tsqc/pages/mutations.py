@@ -1,6 +1,7 @@
 import holoviews as hv
 import holoviews.operation.datashader as hd
 import hvplot.pandas  # noqa
+import numpy as np
 import panel as pn
 from bokeh.models import HoverTool
 
@@ -32,15 +33,16 @@ def make_hist_panel(tsm, log_y):
     return pn.Row(overall_site_hist, overall_node_hist)
 
 
-def page(tsm):
-    hv.extension("bokeh")
+def make_scatter_panel(log_y, tsm):
     plot_width = 1000
-    log_y_checkbox = pn.widgets.Checkbox(
-        name="Log y-axis of Mutations per site/node plots", value=False
-    )
+    y_dim = "time"
+    if log_y:
+        tsm.mutations_df["log_time"] = np.log10(1 + tsm.mutations_df["time"])
+        y_dim = "log_time"
+
     points = tsm.mutations_df.hvplot.scatter(
         x="position",
-        y="time",
+        y=y_dim,
         hover_cols=["id", "num_parents", "num_descendants", "num_inheritors"],
     )
     points.opts(
@@ -69,13 +71,7 @@ def page(tsm):
         clabel="inheritors",
         tools=[hover],
     )
-    time_hist = hv.DynamicMap(
-        make_hist_on_axis(dimension="time", points=points, num_bins=10), streams=streams
-    )
-    site_hist = hv.DynamicMap(
-        make_hist_on_axis(dimension="position", points=points, num_bins=10),
-        streams=streams,
-    )
+
     hover = filtered.apply(hover_points)
     shaded = hd.datashade(filtered, width=400, height=400, streams=streams)
 
@@ -83,11 +79,27 @@ def page(tsm):
         hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10)
     )
 
+    time_hist = hv.DynamicMap(
+        make_hist_on_axis(dimension=y_dim, points=points), streams=streams
+    )
+    site_hist = hv.DynamicMap(
+        make_hist_on_axis(dimension="position", points=points),
+        streams=streams,
+    )
+    return pn.Column(main << time_hist << site_hist)
+
+
+def page(tsm):
+    hv.extension("bokeh")
+
+    log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
+
     hist_panel = pn.bind(make_hist_panel, log_y=log_y_checkbox, tsm=tsm)
+    muts_panel = pn.bind(make_scatter_panel, log_y=log_y_checkbox, tsm=tsm)
 
     plot_options = pn.Column(
-        pn.pane.Markdown("## Plot Options"),
+        pn.pane.Markdown("### Plot Options"),
         log_y_checkbox,
     )
 
-    return pn.Column(main << time_hist << site_hist, hist_panel, plot_options)
+    return pn.Column(plot_options, muts_panel, hist_panel)
