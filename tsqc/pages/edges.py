@@ -9,17 +9,27 @@ from ..plot_helpers import filter_points
 from ..plot_helpers import hover_points
 
 
-def make_edges_panel(log_y, tsm):
+def make_edges_panel(log_y, node_type, tsm):
     edges_df = tsm.edges_df
-    if log_y:
-        edges_df["log_parent_time"] = np.log10(1 + edges_df["parent_time"])
-        edges_df["log_parent_time_right"] = edges_df["log_parent_time"]
-        y_dim_left = "log_parent_time"
-        y_dim_right = "log_parent_time_right"
+    if node_type == "Child node":
+        time_column = "child_time"
+        y_label = "time of child node"
     else:
-        edges_df["parent_time_right"] = edges_df["parent_time"]
-        y_dim_left = "parent_time"
-        y_dim_right = "parent_time_right"
+        time_column = "parent_time"
+        y_label = "time of parent node"
+
+    if log_y:
+        log_time_column = f"log_{time_column}"
+        edges_df[log_time_column] = np.log10(1 + edges_df[time_column])
+        y_dim_left = log_time_column
+        y_dim_right = log_time_column + "_right"
+        y_label = f"log ( {y_label} )"
+    else:
+        y_dim_left = time_column
+        y_dim_right = time_column + "_right"
+        y_label = y_label
+
+    edges_df[y_dim_right] = edges_df[y_dim_left]
 
     lines = hv.Segments(edges_df, kdims=["left", y_dim_left, "right", y_dim_right])
     range_stream = hv.streams.RangeXY(source=lines)
@@ -41,7 +51,7 @@ def make_edges_panel(log_y, tsm):
             width=config.PLOT_WIDTH,
             height=config.PLOT_HEIGHT,
             xlabel="Position",
-            ylabel="Time (parent node)",
+            ylabel=y_label,
         )
     )
     return pn.Column(main)
@@ -49,11 +59,17 @@ def make_edges_panel(log_y, tsm):
 
 def page(tsm):
     hv.extension("bokeh")
-
     log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
-    plot_options = pn.Column(
-        pn.pane.Markdown("### Plot Options"),
-        log_y_checkbox,
+    node_type_radio = pn.widgets.RadioBoxGroup(
+        options=["Parent node", "Child node"], value="Parent node", inline=True
     )
-    edges_panel = pn.bind(make_edges_panel, log_y=log_y_checkbox, tsm=tsm)
-    return pn.Column(plot_options, edges_panel)
+    # using a markdown widget to display radiobox title
+    # (https://github.com/holoviz/panel/issues/1313):
+    radio_title = pn.pane.Markdown("Plot time of:")
+    options_box = pn.WidgetBox(
+        "### Plot options", log_y_checkbox, radio_title, node_type_radio
+    )
+    edges_panel = pn.bind(
+        make_edges_panel, log_y=log_y_checkbox, node_type=node_type_radio, tsm=tsm
+    )
+    return pn.Column(options_box, edges_panel)
