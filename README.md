@@ -10,3 +10,11 @@ To launch the app use:
 On WSL, it may be necessary to disable Numba's CUDA support:
 
 `NUMBA_DISABLE_CUDA=1 python -m tsqc /path/to/trees-file`
+
+## Installation
+
+Tsqc is currently in development. To install the latest dev version from github, try
+
+```
+python -m pip install git+https://github.com/tskit-dev/tsqc
+```
