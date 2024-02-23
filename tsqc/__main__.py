@@ -37,6 +37,7 @@ page_map = {
     "Trees": pages.trees,
     "Nodes": pages.nodes,
     "Popgen": pages.popgen,
+    "Site Frequency Spectra": pages.frequency_spectra,
 }
 
 
