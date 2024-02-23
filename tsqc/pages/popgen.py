@@ -4,8 +4,7 @@ import panel as pn
 from holoviews import opts
 
 
-def make_one_way_stats(ts, windows_trees, windows_count, span_normalise, mode):
-    mode = mode.lower().split()[0]
+def make_one_way_stats(ts, windows_trees, windows_count, span_normalise, statistic):
     windows_count = windows_count
     if windows_trees:
         windows = "trees"
@@ -20,16 +19,30 @@ def make_one_way_stats(ts, windows_trees, windows_count, span_normalise, mode):
             )
         )
         x_axis = windows[:-1]
-    diversity = ts.diversity(span_normalise=span_normalise, windows=windows, mode=mode)
-    tajimas = ts.Tajimas_D(windows=windows, mode=mode)
-    diversity_curve = hv.Curve(
-        (x_axis, diversity), "Genomic position", "Diversity"
-    ).opts(interpolation="steps-post")
-    tajimas_curve = hv.Curve((x_axis, tajimas), "Genomic position", "Tajimas D").opts(
-        interpolation="steps-post"
-    )
 
-    layout = hv.Layout([diversity_curve, tajimas_curve]).cols(1)
+    if statistic == "Diversity":
+        site_statistic = ts.diversity(
+            span_normalise=span_normalise, windows=windows, mode="site"
+        )
+        branch_statistic = ts.diversity(
+            span_normalise=span_normalise, windows=windows, mode="branch"
+        )
+    else:
+        site_statistic = ts.segregating_sites(
+            span_normalise=span_normalise, windows=windows, mode="site"
+        )
+        branch_statistic = ts.segregating_sites(
+            span_normalise=span_normalise, windows=windows, mode="branch"
+        )
+
+    ratio = np.divide(branch_statistic, site_statistic, where=(site_statistic != 0))
+    modes = {"Site": site_statistic, "Branch": branch_statistic, "Branch/Site": ratio}
+    stat_curves = [
+        hv.Curve((x_axis, v), "Genomic position", k).opts(interpolation="steps-post")
+        for k, v in modes.items()
+    ]
+
+    layout = hv.Layout(stat_curves).cols(1)
     layout.opts(opts.Curve(height=200, responsive=True))
     return layout
 
@@ -42,11 +55,13 @@ def page(tsm):
         name="Window count", start=1, end=100_000, value=1000
     )
     span_normalise = pn.widgets.Checkbox(name="Span normalise", value=True)
-    mode = pn.widgets.RadioButtonGroup(
-        name="Mode", options=["Site mode", "Branch mode"], value="Branch mode"
+    stat_radiobox = pn.widgets.RadioButtonGroup(
+        name="Statistic",
+        options=["Diversity", "Segregating Sites"],
+        value="Segregating Sites",
     )
     plot_options = pn.Column(
-        pn.Row(pn.Column(windows_trees, span_normalise), mode),
+        pn.Row(pn.Column(windows_trees, span_normalise), stat_radiobox),
         windows_count,
     )
     one_way_panel = pn.bind(
@@ -55,7 +70,7 @@ def page(tsm):
         windows_trees=windows_trees,
         windows_count=windows_count,
         span_normalise=span_normalise,
-        mode=mode,
+        statistic=stat_radiobox,
     )
     windows_trees.jslink(windows_count, value="disabled")
     return pn.Column(plot_options, one_way_panel)

@@ -36,7 +36,7 @@ page_map = {
     "Edge Explorer": pages.edge_explorer,
     "Trees": pages.trees,
     "Nodes": pages.nodes,
-    "Popgen": pages.popgen,
+    "Windowed Popgen Statistics": pages.popgen,
     "Site Frequency Spectra": pages.frequency_spectra,
 }
 
