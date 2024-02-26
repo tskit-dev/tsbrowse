@@ -2,38 +2,19 @@ import holoviews as hv
 import holoviews.operation.datashader as hd
 import hvplot.pandas  # noqa
 import numpy as np
+import pandas as pd
 import panel as pn
 from bokeh.models import HoverTool
 
 from .. import config
+from ..plot_helpers import customise_ticks
 from ..plot_helpers import filter_points
 from ..plot_helpers import hover_points
-from ..plot_helpers import make_hist
 from ..plot_helpers import make_hist_on_axis
+from ..plot_helpers import selected_hist
 
 
-def make_hist_panel(tsm, log_y):
-    """
-    Make row of histograms for holoviews panel
-    """
-    overall_site_hist = make_hist(
-        tsm.sites_num_mutations,
-        "Mutations per site",
-        range(29),
-        log_y=log_y,
-        plot_width=config.PLOT_WIDTH,
-    )
-    overall_node_hist = make_hist(
-        tsm.nodes_num_mutations,
-        "Mutations per node",
-        range(10),
-        log_y=log_y,
-        plot_width=config.PLOT_WIDTH,
-    )
-    return pn.Row(overall_site_hist, overall_node_hist)
-
-
-def make_scatter_panel(log_y, tsm):
+def make_muts_panel(log_y, tsm):
     plot_width = 1000
     y_dim = "time"
     if log_y:
@@ -86,20 +67,44 @@ def make_scatter_panel(log_y, tsm):
         make_hist_on_axis(dimension="position", points=points),
         streams=streams,
     )
-    return pn.Column(main << time_hist << site_hist)
+
+    breakpoints = tsm.ts.breakpoints(as_array=True)
+    bp_df = pd.DataFrame(
+        {
+            "position": breakpoints,
+            "x1": breakpoints,
+            "y0": tsm.mutations_df[y_dim].min(),
+            "y1": tsm.mutations_df[y_dim].max(),
+        }
+    )
+    trees_hist = hv.DynamicMap(selected_hist(bp_df), streams=streams)
+    trees_line = hv.Segments(bp_df, ["position", "y0", "x1", "y1"])
+
+    return pn.Column(
+        (
+            (main << time_hist << site_hist)
+            + trees_hist.opts(
+                width=config.PLOT_WIDTH, height=100, hooks=[customise_ticks]
+            )
+            + trees_line.opts(
+                width=config.PLOT_WIDTH,
+                height=100,
+                yaxis=None,
+                ylabel=None,
+                xlabel="Tree breakpoints",
+            )
+        )
+        .opts(shared_axes=True)
+        .cols(1)
+    )
 
 
 def page(tsm):
     hv.extension("bokeh")
-
     log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
-
-    hist_panel = pn.bind(make_hist_panel, log_y=log_y_checkbox, tsm=tsm)
-    muts_panel = pn.bind(make_scatter_panel, log_y=log_y_checkbox, tsm=tsm)
-
+    muts_panel = pn.bind(make_muts_panel, log_y=log_y_checkbox, tsm=tsm)
     plot_options = pn.Column(
         pn.pane.Markdown("### Plot Options"),
         log_y_checkbox,
     )
-
-    return pn.Column(plot_options, muts_panel, hist_panel)
+    return pn.Column(plot_options, muts_panel)
