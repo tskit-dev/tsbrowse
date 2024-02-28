@@ -51,3 +51,27 @@ def make_hist(data, title, bins_range, log_y=True, plot_width=800):
         shared_axes=False, width=round(plot_width / 2), toolbar=None, default_tools=[]
     )
     return histogram
+
+
+def filter_hist_data(bp_df, x_range):
+    if x_range:
+        return bp_df[(bp_df.position >= x_range[0]) & (bp_df.position <= x_range[1])]
+    return bp_df
+
+
+def selected_hist(bp_df):
+    def compute_hist(x_range, y_range):
+        filtered_hist_data = filter_hist_data(bp_df, x_range)
+        trees_hist = filtered_hist_data.hvplot.hist(
+            y="position", bins="auto", normed="height"
+        )
+        return trees_hist
+
+    return compute_hist
+
+
+def customise_ticks(plot, element):
+    p = plot.state
+    first, last = int(np.round(p.y_range.start)), int(np.round(p.y_range.end))
+    p.yaxis.ticker = [first, last]
+    p.yaxis.major_label_overrides = {first: str(first), last: str(last)}
