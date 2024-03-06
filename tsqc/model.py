@@ -501,6 +501,17 @@ class TSModel:
             }
         )
 
+    def genes_df(self, genes_file):
+        genes_df = pd.read_csv(genes_file, sep=";")
+        # TODO file checks!
+        genes_df.columns = ["chr", "position", "end", "strand", "id", "name"]
+        genes_df = genes_df[
+            (genes_df["position"] >= self.ts.first().interval.left)
+            & (genes_df["end"] <= self.ts.last().interval.right)
+        ]
+        logger.info("Computed genes dataframe")
+        return genes_df
+
     def calc_polytomy_fractions(self):
         """
         Calculates the fraction of polytomies for each tree in the
