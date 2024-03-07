@@ -14,6 +14,7 @@ import panel as pn  # noqa
 
 from . import model  # noqa
 from . import pages  # noqa
+from . import config  # noqa
 
 logger = daiquiri.getLogger("tsqc")
 
@@ -116,6 +117,7 @@ def setup_logging(log_level, no_log_filter):
 
 @click.command()
 @click.argument("path", type=click.Path(exists=True, dir_okay=False))
+@click.option("--annotations-file", type=click.Path(exists=True, dir_okay=False))
 @click.option("--port", default=8080, help="Port to serve on")
 @click.option(
     "--show/--no-show",
@@ -129,12 +131,15 @@ def setup_logging(log_level, no_log_filter):
     is_flag=True,
     help="Do not filter the output log (advanced debugging only)",
 )
-def main(path, port, show, log_level, no_log_filter):
+def main(path, port, show, log_level, no_log_filter, annotations_file):
     """
     Run the tsqc server.
     """
     setup_logging(log_level, no_log_filter)
+
     tsm = load_data(pathlib.Path(path))
+    if annotations_file:
+        config.ANNOTATIONS_FILE = annotations_file
 
     # Note: functools.partial doesn't work here
     def app():

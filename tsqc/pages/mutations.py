@@ -1,6 +1,5 @@
 import holoviews as hv
 import holoviews.operation.datashader as hd
-import hvplot.pandas  # noqa
 import numpy as np
 import pandas as pd
 import panel as pn
@@ -57,7 +56,7 @@ def make_muts_panel(log_y, tsm):
     shaded = hd.datashade(filtered, width=400, height=400, streams=streams)
 
     main = (shaded * hover).opts(
-        hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10)
+        hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10),
     )
 
     time_hist = hv.DynamicMap(
@@ -78,25 +77,67 @@ def make_muts_panel(log_y, tsm):
         }
     )
     trees_hist = hv.DynamicMap(selected_hist(bp_df), streams=streams)
-    trees_line = hv.Segments(bp_df, ["position", "y0", "x1", "y1"])
-
-    return pn.Column(
-        (
-            (main << time_hist << site_hist)
-            + trees_hist.opts(
-                width=config.PLOT_WIDTH, height=100, hooks=[customise_ticks]
-            )
-            + trees_line.opts(
-                width=config.PLOT_WIDTH,
-                height=100,
-                yaxis=None,
-                ylabel=None,
-                xlabel="Tree breakpoints",
-            )
-        )
-        .opts(shared_axes=True)
-        .cols(1)
+    trees_hist.opts(
+        width=config.PLOT_WIDTH,
+        height=100,
+        hooks=[customise_ticks],
+        xlabel="tree density",
     )
+    trees_line = hv.Segments(bp_df, ["position", "y0", "x1", "y1"])
+    trees_line.opts(
+        width=config.PLOT_WIDTH,
+        height=100,
+        yaxis=None,
+        ylabel=None,
+        xlabel="tree breakpoints",
+        color="grey",
+        line_width=0.5,
+        alpha=0.5,
+    )
+
+    layout = (main << time_hist << site_hist) + trees_hist + trees_line
+
+    if config.ANNOTATIONS_FILE is not None:
+        genes_df = tsm.genes_df(config.ANNOTATIONS_FILE)
+        annot_track = make_annotation_plot(tsm, genes_df)
+        layout += annot_track
+
+    return pn.Column(layout.opts(shared_axes=True).cols(1))
+
+
+def make_annotation_plot(tsm, genes_df):
+    min_y = tsm.mutations_df["time"].min()
+    max_y = tsm.mutations_df["time"].max()
+    genes_df["y0"] = min_y + 0.3 * (max_y - min_y)
+    genes_df["y1"] = max_y - 0.3 * (max_y - min_y)
+    genes_rects = hv.Rectangles(
+        genes_df, kdims=["position", "y0", "end", "y1"], vdims=["name", "id", "strand"]
+    )
+    hover_tool = HoverTool(
+        tooltips=[
+            ("gene name", "@name"),
+            ("ensembl id", "@id"),
+            ("strand", "@strand"),
+        ]
+    )
+    genes_rects.opts(
+        ylabel=None,
+        line_color=None,
+        shared_axes=True,
+        color="maroon",
+        hooks=[customise_ticks],
+        width=config.PLOT_WIDTH,
+        height=100,
+        yaxis=None,
+        xlabel="genes",
+        tools=[hover_tool],
+    )
+
+    genes_rects = (
+        hv.HLine(min_y + (max_y - min_y) / 2).opts(color="black", line_width=0.7)
+        * genes_rects
+    )
+    return genes_rects
 
 
 def page(tsm):
