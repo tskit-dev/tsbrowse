@@ -25,6 +25,8 @@ def page(tsm):
             bins,
             log_y=log_y,
             plot_width=config.PLOT_WIDTH,
+            xlabel="ancestor span",
+            ylabel="number of nodes",
         )
 
         return pn.Column(pn.Row(nodes_hist))

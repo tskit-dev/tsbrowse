@@ -34,21 +34,36 @@ def make_hist_on_axis(dimension, points):
     return compute_hist
 
 
-def make_hist(data, title, bins_range, log_y=True, plot_width=800):
+def make_hist(
+    data,
+    title,
+    bins_range,
+    xlabel,
+    ylabel="count",
+    log_y=True,
+    plot_width=400,
+    plot_height=400,
+):
     """
     Make histogram from given count data
     """
     count, bins = np.histogram(data, bins=bins_range)
-    ylabel = "log(Count)" if log_y else "Count"
     np.seterr(divide="ignore")
     if log_y:
         count = np.log10(count)
         count[count == -np.inf] = 0
+        ylabel = f"log({ylabel})"
+
     histogram = hv.Histogram((count, bins)).opts(
-        title=title, ylabel=ylabel, tools=["hover"]
-    )
-    histogram = histogram.opts(
-        shared_axes=False, width=round(plot_width / 2), toolbar=None, default_tools=[]
+        tools=["hover"],
+        shared_axes=False,
+        width=plot_width,
+        height=plot_height,
+        toolbar=None,
+        default_tools=[],
+        title=title,
+        xlabel=xlabel,
+        ylabel=ylabel,
     )
     return histogram
 
