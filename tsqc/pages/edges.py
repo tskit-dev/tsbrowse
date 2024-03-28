@@ -7,6 +7,7 @@ import panel as pn
 from .. import config
 from ..plot_helpers import filter_points
 from ..plot_helpers import hover_points
+from ..plot_helpers import make_hist
 
 
 def make_edges_panel(log_y, node_type, tsm):
@@ -54,7 +55,37 @@ def make_edges_panel(log_y, node_type, tsm):
             ylabel=y_label,
         )
     )
-    return pn.Column(main)
+
+    edges_df["time_span"] = edges_df["parent_time"] - edges_df["child_time"]
+    gspan_hist = make_hist(
+        edges_df["span"],
+        "Genomic span",
+        "auto",
+        log_y=log_y,
+        xlabel="genomic span",
+        ylabel="number of edges",
+    )
+    tspan_hist = make_hist(
+        edges_df["time_span"],
+        "Time span",
+        "auto",
+        log_y=log_y,
+        xlabel="time span",
+        ylabel="number of edges",
+    )
+    area_hist = make_hist(
+        edges_df["span"] * edges_df["time_span"],
+        "Edge area",
+        "auto",
+        log_y=log_y,
+        xlabel="time span * genomic span",
+        ylabel="number of edges",
+    )
+    area_hist.opts(hv.opts.Histogram(xrotation=90))
+    gspan_hist.opts(hv.opts.Histogram(xrotation=90))
+    tspan_hist.opts(hv.opts.Histogram(xrotation=90))
+
+    return pn.Column(main, pn.Row(gspan_hist, tspan_hist, area_hist))
 
 
 def page(tsm):

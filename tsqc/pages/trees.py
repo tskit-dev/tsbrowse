@@ -27,6 +27,8 @@ def page(tsm):
             bins,
             log_y=log_y,
             plot_width=config.PLOT_WIDTH,
+            xlabel="number of sites",
+            ylabel="number of trees",
         )
 
         spans_hist = make_hist(
@@ -35,6 +37,8 @@ def page(tsm):
             bins,
             log_y=log_y,
             plot_width=config.PLOT_WIDTH,
+            xlabel="genomic span",
+            ylabel="number of trees",
         )
 
         muts_hist = make_hist(
@@ -43,6 +47,8 @@ def page(tsm):
             bins,
             log_y=log_y,
             plot_width=config.PLOT_WIDTH,
+            xlabel="number of mutations",
+            ylabel="number of trees",
         )
 
         tbl_hist = make_hist(
@@ -51,6 +57,8 @@ def page(tsm):
             bins,
             log_y=log_y,
             plot_width=config.PLOT_WIDTH,
+            xlabel="total branch length",
+            ylabel="number of trees",
         )
 
         mean_arity_hist = make_hist(
@@ -59,6 +67,8 @@ def page(tsm):
             bins,
             log_y=log_y,
             plot_width=config.PLOT_WIDTH,
+            xlabel="mean arity",
+            ylabel="number of trees",
         )
 
         max_arity_hist = make_hist(
@@ -67,6 +77,8 @@ def page(tsm):
             bins,
             log_y=log_y,
             plot_width=config.PLOT_WIDTH,
+            xlabel="max arity",
+            ylabel="number of trees",
         )
         return pn.Column(
             pn.Row(
