@@ -46,7 +46,7 @@ def make_muts_panel(log_y, tsm):
         color="num_inheritors",
         alpha="num_inheritors",
         colorbar=True,
-        cmap="kgy",
+        cmap="BuGn",
         colorbar_position="left",
         clabel="inheritors",
         tools=[hover],

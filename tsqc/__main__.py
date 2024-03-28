@@ -72,23 +72,28 @@ def get_app(tsm):
         options=list(page_map.keys()),
         name="Page",
         # sizing_mode="fixed",
-        button_type="success",
+        button_type="default",
+        button_style="outline",
         orientation="vertical",
     )
     ishow = pn.bind(show, page_name=page_options)
     pn.state.location.sync(page_options, {"value": "page"})
 
-    ACCENT_COLOR = "#0072B5"
+    RAW_CSS = """
+        .sidenav#sidebar {
+            background-color: #15E3AC;
+        }
+    """
     DEFAULT_PARAMS = {
         "site": "QC dashboard",
-        "accent_base_color": ACCENT_COLOR,
-        "header_background": ACCENT_COLOR,
+        "header_background": "#0D5160",
     }
 
     return pn.template.FastListTemplate(
         title=tsm.name,
         sidebar=[page_options],
         main=[ishow],
+        raw_css=[RAW_CSS],
         **DEFAULT_PARAMS,
     )
 
