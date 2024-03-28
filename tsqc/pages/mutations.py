@@ -105,37 +105,57 @@ def make_muts_panel(log_y, tsm):
     selection_stream = hv.streams.Selection1D(source=points)
     pops = ["Pop_A", "Pop_B", "Pop_C"]
 
-    def update_pop_freq_plot(index):
+    def get_mut_data(x_range, y_range, index):
+        if x_range and y_range and index:
+            filtered_data = muts_df[
+                (muts_df["position"] >= x_range[0])
+                & (muts_df["position"] <= x_range[1])
+                & (muts_df[y_dim] >= y_range[0])
+                & (muts_df[y_dim] <= y_range[1])
+            ]
+            filtered_data.reset_index(drop=True, inplace=True)
+            mut_data = filtered_data.loc[index[0]]
+            return mut_data
+
+    def update_pop_freq_plot(x_range, y_range, index):
         if not index:
-            return hv.Bars([], kdims="pop", vdims="freq").opts(
-                width=config.PLOT_WIDTH, height=400, title="Tap on a mutation"
+            return hv.Bars([], "population", "frequency").opts(
+                width=int(int(config.PLOT_WIDTH) / 2),
+                height=400,
+                title="Tap on a mutation",
             )
-        mut_data = muts_df.loc[index[0]]
+        mut_data = get_mut_data(x_range, y_range, index)
         freqs = mut_data[pops].values
-        bars = hv.Bars(zip(pops, freqs), "pop", "freq").opts(
-            width=config.PLOT_WIDTH,
+        bars = hv.Bars(zip(pops, freqs), "population", "frequency").opts(
+            width=int(int(config.PLOT_WIDTH) / 2),
             height=400,
             framewise=True,
-            title=f"Mutation {index[0]}",
+            title=f"Mutation {mut_data['id']}: population frequencies",
             ylim=(0, 20),
         )
         return bars
 
-    def update_mut_info_table(index):
+    def update_mut_info_table(x_range, y_range, index):
         if not index:
-            return hv.Table([], kdims=["info"], vdims=["value"]).opts(
-                width=config.PLOT_WIDTH, title="Tap on a mutation"
+            return hv.Table([], kdims=["Detail"], vdims=["value"]).opts(
+                width=int(int(config.PLOT_WIDTH) / 2),
+                title="Tap on a mutation",
             )
-        mut_data = muts_df.loc[index[0]].drop(pops)
-        return hv.Table(mut_data.items(), kdims=["info"], vdims=["value"]).opts(
-            width=config.PLOT_WIDTH, title=f"Mutation {index[0]}"
+        mut_data = get_mut_data(x_range, y_range, index)
+        mut_data = mut_data.drop(pops)
+        return hv.Table(mut_data.items(), kdims=["Column"], vdims=["Value"]).opts(
+            width=int(int(config.PLOT_WIDTH) / 2),
+            title=f"Mutation {mut_data['id']}: details",
         )
 
-    pop_data_dynamic = hv.DynamicMap(update_pop_freq_plot, streams=[selection_stream])
-    mut_info_table_dynamic = hv.DynamicMap(
-        update_mut_info_table, streams=[selection_stream]
+    pop_data_dynamic = hv.DynamicMap(
+        update_pop_freq_plot, streams=[range_stream, selection_stream]
     )
-    layout += (pop_data_dynamic + mut_info_table_dynamic).cols(2)
+    mut_info_table_dynamic = hv.DynamicMap(
+        update_mut_info_table, streams=[range_stream, selection_stream]
+    )
+
+    layout += (pop_data_dynamic + mut_info_table_dynamic).cols(1)
 
     return pn.Column(layout.opts(shared_axes=True).cols(1))
 
