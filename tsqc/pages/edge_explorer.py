@@ -6,7 +6,6 @@ from .. import config
 
 
 def page(tsm):
-    hv.extension("bokeh")
     edges_df = tsm.edges_df
     node_id_input = pn.widgets.TextInput(value="", name="Node ID")
     edges_df["parent_time_right"] = edges_df["parent_time"]

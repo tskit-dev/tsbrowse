@@ -37,7 +37,7 @@ def make_edges_panel(log_y, node_type, tsm):
     streams = [range_stream]
     filtered = lines.apply(filter_points, streams=streams)
     hover = filtered.apply(hover_points)
-    shaded = hd.datashade(filtered, streams=streams)
+    shaded = hd.datashade(filtered, streams=streams, cmap=config.PLOT_COLOURS[1:])
     hover_tool = bkm.HoverTool(
         tooltips=[
             ("child", "@child"),
@@ -89,7 +89,6 @@ def make_edges_panel(log_y, node_type, tsm):
 
 
 def page(tsm):
-    hv.extension("bokeh")
     log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
     node_type_radio = pn.widgets.RadioBoxGroup(
         options=["Parent node", "Child node"], value="Parent node", inline=True

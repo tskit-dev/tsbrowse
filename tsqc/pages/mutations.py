@@ -1,5 +1,6 @@
 import holoviews as hv
 import holoviews.operation.datashader as hd
+import hvplot.pandas  # noqa: F401
 import numpy as np
 import pandas as pd
 import panel as pn
@@ -53,7 +54,13 @@ def make_muts_panel(log_y, tsm):
     )
 
     hover = filtered.apply(hover_points)
-    shaded = hd.datashade(filtered, width=400, height=400, streams=[range_stream])
+    shaded = hd.datashade(
+        filtered,
+        width=400,
+        height=400,
+        streams=[range_stream],
+        cmap=config.PLOT_COLOURS[1:],
+    )
 
     main = (shaded * hover).opts(
         hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10),
@@ -90,7 +97,6 @@ def make_muts_panel(log_y, tsm):
         yaxis=None,
         ylabel=None,
         xlabel="tree breakpoints",
-        color="grey",
         line_width=0.5,
         alpha=0.5,
     )
@@ -196,7 +202,6 @@ def make_annotation_plot(tsm, genes_df):
 
 
 def page(tsm):
-    hv.extension("bokeh")
     log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
     muts_panel = pn.bind(make_muts_panel, log_y=log_y_checkbox, tsm=tsm)
     plot_options = pn.Column(
