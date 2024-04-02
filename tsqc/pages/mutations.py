@@ -46,7 +46,6 @@ def make_muts_panel(log_y, tsm):
     filtered.opts(
         color="num_inheritors",
         alpha="num_inheritors",
-        colorbar=True,
         cmap="BuGn",
         colorbar_position="left",
         clabel="inheritors",
@@ -125,9 +124,8 @@ def make_muts_panel(log_y, tsm):
     def update_pop_freq_plot(x_range, y_range, index):
         if not index:
             return hv.Bars([], "population", "frequency").opts(
-                width=int(int(config.PLOT_WIDTH) / 2),
-                height=400,
-                title="Tap on a mutation",
+                title="Population frequencies",
+                default_tools=[],
                 tools=["hover"],
             )
 
@@ -143,37 +141,31 @@ def make_muts_panel(log_y, tsm):
                     "frequency": [mut_data[col] for col in pops],
                 }
             )
-
             bars = hv.Bars(df, "population", "frequency").opts(
-                width=int(int(config.PLOT_WIDTH) / 2),
-                height=400,
                 framewise=True,
-                title=f"Mutation {mut_data['id']}: population frequencies",
+                title="Population frequencies",
                 ylim=(0, max(df["frequency"]) * 1.1),
                 xrotation=45,
                 tools=["hover"],
+                default_tools=[],
             )
             return bars
         else:
             return hv.Bars([], "population", "frequency").opts(
-                width=int(int(config.PLOT_WIDTH) / 2),
-                height=400,
-                title=f"No frequencies available for mutation {mut_data['id']}",
+                default_tools=[],
                 tools=["hover"],
             )
 
     def update_mut_info_table(x_range, y_range, index):
         if not index:
             return hv.Table([], kdims=["Detail"], vdims=["value"]).opts(
-                width=int(int(config.PLOT_WIDTH) / 2),
-                title="Tap on a mutation",
+                title="Tap on a mutation"
             )
         mut_data = get_mut_data(x_range, y_range, index)
         pops = [col for col in mut_data.index if "pop_" in col]
         mut_data = mut_data.drop(pops)
         return hv.Table(mut_data.items(), kdims=["Column"], vdims=["Value"]).opts(
-            width=int(int(config.PLOT_WIDTH) / 2),
-            title=f"Mutation {mut_data['id']}: details",
+            title=f"Mutation {mut_data['id']}"
         )
 
     pop_data_dynamic = hv.DynamicMap(
@@ -183,9 +175,17 @@ def make_muts_panel(log_y, tsm):
         update_mut_info_table, streams=[range_stream, selection_stream]
     )
 
-    layout += (pop_data_dynamic + mut_info_table_dynamic).cols(1)
+    tap_widgets_layout = (mut_info_table_dynamic + pop_data_dynamic).cols(1)
 
-    return pn.Column(layout.opts(shared_axes=True).cols(1))
+    return pn.Row(
+        pn.Column(layout.opts(shared_axes=True).cols(1)),
+        pn.panel(
+            tap_widgets_layout,
+            align="center",
+            sizing_mode="stretch_width",
+            margin=(0, 0, 0, 200),
+        ),
+    )
 
 
 def make_annotation_plot(tsm, genes_df):
@@ -205,9 +205,7 @@ def make_annotation_plot(tsm, genes_df):
     )
     genes_rects.opts(
         ylabel=None,
-        line_color=None,
         shared_axes=True,
-        color="maroon",
         hooks=[customise_ticks],
         width=config.PLOT_WIDTH,
         height=100,
@@ -230,8 +228,5 @@ def page(tsm):
         pn.pane.Markdown("### Plot Options"),
         log_y_checkbox,
     )
-
-    # mut_data = tsm.mutations_df.loc[0]
-    # mut_table = pn.widgets.Tabulator(mut_data.to_frame().T, height=200, width=800)
 
     return pn.Column(plot_options, muts_panel)
