@@ -1,6 +1,6 @@
 import holoviews as hv
 import holoviews.operation.datashader as hd
-import hvplot.pandas  # noqa
+import hvplot.pandas  # noqa: F401
 import numpy as np
 import panel as pn
 
@@ -11,7 +11,6 @@ from ..plot_helpers import make_hist
 
 
 def page(tsm):
-    hv.extension("bokeh")
     df_nodes = tsm.nodes_df
     df_nodes = df_nodes[(df_nodes.ancestors_span != -np.inf)]
     bins = min(50, int(np.sqrt(len(df_nodes))))
@@ -45,7 +44,13 @@ def page(tsm):
         streams = [range_stream]
         filtered = points.apply(filter_points, streams=streams)
         hover = filtered.apply(hover_points, threshold=config.THRESHOLD)
-        shaded = hd.datashade(filtered, width=400, height=400, streams=streams)
+        shaded = hd.datashade(
+            filtered,
+            width=400,
+            height=400,
+            streams=streams,
+            cmap=config.PLOT_COLOURS[1:],
+        )
 
         main = (shaded * hover).opts(
             hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10)

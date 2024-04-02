@@ -62,7 +62,6 @@ def make_afs_panel(afs_df, log_bins, mode):
 
 
 def page(tsm):
-    hv.extension("bokeh")
     log_bins_chk = pn.widgets.Checkbox(name="log-scale bins", value=True)
     span_normalise_chk = pn.widgets.Checkbox(name="span normalise", value=False)
     afs_type_radio = pn.widgets.RadioButtonGroup(

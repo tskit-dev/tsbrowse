@@ -4,8 +4,10 @@ import traceback
 
 import click
 import daiquiri
+import holoviews as hv
 import tskit
 import tszip
+from holoviews import opts
 
 # Need to import daiquiri and set up logging before importing panel
 # and bokeh, so we can set logging up correctly
@@ -47,6 +49,17 @@ def get_app(tsm):
     pn.extension("tabulator")
 
     def show(page_name):
+        hv.extension("bokeh")
+        hv.opts.defaults(
+            opts.Scatter(color=config.PLOT_COLOURS[2]),
+            opts.Points(color=config.PLOT_COLOURS[2]),
+            opts.Histogram(
+                fill_color=config.PLOT_COLOURS[0], line_color=config.PLOT_COLOURS[2]
+            ),
+            opts.Bars(color=config.PLOT_COLOURS[0], line_color=config.PLOT_COLOURS[2]),
+            opts.Segments(color=config.PLOT_COLOURS[2]),
+            opts.Curve(color=config.PLOT_COLOURS[2]),
+        )
         logger.info(f"Showing page {page_name}")
         yield pn.indicators.LoadingSpinner(value=True, width=50, height=50)
         try:

@@ -1,4 +1,3 @@
-import holoviews as hv
 import numpy as np
 import panel as pn
 
@@ -7,7 +6,6 @@ from ..plot_helpers import make_hist
 
 
 def page(tsm):
-    hv.extension("bokeh")
     df_trees = tsm.trees_df
     bins = min(50, int(np.sqrt(len(df_trees))))
 

@@ -48,7 +48,6 @@ def make_one_way_stats(ts, windows_trees, windows_count, span_normalise, statist
 
 
 def page(tsm):
-    hv.extension("bokeh")
     ts = tsm.ts
     windows_trees = pn.widgets.Checkbox(name="Tree-based windows", value=False)
     windows_count = pn.widgets.IntSlider(

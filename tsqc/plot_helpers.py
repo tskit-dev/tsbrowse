@@ -27,7 +27,10 @@ def make_hist_on_axis(dimension, points):
     def compute_hist(x_range, y_range):
         filtered_points = filter_points(points, x_range, y_range)
         hist = hv.operation.histogram(
-            filtered_points, dimension=dimension, bins="auto", normed="height"
+            filtered_points,
+            dimension=dimension,
+            bins="auto",
+            normed="height",
         )
         return hist
 
@@ -78,7 +81,9 @@ def selected_hist(bp_df):
     def compute_hist(x_range, y_range):
         filtered_hist_data = filter_hist_data(bp_df, x_range)
         trees_hist = filtered_hist_data.hvplot.hist(
-            y="position", bins="auto", normed="height"
+            y="position",
+            bins="auto",
+            normed="height",
         )
         return trees_hist
 
