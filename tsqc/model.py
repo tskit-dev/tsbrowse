@@ -257,6 +257,85 @@ def compute_mutation_counts(ts):
     return MutationCounts(num_parents, num_inheritors, num_descendants)
 
 
+@numba.njit
+def _compute_population_mutation_counts(
+    tree_pos,
+    num_nodes,
+    num_mutations,
+    num_populations,
+    edges_parent,
+    edges_child,
+    num_pop_samples,
+    nodes_population,
+    mutations_position,
+    mutations_node,
+    mutations_parent,
+):
+    pop_mutation_count = np.zeros((num_populations, num_mutations), dtype=np.int32)
+    parent = np.zeros(num_nodes, dtype=np.int32) - 1
+
+    mut_id = 0
+
+    while tree_pos.next():
+        for j in range(tree_pos.out_range[0], tree_pos.out_range[1]):
+            e = tree_pos.edge_removal_order[j]
+            c = edges_child[e]
+            p = edges_parent[e]
+            parent[c] = -1
+            u = p
+            while u != -1:
+                num_pop_samples[u] -= num_pop_samples[c]
+                u = parent[u]
+
+        for j in range(tree_pos.in_range[0], tree_pos.in_range[1]):
+            e = tree_pos.edge_insertion_order[j]
+            p = edges_parent[e]
+            c = edges_child[e]
+            parent[c] = p
+            u = p
+            while u != -1:
+                num_pop_samples[u] += num_pop_samples[c]
+                u = parent[u]
+
+        left, right = tree_pos.interval
+        while mut_id < num_mutations and mutations_position[mut_id] < right:
+            assert mutations_position[mut_id] >= left
+            mutation_node = mutations_node[mut_id]
+            for pop in range(num_populations):
+                pop_mutation_count[pop, mut_id] = num_pop_samples[mutation_node, pop]
+            mut_id += 1
+
+    return pop_mutation_count
+
+
+def compute_population_mutation_counts(ts):
+    """
+    Return a dataframe that gives the frequency of each mutation
+    in each of the populations in the specified tree sequence.
+    """
+    mutations_position = ts.sites_position[ts.mutations_site].astype(int)
+    num_pop_samples = np.zeros((ts.num_nodes, ts.num_populations), dtype=np.int32)
+    for pop in range(ts.num_populations):
+        samples = np.logical_and(
+            ts.nodes_population == pop, ts.nodes_flags == 1  # Not quite right!
+        )
+        num_pop_samples[samples, pop] = 1
+
+    return _compute_population_mutation_counts(
+        alloc_tree_position(ts),
+        ts.num_nodes,
+        ts.num_mutations,
+        ts.num_populations,
+        ts.edges_parent,
+        ts.edges_child,
+        num_pop_samples,
+        ts.nodes_population,
+        mutations_position,
+        ts.mutations_node,
+        ts.mutations_parent,
+    )
+
+
 class TSModel:
     """
     A wrapper around a tskit.TreeSequence object that provides some
@@ -320,7 +399,7 @@ class TSModel:
         return child_left, child_right
 
     @cached_property
-    @disk_cache("v1")
+    @disk_cache("v2")
     def mutations_df(self):
         # FIXME use tskit's impute mutations time
         ts = self.ts
@@ -363,8 +442,17 @@ class TSModel:
         self.mutations_derived_state = derived_state
         self.mutations_inherited_state = inherited_state
 
-        counts = compute_mutation_counts(ts)
+        population_data = {}
+        if ts.num_populations > 0:
+            pop_mutation_count = compute_population_mutation_counts(ts)
+            for pop in ts.populations():
+                name = f"pop{pop.id}"
+                if "name" in pop.metadata:
+                    name = pop.metadata["name"]
+                col_name = f"pop_{name}_freq"
+                population_data[col_name] = pop_mutation_count[pop.id] / ts.num_samples
 
+        counts = compute_mutation_counts(ts)
         df = pd.DataFrame(
             {
                 "id": np.arange(ts.num_mutations),
@@ -376,12 +464,9 @@ class TSModel:
                 "num_descendants": counts.num_descendants,
                 "num_inheritors": counts.num_inheritors,
                 "num_parents": counts.num_parents,
-                "Pop_A": np.random.randint(0, 20, ts.num_mutations),
-                "Pop_B": np.random.randint(0, 20, ts.num_mutations),
-                "Pop_C": np.random.randint(0, 20, ts.num_mutations),
+                **population_data,
             }
         )
-
         logger.info("Computed mutations dataframe")
         return df.astype(
             {
@@ -394,9 +479,6 @@ class TSModel:
                 "num_descendants": "int",
                 "num_inheritors": "int",
                 "num_parents": "int",
-                "Pop_A": "int",
-                "Pop_B": "int",
-                "Pop_C": "int",
             }
         )
 

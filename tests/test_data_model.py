@@ -1,7 +1,9 @@
 import logging
 
+import msprime
 import numpy as np
 import numpy.testing as nt
+import pytest
 import tskit
 
 from tsqc import model
@@ -179,6 +181,56 @@ class TestNodeDataTable:
         nt.assert_array_equal(df.num_mutations, [0, 0, 0, 0, 0])
         nt.assert_array_equal(df.ancestors_span, [10, 10, 10, 10, -np.inf])
         nt.assert_array_equal(df.node_flags, [1, 1, 1, 0, 0])
+
+
+def compute_mutation_counts(ts):
+    pop_mutation_count = np.zeros((ts.num_populations, ts.num_mutations), dtype=int)
+    for pop in ts.populations():
+        for tree in ts.trees(tracked_samples=ts.samples(population=pop.id)):
+            for mut in tree.mutations():
+                count = tree.num_tracked_samples(mut.node)
+                pop_mutation_count[pop.id, mut.id] = count
+    return pop_mutation_count
+
+
+class TestMutationFrequencies:
+    def example_ts(self):
+        demography = msprime.Demography()
+        demography.add_population(name="A", initial_size=10_000)
+        demography.add_population(name="B", initial_size=5_000)
+        demography.add_population(name="C", initial_size=1_000)
+        demography.add_population_split(time=1000, derived=["A", "B"], ancestral="C")
+        return msprime.sim_ancestry(
+            samples={"A": 1, "B": 1},
+            demography=demography,
+            random_seed=12,
+            sequence_length=10_000,
+        )
+
+    def check_ts(self, ts):
+        C1 = compute_mutation_counts(ts)
+        C2 = model.compute_population_mutation_counts(ts)
+        nt.assert_array_equal(C1, C2)
+        tsm = model.TSModel(ts)
+        df = tsm.mutations_df
+        nt.assert_array_equal(df["pop_A_freq"], C1[0] / ts.num_samples)
+        nt.assert_array_equal(df["pop_B_freq"], C1[1] / ts.num_samples)
+        nt.assert_array_equal(df["pop_C_freq"], C1[2] / ts.num_samples)
+
+    def test_all_nodes(self):
+        ts = self.example_ts()
+        tables = ts.dump_tables()
+        for u in range(ts.num_nodes - 1):
+            site_id = tables.sites.add_row(u, "A")
+            tables.mutations.add_row(site=site_id, node=u, derived_state="T")
+        ts = tables.tree_sequence()
+        self.check_ts(ts)
+
+    @pytest.mark.parametrize("seed", range(1, 7))
+    def test_simulated_mutations(self, seed):
+        ts = msprime.sim_mutations(self.example_ts(), rate=1e-6, random_seed=seed)
+        assert ts.num_mutations > 0
+        self.check_ts(ts)
 
 
 class TestTreesDataTable:
