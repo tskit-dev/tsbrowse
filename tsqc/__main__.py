@@ -59,6 +59,9 @@ def get_app(tsm):
             opts.Bars(color=config.PLOT_COLOURS[0], line_color=config.PLOT_COLOURS[2]),
             opts.Segments(color=config.PLOT_COLOURS[2]),
             opts.Curve(color=config.PLOT_COLOURS[2]),
+            opts.Rectangles(
+                fill_color=config.PLOT_COLOURS[0], line_color=config.PLOT_COLOURS[2]
+            ),
         )
         logger.info(f"Showing page {page_name}")
         yield pn.indicators.LoadingSpinner(value=True, width=50, height=50)
