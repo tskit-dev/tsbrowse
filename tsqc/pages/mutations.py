@@ -109,7 +109,6 @@ def make_muts_panel(log_y, tsm):
         layout += annot_track
 
     selection_stream = hv.streams.Selection1D(source=points)
-    pops = ["Pop_A", "Pop_B", "Pop_C"]
 
     def get_mut_data(x_range, y_range, index):
         if x_range and y_range and index:
@@ -129,17 +128,39 @@ def make_muts_panel(log_y, tsm):
                 width=int(int(config.PLOT_WIDTH) / 2),
                 height=400,
                 title="Tap on a mutation",
+                tools=["hover"],
             )
+
         mut_data = get_mut_data(x_range, y_range, index)
-        freqs = mut_data[pops].values
-        bars = hv.Bars(zip(pops, freqs), "population", "frequency").opts(
-            width=int(int(config.PLOT_WIDTH) / 2),
-            height=400,
-            framewise=True,
-            title=f"Mutation {mut_data['id']}: population frequencies",
-            ylim=(0, 20),
-        )
-        return bars
+        pops = [col for col in mut_data.index if "pop_" in col]
+
+        if pops:
+            df = pd.DataFrame(
+                {
+                    "population": [
+                        pop.replace("pop_", "").replace("_freq", "") for pop in pops
+                    ],
+                    "frequency": [mut_data[col] for col in pops],
+                }
+            )
+
+            bars = hv.Bars(df, "population", "frequency").opts(
+                width=int(int(config.PLOT_WIDTH) / 2),
+                height=400,
+                framewise=True,
+                title=f"Mutation {mut_data['id']}: population frequencies",
+                ylim=(0, max(df["frequency"]) * 1.1),
+                xrotation=45,
+                tools=["hover"],
+            )
+            return bars
+        else:
+            return hv.Bars([], "population", "frequency").opts(
+                width=int(int(config.PLOT_WIDTH) / 2),
+                height=400,
+                title=f"No frequencies available for mutation {mut_data['id']}",
+                tools=["hover"],
+            )
 
     def update_mut_info_table(x_range, y_range, index):
         if not index:
@@ -148,6 +169,7 @@ def make_muts_panel(log_y, tsm):
                 title="Tap on a mutation",
             )
         mut_data = get_mut_data(x_range, y_range, index)
+        pops = [col for col in mut_data.index if "pop_" in col]
         mut_data = mut_data.drop(pops)
         return hv.Table(mut_data.items(), kdims=["Column"], vdims=["Value"]).opts(
             width=int(int(config.PLOT_WIDTH) / 2),
@@ -208,5 +230,8 @@ def page(tsm):
         pn.pane.Markdown("### Plot Options"),
         log_y_checkbox,
     )
+
+    # mut_data = tsm.mutations_df.loc[0]
+    # mut_table = pn.widgets.Tabulator(mut_data.to_frame().T, height=200, width=800)
 
     return pn.Column(plot_options, muts_panel)
