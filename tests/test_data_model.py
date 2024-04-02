@@ -184,12 +184,12 @@ class TestNodeDataTable:
 
 
 def compute_mutation_counts(ts):
-    pop_mutation_count = np.zeros((ts.num_mutations, ts.num_populations), dtype=int)
+    pop_mutation_count = np.zeros((ts.num_populations, ts.num_mutations), dtype=int)
     for pop in ts.populations():
         for tree in ts.trees(tracked_samples=ts.samples(population=pop.id)):
             for mut in tree.mutations():
                 count = tree.num_tracked_samples(mut.node)
-                pop_mutation_count[mut.id, pop.id] = count
+                pop_mutation_count[pop.id, mut.id] = count
     return pop_mutation_count
 
 
@@ -207,6 +207,16 @@ class TestMutationFrequencies:
             sequence_length=10_000,
         )
 
+    def check_ts(self, ts):
+        C1 = compute_mutation_counts(ts)
+        C2 = model.compute_population_mutation_counts(ts)
+        nt.assert_array_equal(C1, C2)
+        tsm = model.TSModel(ts)
+        df = tsm.mutations_df
+        nt.assert_array_equal(df["pop_A_freq"], C1[0] / ts.num_samples)
+        nt.assert_array_equal(df["pop_B_freq"], C1[1] / ts.num_samples)
+        nt.assert_array_equal(df["pop_C_freq"], C1[2] / ts.num_samples)
+
     def test_all_nodes(self):
         ts = self.example_ts()
         tables = ts.dump_tables()
@@ -214,17 +224,13 @@ class TestMutationFrequencies:
             site_id = tables.sites.add_row(u, "A")
             tables.mutations.add_row(site=site_id, node=u, derived_state="T")
         ts = tables.tree_sequence()
-        C1 = compute_mutation_counts(ts)
-        C2 = model.compute_population_mutation_counts(ts)
-        nt.assert_array_equal(C1, C2)
+        self.check_ts(ts)
 
     @pytest.mark.parametrize("seed", range(1, 7))
     def test_simulated_mutations(self, seed):
         ts = msprime.sim_mutations(self.example_ts(), rate=1e-6, random_seed=seed)
         assert ts.num_mutations > 0
-        C1 = compute_mutation_counts(ts)
-        C2 = model.compute_population_mutation_counts(ts)
-        nt.assert_array_equal(C1, C2)
+        self.check_ts(ts)
 
 
 class TestTreesDataTable:
