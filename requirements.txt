@@ -3,10 +3,8 @@ daiquiri
 panel
 diskcache
 hvplot
-xarray
 datashader
 tskit
-seaborn
 pre-commit
 pytest
 tszip
