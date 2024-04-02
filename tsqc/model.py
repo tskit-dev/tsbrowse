@@ -1,4 +1,5 @@
 import dataclasses
+import json
 from functools import cached_property
 
 import daiquiri
@@ -447,8 +448,12 @@ class TSModel:
             pop_mutation_count = compute_population_mutation_counts(ts)
             for pop in ts.populations():
                 name = f"pop{pop.id}"
-                if "name" in pop.metadata:
-                    name = pop.metadata["name"]
+                if isinstance(pop.metadata, bytes):
+                    metadata_dict = json.loads(pop.metadata.decode("utf-8"))
+                else:
+                    metadata_dict = pop.metadata
+                if "name" in metadata_dict:
+                    name = metadata_dict["name"]
                 col_name = f"pop_{name}_freq"
                 population_data[col_name] = pop_mutation_count[pop.id] / ts.num_samples
 
