@@ -257,6 +257,84 @@ def compute_mutation_counts(ts):
     return MutationCounts(num_parents, num_inheritors, num_descendants)
 
 
+@numba.njit
+def _compute_population_mutation_counts(
+    tree_pos,
+    num_nodes,
+    num_mutations,
+    num_populations,
+    edges_parent,
+    edges_child,
+    num_pop_samples,
+    nodes_population,
+    mutations_position,
+    mutations_node,
+    mutations_parent,
+):
+    pop_mutation_count = np.zeros((num_mutations, num_populations), dtype=np.int32)
+    parent = np.zeros(num_nodes, dtype=np.int32) - 1
+
+    mut_id = 0
+
+    while tree_pos.next():
+        for j in range(tree_pos.out_range[0], tree_pos.out_range[1]):
+            e = tree_pos.edge_removal_order[j]
+            c = edges_child[e]
+            p = edges_parent[e]
+            parent[c] = -1
+            u = p
+            while u != -1:
+                num_pop_samples[u] -= num_pop_samples[c]
+                u = parent[u]
+
+        for j in range(tree_pos.in_range[0], tree_pos.in_range[1]):
+            e = tree_pos.edge_insertion_order[j]
+            p = edges_parent[e]
+            c = edges_child[e]
+            parent[c] = p
+            u = p
+            while u != -1:
+                num_pop_samples[u] += num_pop_samples[c]
+                u = parent[u]
+
+        left, right = tree_pos.interval
+        while mut_id < num_mutations and mutations_position[mut_id] < right:
+            assert mutations_position[mut_id] >= left
+            mutation_node = mutations_node[mut_id]
+            pop_mutation_count[mut_id] = num_pop_samples[mutation_node]
+            mut_id += 1
+
+    return pop_mutation_count
+
+
+def compute_population_mutation_counts(ts):
+    """
+    Return a dataframe that gives the frequency of each mutation
+    in each of the populations in the specified tree sequence.
+    """
+    mutations_position = ts.sites_position[ts.mutations_site].astype(int)
+    num_pop_samples = np.zeros((ts.num_nodes, ts.num_populations), dtype=np.int32)
+    for pop in range(ts.num_populations):
+        samples = np.logical_and(
+            ts.nodes_population == pop, ts.nodes_flags == 1  # Not quite right!
+        )
+        num_pop_samples[samples, pop] = 1
+
+    return _compute_population_mutation_counts(
+        alloc_tree_position(ts),
+        ts.num_nodes,
+        ts.num_mutations,
+        ts.num_populations,
+        ts.edges_parent,
+        ts.edges_child,
+        num_pop_samples,
+        ts.nodes_population,
+        mutations_position,
+        ts.mutations_node,
+        ts.mutations_parent,
+    )
+
+
 class TSModel:
     """
     A wrapper around a tskit.TreeSequence object that provides some
@@ -320,7 +398,7 @@ class TSModel:
         return child_left, child_right
 
     @cached_property
-    @disk_cache("v1")
+    @disk_cache("v2")
     def mutations_df(self):
         # FIXME use tskit's impute mutations time
         ts = self.ts
