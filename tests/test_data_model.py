@@ -233,6 +233,25 @@ class TestMutationFrequencies:
         self.check_ts(ts)
 
 
+class TestNodeIsSample:
+    def test_simple_example(self):
+        ts = single_tree_example_ts()
+        is_sample = model.node_is_sample(ts)
+        for node in ts.nodes():
+            assert node.is_sample() == is_sample[node.id]
+
+    @pytest.mark.parametrize("bit", [1, 2, 17, 31])
+    def test_sample_and_other_flags(self, bit):
+        tables = single_tree_example_ts().dump_tables()
+        flags = tables.nodes.flags
+        tables.nodes.flags = flags | (1 << bit)
+        ts = tables.tree_sequence()
+        is_sample = model.node_is_sample(ts)
+        for node in ts.nodes():
+            assert node.is_sample() == is_sample[node.id]
+            assert (node.flags & (1 << bit)) != 0
+
+
 class TestTreesDataTable:
     def test_single_tree_example(self):
         ts = single_tree_example_ts()

@@ -309,6 +309,11 @@ def _compute_population_mutation_counts(
     return pop_mutation_count
 
 
+def node_is_sample(ts):
+    sample_flag = np.full_like(ts.nodes_flags, tskit.NODE_IS_SAMPLE)
+    return np.bitwise_and(ts.nodes_flags, sample_flag) != 0
+
+
 def compute_population_mutation_counts(ts):
     """
     Return a dataframe that gives the frequency of each mutation
@@ -316,10 +321,9 @@ def compute_population_mutation_counts(ts):
     """
     mutations_position = ts.sites_position[ts.mutations_site].astype(int)
     num_pop_samples = np.zeros((ts.num_nodes, ts.num_populations), dtype=np.int32)
+    is_sample = node_is_sample(ts)
     for pop in range(ts.num_populations):
-        samples = np.logical_and(
-            ts.nodes_population == pop, ts.nodes_flags == 1  # Not quite right!
-        )
+        samples = np.logical_and(ts.nodes_population == pop, is_sample)
         num_pop_samples[samples, pop] = 1
 
     return _compute_population_mutation_counts(
