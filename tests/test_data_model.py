@@ -232,6 +232,20 @@ class TestMutationFrequencies:
         assert ts.num_mutations > 0
         self.check_ts(ts)
 
+    def test_no_metadata_schema(self):
+        ts = msprime.sim_mutations(self.example_ts(), rate=1e-6, random_seed=43)
+        assert ts.num_mutations > 0
+        tables = ts.dump_tables()
+        tables.populations.metadata_schema = tskit.MetadataSchema(None)
+        self.check_ts(tables.tree_sequence())
+
+    def test_no_populations(self):
+        tables = single_tree_example_ts().dump_tables()
+        tables.populations.add_row(b"{}")
+        tsm = model.TSModel(tables.tree_sequence())
+        with pytest.raises(ValueError, match="must be assigned to populations"):
+            tsm.mutations_df
+
 
 class TestNodeIsSample:
     def test_simple_example(self):
