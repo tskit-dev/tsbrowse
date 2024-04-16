@@ -7,6 +7,7 @@ import panel as pn
 from bokeh.models import HoverTool
 
 from .. import config
+from ..plot_helpers import center_plot_title
 from ..plot_helpers import customise_ticks
 from ..plot_helpers import filter_points
 from ..plot_helpers import hover_points
@@ -124,9 +125,10 @@ def make_muts_panel(log_y, tsm):
     def update_pop_freq_plot(x_range, y_range, index):
         if not index:
             return hv.Bars([], "population", "frequency").opts(
-                title="Population frequencies",
+                title="Tap on a mutation",
                 default_tools=[],
                 tools=["hover"],
+                hooks=[center_plot_title],
             )
 
         mut_data = get_mut_data(x_range, y_range, index)
@@ -141,49 +143,53 @@ def make_muts_panel(log_y, tsm):
                     "frequency": [mut_data[col] for col in pops],
                 }
             )
+            df = df[df["frequency"] > 0]
+
             bars = hv.Bars(df, "population", "frequency").opts(
                 framewise=True,
-                title="Population frequencies",
+                title=f"Mutation {mut_data['id']}",
                 ylim=(0, max(df["frequency"]) * 1.1),
                 xrotation=45,
                 tools=["hover"],
                 default_tools=[],
+                yticks=3,
+                yformatter="%.3f",
+                hooks=[center_plot_title],
             )
             return bars
         else:
             return hv.Bars([], "population", "frequency").opts(
+                title="Tap on a mutation",
                 default_tools=[],
                 tools=["hover"],
+                hooks=[center_plot_title],
             )
 
     def update_mut_info_table(x_range, y_range, index):
         if not index:
-            return hv.Table([], kdims=["Detail"], vdims=["value"]).opts(
-                title="Tap on a mutation"
-            )
+            return hv.Table([], kdims=["mutation"], vdims=["value"])
         mut_data = get_mut_data(x_range, y_range, index)
         pops = [col for col in mut_data.index if "pop_" in col]
         mut_data = mut_data.drop(pops)
-        return hv.Table(mut_data.items(), kdims=["Column"], vdims=["Value"]).opts(
-            title=f"Mutation {mut_data['id']}"
-        )
+        mut_data["time"] = mut_data["time"].round(2)
+        if "log_time" in mut_data:
+            mut_data["log_time"] = mut_data["log_time"].round(2)
+        return hv.Table(mut_data.items(), kdims=["mutation"], vdims=["value"])
 
     pop_data_dynamic = hv.DynamicMap(
         update_pop_freq_plot, streams=[range_stream, selection_stream]
     )
+    pop_data_dynamic.opts(align=("center"))
     mut_info_table_dynamic = hv.DynamicMap(
         update_mut_info_table, streams=[range_stream, selection_stream]
     )
-
-    tap_widgets_layout = (mut_info_table_dynamic + pop_data_dynamic).cols(1)
+    tap_widgets_layout = (pop_data_dynamic + mut_info_table_dynamic).cols(1)
 
     return pn.Row(
-        pn.Column(layout.opts(shared_axes=True).cols(1)),
-        pn.panel(
+        layout.opts(shared_axes=True).cols(1),
+        pn.Column(
             tap_widgets_layout,
             align="center",
-            sizing_mode="stretch_width",
-            margin=(0, 0, 0, 200),
         ),
     )
 
