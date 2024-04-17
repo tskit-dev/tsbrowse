@@ -95,3 +95,7 @@ def customise_ticks(plot, element):
     first, last = int(np.round(p.y_range.start)), int(np.round(p.y_range.end))
     p.yaxis.ticker = [first, last]
     p.yaxis.major_label_overrides = {first: str(first), last: str(last)}
+
+
+def center_plot_title(plot, element):
+    plot.state.title.align = "center"
