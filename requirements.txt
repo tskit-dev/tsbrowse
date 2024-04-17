@@ -7,5 +7,6 @@ datashader
 tskit
 pre-commit
 pytest
+msprime
 tszip
 appdirs
