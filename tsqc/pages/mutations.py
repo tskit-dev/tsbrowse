@@ -90,18 +90,8 @@ def make_muts_panel(log_y, tsm):
         hooks=[customise_ticks],
         xlabel="tree density",
     )
-    trees_line = hv.Segments(bp_df, ["position", "y0", "x1", "y1"])
-    trees_line.opts(
-        width=config.PLOT_WIDTH,
-        height=100,
-        yaxis=None,
-        ylabel=None,
-        xlabel="tree breakpoints",
-        line_width=0.5,
-        alpha=0.5,
-    )
 
-    layout = (main << time_hist << site_hist) + trees_hist + trees_line
+    layout = (main << time_hist << site_hist) + trees_hist
 
     if config.ANNOTATIONS_FILE is not None:
         genes_df = tsm.genes_df(config.ANNOTATIONS_FILE)
