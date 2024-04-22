@@ -6,3 +6,14 @@ from . import nodes  # noqa: F401
 from . import overview  # noqa: F401
 from . import popgen  # noqa: F401
 from . import trees  # noqa: F401
+
+PAGES_MAP = {
+    "Overview": overview,
+    "Mutations": mutations,
+    "Edges": edges,
+    "Edge Explorer": edge_explorer,
+    "Trees": trees,
+    "Nodes": nodes,
+    "Windowed Popgen Statistics": popgen,
+    "Site Frequency Spectra": frequency_spectra,
+}
