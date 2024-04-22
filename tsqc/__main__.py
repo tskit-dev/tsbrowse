@@ -32,18 +32,6 @@ def load_data(path):
     return tsm
 
 
-page_map = {
-    "Overview": pages.overview,
-    "Mutations": pages.mutations,
-    "Edges": pages.edges,
-    "Edge Explorer": pages.edge_explorer,
-    "Trees": pages.trees,
-    "Nodes": pages.nodes,
-    "Windowed Popgen Statistics": pages.popgen,
-    "Site Frequency Spectra": pages.frequency_spectra,
-}
-
-
 def get_app(tsm):
     pn.extension(sizing_mode="stretch_width")
     pn.extension("tabulator")
@@ -67,7 +55,7 @@ def get_app(tsm):
         yield pn.indicators.LoadingSpinner(value=True, width=50, height=50)
         try:
             before = time.time()
-            content = page_map[page_name].page(tsm)
+            content = pages.PAGES_MAP[page_name].page(tsm)
             duration = time.time() - before
             logger.info(f"Loaded page {page_name} in {duration:.2f}s")
         except Exception as e:
@@ -85,7 +73,7 @@ def get_app(tsm):
     starting_page = pn.state.session_args.get("page", [b"Overview"])[0].decode()
     page_options = pn.widgets.RadioButtonGroup(
         value=starting_page,
-        options=list(page_map.keys()),
+        options=list(pages.PAGES_MAP.keys()),
         name="Page",
         # sizing_mode="fixed",
         button_type="default",
