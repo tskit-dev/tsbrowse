@@ -64,7 +64,7 @@ def get_app(tsm):
             error_traceback = f"<pre>{error_traceback}</pre>"
             error_panel = pn.pane.Markdown(
                 f"## Error\n\n{error_message}\n\n{error_traceback}",
-                style={"color": "red"},
+                styles={"color": "red"},
             )
             yield error_panel
             return
