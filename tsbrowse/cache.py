@@ -9,7 +9,7 @@ logger = daiquiri.getLogger("cache")
 
 
 def get_cache_dir():
-    cache_dir = pathlib.Path(appdirs.user_cache_dir("tsqc", "tsqc"))
+    cache_dir = pathlib.Path(appdirs.user_cache_dir("tsbrowse", "tsbrowse"))
     cache_dir.mkdir(exist_ok=True, parents=True)
     return cache_dir
 

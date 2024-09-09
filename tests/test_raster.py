@@ -1,8 +1,8 @@
 import msprime
 import pytest
 
-from tsqc import pages
-from tsqc import raster
+from tsbrowse import pages
+from tsbrowse import raster
 
 
 @pytest.fixture(scope="module")

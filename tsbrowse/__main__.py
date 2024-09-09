@@ -18,7 +18,7 @@ from . import model  # noqa
 from . import pages  # noqa
 from . import config  # noqa
 
-logger = daiquiri.getLogger("tsqc")
+logger = daiquiri.getLogger("tsbrowse")
 
 
 def load_data(path):
@@ -109,7 +109,7 @@ def setup_logging(log_level, no_log_filter):
     else:
         # TODO figure out what's useful for users to track here, including
         # bokeh and tornado for now for dev
-        loggers = ["tsqc", "cache", "bokeh", "tornado"]
+        loggers = ["tsbrowse", "cache", "bokeh", "tornado"]
         for logname in loggers:
             logger = daiquiri.getLogger(logname)
             logger.setLevel(log_level)
@@ -142,7 +142,7 @@ def setup_logging(log_level, no_log_filter):
 )
 def main(path, port, show, log_level, no_log_filter, annotations_file):
     """
-    Run the tsqc server.
+    Run the tsbrowse server.
     """
     setup_logging(log_level, no_log_filter)
 
