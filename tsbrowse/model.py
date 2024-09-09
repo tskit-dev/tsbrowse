@@ -11,7 +11,7 @@ import tskit
 from .cache import disk_cache
 
 
-logger = daiquiri.getLogger("tsqc")
+logger = daiquiri.getLogger("tsbrowse")
 
 spec = [
     ("num_edges", numba.int64),

@@ -1,4 +1,4 @@
-from tsqc import model
+from tsbrowse import model
 
 
 def raster_component(page, ts, png_filename, *, width=None, height=None, **kwargs):

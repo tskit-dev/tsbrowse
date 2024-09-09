@@ -6,7 +6,7 @@ import numpy.testing as nt
 import pytest
 import tskit
 
-from tsqc import model
+from tsbrowse import model
 
 
 def single_tree_example_ts():

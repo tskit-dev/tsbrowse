@@ -3,8 +3,8 @@ import pytest
 import tskit
 
 from tests import test_data_model
-from tsqc import model
-from tsqc import pages
+from tsbrowse import model
+from tsbrowse import pages
 
 # TODO give these some pytest metadata so they are named.
 examples = [
