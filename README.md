@@ -8,13 +8,19 @@ It is particularly useful to help evaluate ARGs that have been inferred using to
 [KwARG](https://github.com/a-ignatieva/kwarg),
 [Threads](https://pypi.org/project/threads-arg/), etc.
 
+To view a tskit tree sequence or tszip file first pre-process it:
+
+`python -m tsbrowse preprocess /path/to/trees-file`
+
+This will write a `.tsbrowse` file
+
 To launch the app use:
 
-`python -m tsbrowse /path/to/trees-file`
+`python -m tsbrowse serve /path/to/tsbrowse-file`
 
 On WSL, it may be necessary to disable Numba's CUDA support:
 
-`NUMBA_DISABLE_CUDA=1 python -m tsbrowse /path/to/trees-file`
+`NUMBA_DISABLE_CUDA=1 python -m tsbrowse serve /path/to/tsbrowse-file`
 
 ## Installation
 

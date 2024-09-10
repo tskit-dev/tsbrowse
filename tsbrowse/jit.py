@@ -31,8 +31,8 @@ DEFAULT_NUMBA_ARGS = {
 }
 
 
-def numba_njit(**numba_kwargs):
-    def _numba_njit(func):
+def numba_jit(**numba_kwargs):
+    def _numba_jit(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             return func(*args, **kwargs)  # pragma: no cover
@@ -43,7 +43,7 @@ def numba_njit(**numba_kwargs):
         else:
             return func
 
-    return _numba_njit
+    return _numba_jit
 
 
 def numba_jitclass(spec):

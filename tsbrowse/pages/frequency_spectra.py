@@ -33,7 +33,7 @@ def make_afs_panel(afs_df, log_bins, mode):
         bin_edges = np.linspace(1, len_df, num_bins).astype(int)
         xrotation = 45
 
-    labels = [f"{bin_edges[i]}-{bin_edges[i+1]}" for i in range(len(bin_edges) - 1)]
+    labels = [f"{bin_edges[i]} - {bin_edges[i + 1]}" for i in range(len(bin_edges) - 1)]
     afs_df["bins"] = pd.cut(
         afs_df["allele_count"],
         bins=bin_edges,

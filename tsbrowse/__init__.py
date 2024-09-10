@@ -5,3 +5,5 @@ try:
     __version__ = _version.version
 except ImportError:
     pass
+
+TSBROWSE_DATA_VERSION = "1"

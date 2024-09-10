@@ -33,7 +33,7 @@ def page(tsm):
     hist_panel = pn.bind(make_node_hist_panel, log_y=log_y_checkbox, tsm=tsm)
 
     def make_node_plot(data, node_types):
-        df = data[data.node_flags.isin(node_types)]
+        df = data[data["flags"].isin(node_types)]
         points = df.hvplot.scatter(
             x="ancestors_span",
             y="time",
@@ -64,7 +64,7 @@ def page(tsm):
         )
         return pn.Row(nodes_spans_plot)
 
-    anc_options = list(df_nodes.node_flags.unique())
+    anc_options = list(df_nodes["flags"].unique())
     checkboxes = pn.widgets.CheckBoxGroup(
         name="Node Types", value=anc_options, options=anc_options
     )
