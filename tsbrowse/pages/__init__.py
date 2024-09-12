@@ -14,6 +14,6 @@ PAGES_MAP = {
     "Edge Explorer": edge_explorer,
     "Trees": trees,
     "Nodes": nodes,
-    "Windowed Popgen Statistics": popgen,
-    "Site Frequency Spectra": frequency_spectra,
+    "Popgen": popgen,
+    "SFS": frequency_spectra,
 }

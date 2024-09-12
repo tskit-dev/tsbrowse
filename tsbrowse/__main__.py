@@ -64,9 +64,8 @@ def get_app(tsm):
         options=list(pages.PAGES_MAP.keys()),
         name="Page",
         # sizing_mode="fixed",
-        button_type="default",
-        button_style="outline",
-        orientation="vertical",
+        button_type="success",
+        orientation="horizontal",
     )
     ishow = pn.bind(show, page_name=page_options)
     pn.state.location.sync(page_options, {"value": "page"})
@@ -75,15 +74,17 @@ def get_app(tsm):
         .sidenav#sidebar {
             background-color: #15E3AC;
         }
+        .title {
+            font-size: var(--type-ramp-plus-2-font-size);
+        }
     """
     DEFAULT_PARAMS = {
-        "site": "QC dashboard",
-        "header_background": "#0D5160",
+        "site": "tsbrowse",
     }
 
     return pn.template.FastListTemplate(
-        title=tsm.name,
-        sidebar=[page_options],
+        title=tsm.name if len(tsm.name) <= 15 else f"{tsm.name[:5]}...{tsm.name[-5:]}",
+        header=[page_options],
         main=[ishow],
         raw_css=[RAW_CSS],
         **DEFAULT_PARAMS,
