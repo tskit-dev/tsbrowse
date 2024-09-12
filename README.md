@@ -18,6 +18,10 @@ To launch the app use:
 
 `python -m tsbrowse serve /path/to/tsbrowse-file`
 
+Or to generate a PNG of a specific page use, e.g:
+
+`python -m tsbrowse screenshot /path/to/tsbrowse-file mutations`
+
 On WSL, it may be necessary to disable Numba's CUDA support:
 
 `NUMBA_DISABLE_CUDA=1 python -m tsbrowse serve /path/to/tsbrowse-file`
