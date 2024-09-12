@@ -8,8 +8,8 @@ import numpy as np
 import pandas as pd
 import tskit
 
+from . import jit
 from .cache import disk_cache
-
 
 logger = daiquiri.getLogger("tsbrowse")
 
@@ -28,7 +28,7 @@ spec = [
 ]
 
 
-@numba.experimental.jitclass(spec)
+@jit.numba_jitclass(spec)
 class TreePosition:
     def __init__(
         self,
@@ -91,7 +91,7 @@ def alloc_tree_position(ts):
     )
 
 
-@numba.njit
+@jit.numba_njit()
 def _compute_per_tree_stats(
     tree_pos, num_trees, num_nodes, nodes_time, edges_parent, edges_child
 ):
@@ -163,7 +163,7 @@ def compute_per_tree_stats(ts):
     )
 
 
-@numba.njit
+@jit.numba_njit()
 def _compute_mutation_parent_counts(mutations_parent):
     N = mutations_parent.shape[0]
     num_parents = np.zeros(N, dtype=np.int32)
@@ -176,7 +176,7 @@ def _compute_mutation_parent_counts(mutations_parent):
     return num_parents
 
 
-@numba.njit
+@jit.numba_njit()
 def _compute_mutation_inheritance_counts(
     tree_pos,
     num_nodes,
@@ -259,7 +259,7 @@ def compute_mutation_counts(ts):
     return MutationCounts(num_parents, num_inheritors, num_descendants)
 
 
-@numba.njit
+@jit.numba_njit()
 def _compute_population_mutation_counts(
     tree_pos,
     num_nodes,
@@ -398,7 +398,7 @@ class TSModel:
         return self.summary_df._repr_html_()
 
     @staticmethod
-    @numba.njit
+    @jit.numba_njit()
     def child_bounds(num_nodes, edges_left, edges_right, edges_child):
         num_edges = edges_left.shape[0]
         child_left = np.zeros(num_nodes, dtype=np.float64) + np.inf

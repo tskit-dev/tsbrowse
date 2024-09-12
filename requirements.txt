@@ -1,9 +1,8 @@
 appdirs
 click
+coverage
+coveralls
 daiquiri
-# It's not clear why we need Dask here, but tests are failing
-# otherwise. Pinning to arbitrary working version
-dask[dataframe]==2024.4.1
 datashader
 diskcache
 hvplot
