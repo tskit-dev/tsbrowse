@@ -1,7 +1,12 @@
 # tsbrowse
-Utilities for evaluating large genetic genealogies (e.g. ARGs) stored in the [tskit](https://tskit.dev) "succinct tree sequence" format.
-This is targetted at ARGs that have been inferred using a variety of inference tools such as `tsinfer`, `sc2ts`, `Relate`, `kwARG`, `ARGneedle`, etc. 
-
+Inspect large genetic genealogies (e.g. ARGs) stored in the [tskit](https://tskit.dev) "succinct tree sequence" format,
+via a genome browser style app. _Tsbrowse_ can deal with ARGs of thousands or potentially millions of samples.
+It is particularly useful to help evaluate ARGs that have been inferred using tools such as
+[tsinfer](https://github.com/tskit-dev/tsinfer),
+[sc2ts](https://github.com/tskit-dev/sc2ts),
+[Relate](https://github.com/MyersGroup/relate),
+[KwARG](https://github.com/a-ignatieva/kwarg),
+[Threads](https://pypi.org/project/threads-arg/), etc.
 
 To launch the app use:
 
