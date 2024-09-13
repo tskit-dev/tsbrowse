@@ -16,6 +16,7 @@ from . import model  # noqa
 from . import pages  # noqa
 from . import config  # noqa
 from . import preprocess as preprocess_  # noqa
+from . import raster  # noqa
 
 logger = daiquiri.getLogger("tsbrowse")
 
@@ -157,6 +158,7 @@ def serve(path, port, show, log_level, no_log_filter, annotations_file):
 @click.argument("tszip_path", type=click.Path(exists=True, dir_okay=False))
 @click.option(
     "--output",
+    "-o",
     type=click.Path(dir_okay=False),
     default=None,
     help="Optional output filename, defaults to tszip_path with .tsbrowse extension",
@@ -172,6 +174,49 @@ def preprocess(tszip_path, output):
     preprocess_.preprocess(tszip_path, output, show_progress=True)
     logger.info(f"Preprocessing completed. Output saved to: {output}")
     print(f"Preprocessing completed. You can now view with `tsbrowse serve {output}`")
+
+
+@cli.command()
+@click.argument("tsbrowse_path", type=click.Path(exists=True, dir_okay=False))
+@click.argument(
+    "page",
+    type=click.Choice(
+        [page.__name__.split(".")[-1] for page in pages.PAGES_MAP.values()]
+    ),
+)
+@click.option(
+    "--output",
+    "-o",
+    type=click.Path(dir_okay=False),
+    default=None,
+    help="Optional output filename for the screenshot. If not provided, it will"
+    "be automatically generated based on the input filename and page name.",
+)
+@click.option(
+    "--width", type=int, default=1920, help="Width of the screenshot in pixels"
+)
+@click.option(
+    "--height", type=int, default=1080, help="Height of the screenshot in pixels"
+)
+def screenshot(tsbrowse_path, page, output, width, height):
+    """
+    Create a screenshot of a specific page from a .tsbrowse file.
+
+    TSBROWSE_PATH: Path to the .tsbrowse file to screenshot.
+
+    PAGE: The specific page to capture (e.g., 'overview', 'mutations', 'edges').
+
+    Example usage:
+    tsbrowse screenshot example.tsbrowse overview --output outfile.png
+    """
+    if output is None:
+        base_name = tsbrowse_path.rsplit(".", 1)[0]
+        output = f"{base_name}_{page}.png"
+
+    raster.raster_component(
+        getattr(pages, page).page, tsbrowse_path, output, width=width, height=height
+    )
+    logger.info(f"Screenshot saved to: {output}")
 
 
 if __name__ == "__main__":

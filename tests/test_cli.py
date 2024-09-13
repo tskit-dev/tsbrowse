@@ -2,6 +2,7 @@ import os
 
 import tszip
 from click.testing import CliRunner
+from PIL import Image
 
 from . import test_preprocess
 from tsbrowse import __main__ as main
@@ -28,4 +29,50 @@ def test_preprocess_cli(tmpdir):
     assert os.path.exists(custom_output_path)
     tszip.load(custom_output_path).tables.assert_equals(ts.tables)
 
-    # TODO Load into model and check that the model is correct
+
+def test_screenshot_cli(tmpdir):
+    tszip_path = os.path.join(tmpdir, "test_input.tszip")
+    tsbrowse_path = os.path.join(tmpdir, "test_input.tsbrowse")
+    ts = test_preprocess.single_tree_example_ts()
+    tszip.compress(ts, tszip_path)
+    runner = CliRunner()
+    result = runner.invoke(main.cli, ["preprocess", tszip_path])
+    assert result.exit_code == 0
+
+    # Test with default output
+    result = runner.invoke(main.cli, ["screenshot", tsbrowse_path, "overview"])
+    assert result.exit_code == 0
+    default_output = os.path.join(tmpdir, "test_input_overview.png")
+    assert os.path.exists(default_output)
+    with Image.open(default_output) as img:
+        width, height = img.size
+        assert width == 1920
+        assert height == 1080
+
+    # Test with custom dimensions and path
+    custom_output = os.path.join(tmpdir, "custom_screenshot.png")
+    result = runner.invoke(
+        main.cli,
+        [
+            "screenshot",
+            tsbrowse_path,
+            "edge_explorer",
+            "--output",
+            custom_output,
+            "--width",
+            "1920",
+            "--height",
+            "1080",
+        ],
+    )
+    assert result.exit_code == 0
+    assert os.path.exists(custom_output)
+    with Image.open(custom_output) as img:
+        width, height = img.size
+        assert width == 1920
+        assert height == 1080
+
+    # Test with invalid page
+    result = runner.invoke(main.cli, ["screenshot", tsbrowse_path, "InvalidPage"])
+    assert result.exit_code != 0
+    assert "Invalid value" in result.output
