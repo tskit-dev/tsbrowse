@@ -157,6 +157,7 @@ def serve(path, port, show, log_level, no_log_filter, annotations_file):
 @click.argument("tszip_path", type=click.Path(exists=True, dir_okay=False))
 @click.option(
     "--output",
+    "-o",
     type=click.Path(dir_okay=False),
     default=None,
     help="Optional output filename, defaults to tszip_path with .tsbrowse extension",
@@ -184,6 +185,7 @@ def preprocess(tszip_path, output):
 )
 @click.option(
     "--output",
+    "-o",
     type=click.Path(dir_okay=False),
     default=None,
     help="Optional output filename for the screenshot. If not provided, it will"

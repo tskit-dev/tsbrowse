@@ -29,8 +29,6 @@ def test_preprocess_cli(tmpdir):
     assert os.path.exists(custom_output_path)
     tszip.load(custom_output_path).tables.assert_equals(ts.tables)
 
-    # TODO Load into model and check that the model is correct
-
 
 def test_screenshot_cli(tmpdir):
     tszip_path = os.path.join(tmpdir, "test_input.tszip")
