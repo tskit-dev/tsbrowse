@@ -1,8 +1,10 @@
 from tsbrowse import model
 
 
-def raster_component(page, ts, png_filename, *, width=None, height=None, **kwargs):
-    tsm = model.TSModel(ts)
+def raster_component(
+    page, tsbrowse, png_filename, *, width=None, height=None, **kwargs
+):
+    tsm = model.TSModel(tsbrowse)
     p = page(tsm, **kwargs)
     if width is not None:
         p.width = width

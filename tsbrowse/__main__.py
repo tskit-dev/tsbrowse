@@ -1,12 +1,10 @@
-import pathlib
 import time
 import traceback
+from pathlib import Path
 
 import click
 import daiquiri
 import holoviews as hv
-import tskit
-import tszip
 from holoviews import opts
 
 # Need to import daiquiri and set up logging before importing panel
@@ -17,19 +15,9 @@ import panel as pn  # noqa
 from . import model  # noqa
 from . import pages  # noqa
 from . import config  # noqa
+from . import preprocess as preprocess_  # noqa
 
 logger = daiquiri.getLogger("tsbrowse")
-
-
-def load_data(path):
-    logger.info(f"Loading {path}")
-    try:
-        ts = tskit.load(path)
-    except tskit.FileFormatError:
-        ts = tszip.decompress(path)
-
-    tsm = model.TSModel(ts, path.name)
-    return tsm
 
 
 def get_app(tsm):
@@ -124,7 +112,13 @@ def setup_logging(log_level, no_log_filter):
         logger.setLevel("CRITICAL")
 
 
-@click.command()
+@click.group()
+def cli():
+    """Command line interface for tsbrowse."""
+    pass
+
+
+@cli.command()
 @click.argument("path", type=click.Path(exists=True, dir_okay=False))
 @click.option("--annotations-file", type=click.Path(exists=True, dir_okay=False))
 @click.option("--port", default=8080, help="Port to serve on")
@@ -140,13 +134,13 @@ def setup_logging(log_level, no_log_filter):
     is_flag=True,
     help="Do not filter the output log (advanced debugging only)",
 )
-def main(path, port, show, log_level, no_log_filter, annotations_file):
+def serve(path, port, show, log_level, no_log_filter, annotations_file):
     """
     Run the tsbrowse server.
     """
     setup_logging(log_level, no_log_filter)
 
-    tsm = load_data(pathlib.Path(path))
+    tsm = model.TSModel(path)
     if annotations_file:
         config.ANNOTATIONS_FILE = annotations_file
 
@@ -158,5 +152,26 @@ def main(path, port, show, log_level, no_log_filter, annotations_file):
     pn.serve(app, port=port, show=show, verbose=False)
 
 
+@cli.command()
+@click.argument("tszip_path", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--output",
+    type=click.Path(dir_okay=False),
+    default=None,
+    help="Optional output filename, defaults to tszip_path with .tsbrowse extension",
+)
+def preprocess(tszip_path, output):
+    """
+    Preprocess a tskit tree sequence or tszip file, producing a .tsbrowse file.
+    """
+    tszip_path = Path(tszip_path)
+    if output is None:
+        output = tszip_path.with_suffix(".tsbrowse")
+
+    preprocess_.preprocess(tszip_path, output, show_progress=True)
+    logger.info(f"Preprocessing completed. Output saved to: {output}")
+    print(f"Preprocessing completed. You can now view with `tsbrowse serve {output}`")
+
+
 if __name__ == "__main__":
-    main()
+    cli()
