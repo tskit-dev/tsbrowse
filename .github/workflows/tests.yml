@@ -44,5 +44,18 @@ jobs:
         with:
           python-version: '3.11'
           cache: 'pip'
-      - run: pip install -r requirements.txt
-      - run: python -m pytest tests
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Tests with numba
+        run: coverage run --source=tsbrowse -m pytest -x tests
+    
+      - name: Tests with coverage (no numba)
+        run: TSBROWSE_DISABLE_NUMBA=1 coverage run --source=tsbrowse -m pytest -x tests
+
+      - name: Upload coverage
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          coveralls --service=github
