@@ -217,12 +217,17 @@ def make_annotation_plot(tsm, genes_df):
     return genes_rects
 
 
-def page(tsm):
-    log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
-    muts_panel = pn.bind(make_muts_panel, log_y=log_y_checkbox, tsm=tsm)
-    plot_options = pn.Column(
-        pn.pane.Markdown("### Plot Options"),
-        log_y_checkbox,
-    )
+class MutationsPage:
+    key = "mutations"
+    title = "Mutations"
 
-    return pn.Column(plot_options, muts_panel)
+    def __init__(self, tsm):
+        self.tsm = tsm
+        log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
+        muts_panel = pn.Column(pn.bind(make_muts_panel, log_y=log_y_checkbox, tsm=tsm))
+        plot_options = pn.Column(
+            pn.pane.Markdown("### Plot Options"),
+            log_y_checkbox,
+        )
+        self.content = muts_panel
+        self.sidebar = plot_options

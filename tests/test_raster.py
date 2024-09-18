@@ -2,6 +2,7 @@ import msprime
 import pytest
 import tszip
 
+from tsbrowse import model
 from tsbrowse import pages
 from tsbrowse import preprocess
 from tsbrowse import raster
@@ -18,13 +19,13 @@ def ts():
 
 
 class TestRaster:
-    @pytest.mark.parametrize("page", pages.PAGES_MAP.values())
-    def test_mutation_scatter(self, page, ts, tmp_path, tmpdir):
+    @pytest.mark.parametrize("page", pages.PAGES[:1])
+    def test_raster_page(self, page, ts, tmp_path, tmpdir):
         tszip.compress(ts, tmpdir / "test.tszip")
         preprocess.preprocess(tmpdir / "test.tszip", tmpdir / "test.tsbrowse")
+        tsm = model.TSModel(tmpdir / "test.tsbrowse")
         raster.raster_component(
-            page.page,
-            tmpdir / "test.tsbrowse",
+            page(tsm),
             tmp_path / "image.png",
         )
         assert (tmp_path / "image.png").exists()

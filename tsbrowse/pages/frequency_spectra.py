@@ -61,39 +61,44 @@ def make_afs_panel(afs_df, log_bins, mode):
     return afs_bar
 
 
-def page(tsm):
-    log_bins_chk = pn.widgets.Checkbox(name="log-scale bins", value=True)
-    span_normalise_chk = pn.widgets.Checkbox(name="span normalise", value=False)
-    afs_type_radio = pn.widgets.RadioButtonGroup(
-        name="SFS type", options=["folded", "unfolded"], value="folded"
-    )
-    plot_options = pn.Column(
-        pn.pane.Markdown("### Plot options"),
-        pn.Row(pn.Column(log_bins_chk, span_normalise_chk), afs_type_radio),
-    )
+class FrequencySpectraPage:
+    key = "sfs"
+    title = "SFS"
 
-    afs_site_df = pn.bind(
-        make_afs_df, tsm.ts, span_normalise_chk, afs_type_radio, "site"
-    )
-    afs_site_bar = pn.bind(
-        make_afs_panel, afs_df=afs_site_df, log_bins=log_bins_chk, mode="site"
-    )
-    afs_branch_df = pn.bind(
-        make_afs_df, tsm.ts, span_normalise_chk, afs_type_radio, "branch"
-    )
-    afs_branch_bar = pn.bind(
-        make_afs_panel, afs_df=afs_branch_df, log_bins=log_bins_chk, mode="branch"
-    )
+    def __init__(self, tsm):
+        log_bins_chk = pn.widgets.Checkbox(name="log-scale bins", value=True)
+        span_normalise_chk = pn.widgets.Checkbox(name="span normalise", value=False)
+        afs_type_radio = pn.widgets.RadioButtonGroup(
+            name="SFS type", options=["folded", "unfolded"], value="folded"
+        )
+        plot_options = pn.Column(
+            pn.pane.Markdown("### Plot options"),
+            pn.Row(pn.Column(log_bins_chk, span_normalise_chk), afs_type_radio),
+        )
 
-    site_count_table = pn.widgets.Tabulator(
-        afs_site_df, show_index=False, disabled=True, layout="fit_data_stretch"
-    )
-    branch_count_table = pn.widgets.Tabulator(
-        afs_branch_df, show_index=False, disabled=True, layout="fit_data_stretch"
-    )
-    layout = pn.Row(
-        pn.Column(afs_site_bar, site_count_table),
-        pn.Column(afs_branch_bar, branch_count_table),
-    )
+        afs_site_df = pn.bind(
+            make_afs_df, tsm.ts, span_normalise_chk, afs_type_radio, "site"
+        )
+        afs_site_bar = pn.bind(
+            make_afs_panel, afs_df=afs_site_df, log_bins=log_bins_chk, mode="site"
+        )
+        afs_branch_df = pn.bind(
+            make_afs_df, tsm.ts, span_normalise_chk, afs_type_radio, "branch"
+        )
+        afs_branch_bar = pn.bind(
+            make_afs_panel, afs_df=afs_branch_df, log_bins=log_bins_chk, mode="branch"
+        )
 
-    return pn.Column(plot_options, layout, sizing_mode="stretch_width")
+        site_count_table = pn.widgets.Tabulator(
+            afs_site_df, show_index=False, disabled=True, layout="fit_data_stretch"
+        )
+        branch_count_table = pn.widgets.Tabulator(
+            afs_branch_df, show_index=False, disabled=True, layout="fit_data_stretch"
+        )
+        layout = pn.Row(
+            pn.Column(afs_site_bar, site_count_table),
+            pn.Column(afs_branch_bar, branch_count_table),
+        )
+
+        self.content = pn.Column(layout, sizing_mode="stretch_width")
+        self.sidebar = plot_options

@@ -47,29 +47,34 @@ def make_one_way_stats(ts, windows_trees, windows_count, span_normalise, statist
     return layout
 
 
-def page(tsm):
-    ts = tsm.ts
-    windows_trees = pn.widgets.Checkbox(name="Tree-based windows", value=False)
-    windows_count = pn.widgets.IntSlider(
-        name="Window count", start=1, end=100_000, value=1000
-    )
-    span_normalise = pn.widgets.Checkbox(name="Span normalise", value=True)
-    stat_radiobox = pn.widgets.RadioButtonGroup(
-        name="Statistic",
-        options=["Diversity", "Segregating Sites"],
-        value="Segregating Sites",
-    )
-    plot_options = pn.Column(
-        pn.Row(pn.Column(windows_trees, span_normalise), stat_radiobox),
-        windows_count,
-    )
-    one_way_panel = pn.bind(
-        make_one_way_stats,
-        ts=ts,
-        windows_trees=windows_trees,
-        windows_count=windows_count,
-        span_normalise=span_normalise,
-        statistic=stat_radiobox,
-    )
-    windows_trees.jslink(windows_count, value="disabled")
-    return pn.Column(plot_options, one_way_panel)
+class PopgenPage:
+    key = "popgen"
+    title = "Pop Gen"
+
+    def __init__(self, tsm):
+        ts = tsm.ts
+        windows_trees = pn.widgets.Checkbox(name="Tree-based windows", value=False)
+        windows_count = pn.widgets.IntSlider(
+            name="Window count", start=1, end=100_000, value=1000
+        )
+        span_normalise = pn.widgets.Checkbox(name="Span normalise", value=True)
+        stat_radiobox = pn.widgets.RadioButtonGroup(
+            name="Statistic",
+            options=["Diversity", "Segregating Sites"],
+            value="Segregating Sites",
+        )
+        plot_options = pn.Column(
+            pn.Row(pn.Column(windows_trees, span_normalise), stat_radiobox),
+            windows_count,
+        )
+        one_way_panel = pn.bind(
+            make_one_way_stats,
+            ts=ts,
+            windows_trees=windows_trees,
+            windows_count=windows_count,
+            span_normalise=span_normalise,
+            statistic=stat_radiobox,
+        )
+        windows_trees.jslink(windows_count, value="disabled")
+        self.content = pn.Column(one_way_panel)
+        self.sidebar = pn.Column(plot_options)

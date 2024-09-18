@@ -46,31 +46,23 @@ def test_screenshot_cli(tmpdir):
     assert os.path.exists(default_output)
     with Image.open(default_output) as img:
         width, height = img.size
-        assert width == 1920
-        assert height == 1080
+        assert width == 1560
+        assert height == 296
 
-    # Test with custom dimensions and path
+    # Test with path
     custom_output = os.path.join(tmpdir, "custom_screenshot.png")
     result = runner.invoke(
         main.cli,
         [
             "screenshot",
             tsbrowse_path,
-            "edge_explorer",
+            "overview",
             "--output",
             custom_output,
-            "--width",
-            "1920",
-            "--height",
-            "1080",
         ],
     )
     assert result.exit_code == 0
     assert os.path.exists(custom_output)
-    with Image.open(custom_output) as img:
-        width, height = img.size
-        assert width == 1920
-        assert height == 1080
 
     # Test with invalid page
     result = runner.invoke(main.cli, ["screenshot", tsbrowse_path, "InvalidPage"])

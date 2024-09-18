@@ -88,18 +88,23 @@ def make_edges_panel(log_y, node_type, tsm):
     return pn.Column(main, pn.Row(gspan_hist, tspan_hist, area_hist))
 
 
-def page(tsm):
-    log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
-    node_type_radio = pn.widgets.RadioBoxGroup(
-        options=["Parent node", "Child node"], value="Parent node", inline=True
-    )
-    # using a markdown widget to display radiobox title
-    # (https://github.com/holoviz/panel/issues/1313):
-    radio_title = pn.pane.Markdown("Plot time of:")
-    options_box = pn.WidgetBox(
-        "### Plot options", log_y_checkbox, radio_title, node_type_radio
-    )
-    edges_panel = pn.bind(
-        make_edges_panel, log_y=log_y_checkbox, node_type=node_type_radio, tsm=tsm
-    )
-    return pn.Column(options_box, edges_panel)
+class EdgesPage:
+    key = "edges"
+    title = "Edges"
+
+    def __init__(self, tsm):
+        log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
+        node_type_radio = pn.widgets.RadioBoxGroup(
+            options=["Parent node", "Child node"], value="Parent node", inline=True
+        )
+        # using a markdown widget to display radiobox title
+        # (https://github.com/holoviz/panel/issues/1313):
+        radio_title = pn.pane.Markdown("Plot time of:")
+        options_box = pn.WidgetBox(
+            "### Plot options", log_y_checkbox, radio_title, node_type_radio
+        )
+        edges_panel = pn.bind(
+            make_edges_panel, log_y=log_y_checkbox, node_type=node_type_radio, tsm=tsm
+        )
+        self.content = pn.Column(edges_panel)
+        self.sidebar = pn.Column(options_box)
