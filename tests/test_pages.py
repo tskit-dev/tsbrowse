@@ -18,23 +18,14 @@ examples = [
     test_preprocess.single_tree_with_polytomies_example_ts(),
 ]
 
-display_pages = [
-    pages.overview,
-    pages.mutations,
-    pages.edges,
-    pages.edge_explorer,
-    pages.trees,
-    pages.nodes,
-    pages.popgen,
-]
-
 
 class TestPages:
     @pytest.mark.parametrize("ts", examples)
-    @pytest.mark.parametrize("page", display_pages)
+    @pytest.mark.parametrize("page", pages.PAGES)
     def test_is_panel_layout_instance(self, ts, page, tmpdir):
         tszip.compress(ts, tmpdir / "test.tszip")
         preprocess.preprocess(tmpdir / "test.tszip", tmpdir / "test.tsbrowse")
         tsm = model.TSModel(tmpdir / "test.tsbrowse")
-        ui = page.page(tsm)
-        assert isinstance(ui, panel.layout.base.Panel)
+        page = page(tsm)
+        assert isinstance(page.content, panel.layout.base.Panel)
+        assert isinstance(page.sidebar, panel.layout.base.Panel)
