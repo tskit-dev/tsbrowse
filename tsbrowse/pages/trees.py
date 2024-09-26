@@ -18,7 +18,7 @@ class TreesPage:
         log_y_checkbox = pn.widgets.Checkbox(name="log y-axis", value=True)
 
         plot_options = pn.Column(
-            pn.pane.Markdown("# Plot Options"),
+            pn.pane.Markdown("# Trees"),
             log_y_checkbox,
         )
 

@@ -72,7 +72,7 @@ class FrequencySpectraPage:
             name="SFS type", options=["folded", "unfolded"], value="folded"
         )
         plot_options = pn.Column(
-            pn.pane.Markdown("### Plot options"),
+            pn.pane.Markdown("# Frequency Spectra"),
             pn.Row(pn.Column(log_bins_chk, span_normalise_chk), afs_type_radio),
         )
 

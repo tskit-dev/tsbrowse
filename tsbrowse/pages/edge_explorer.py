@@ -49,4 +49,4 @@ class EdgeExplorerPage:
         dynamic_plot = pn.bind(plot_data, node_id=node_id_input)
 
         self.content = pn.Column(dynamic_plot, tabulator)
-        self.sidebar = pn.Column(node_id_input)
+        self.sidebar = pn.Column(pn.pane.Markdown("# Edge Explorer"), node_id_input)
