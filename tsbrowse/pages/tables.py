@@ -10,7 +10,17 @@ class TablesPage:
 
         self.table_selector = pn.widgets.Select(
             name="Select Table",
-            options=["", "edges", "trees", "mutations", "nodes", "sites"],
+            options=[
+                "edges",
+                "trees",
+                "mutations",
+                "nodes",
+                "sites",
+                "individuals",
+                "populations",
+                "migrations",
+                "provenances",
+            ],
             value="",
         )
 
@@ -47,7 +57,7 @@ class TablesPage:
             except Exception as e:
                 self.filter_status.object = f"Error in filter: {str(e)}"
         else:
-            self.filter_status.object = ""
+            self.filter_status.object = f"No filter: {len(df)} rows"
 
         return pn.widgets.Tabulator(
             df,
