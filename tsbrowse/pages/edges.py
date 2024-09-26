@@ -37,7 +37,7 @@ def make_edges_panel(log_y, node_type, tsm):
     streams = [range_stream]
     filtered = lines.apply(filter_points, streams=streams)
     hover = filtered.apply(hover_points)
-    shaded = hd.datashade(filtered, streams=streams, cmap=config.PLOT_COLOURS[1:])
+    shaded = hd.datashade(lines, streams=streams, cmap=config.PLOT_COLOURS[1:])
     hover_tool = bkm.HoverTool(
         tooltips=[
             ("child", "@child"),

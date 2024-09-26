@@ -49,7 +49,7 @@ class NodesPage:
             filtered = points.apply(filter_points, streams=streams)
             hover = filtered.apply(hover_points, threshold=config.THRESHOLD)
             shaded = hd.datashade(
-                filtered,
+                points,
                 width=400,
                 height=400,
                 streams=streams,
