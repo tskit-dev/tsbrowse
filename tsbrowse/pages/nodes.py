@@ -79,4 +79,6 @@ class NodesPage:
         )
 
         self.content = pn.Column(nodes_panel, hist_panel)
-        self.sidebar = pn.Column(node_options, log_y_checkbox)
+        self.sidebar = pn.Column(
+            pn.pane.Markdown("# Nodes"), node_options, log_y_checkbox
+        )

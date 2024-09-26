@@ -100,11 +100,9 @@ class EdgesPage:
         # using a markdown widget to display radiobox title
         # (https://github.com/holoviz/panel/issues/1313):
         radio_title = pn.pane.Markdown("Plot time of:")
-        options_box = pn.WidgetBox(
-            "### Plot options", log_y_checkbox, radio_title, node_type_radio
-        )
+        options_box = pn.WidgetBox(log_y_checkbox, radio_title, node_type_radio)
         edges_panel = pn.bind(
             make_edges_panel, log_y=log_y_checkbox, node_type=node_type_radio, tsm=tsm
         )
         self.content = pn.Column(edges_panel)
-        self.sidebar = pn.Column(options_box)
+        self.sidebar = pn.Column(pn.pane.Markdown("# Edges"), options_box)

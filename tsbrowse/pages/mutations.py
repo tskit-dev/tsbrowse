@@ -226,7 +226,7 @@ class MutationsPage:
         log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
         muts_panel = pn.Column(pn.bind(make_muts_panel, log_y=log_y_checkbox, tsm=tsm))
         plot_options = pn.Column(
-            pn.pane.Markdown("### Plot Options"),
+            pn.pane.Markdown("# Mutations"),
             log_y_checkbox,
         )
         self.content = muts_panel

@@ -77,4 +77,4 @@ class PopgenPage:
         )
         windows_trees.jslink(windows_count, value="disabled")
         self.content = pn.Column(one_way_panel)
-        self.sidebar = pn.Column(plot_options)
+        self.sidebar = pn.Column(pn.pane.Markdown("# Pop Gen"), plot_options)

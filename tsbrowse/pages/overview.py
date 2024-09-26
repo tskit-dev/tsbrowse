@@ -8,4 +8,4 @@ class OverviewPage:
     def __init__(self, tsm):
         self.tsm = tsm
         self.content = pn.Column(pn.pane.HTML(self.tsm.ts))
-        self.sidebar = pn.Column(pn.pane.HTML("Sidebar"))
+        self.sidebar = pn.Column(pn.pane.Markdown("# Overview"))

@@ -5,10 +5,12 @@ from . import mutations  # noqa: F401
 from . import nodes  # noqa: F401
 from . import overview  # noqa: F401
 from . import popgen  # noqa: F401
+from . import tables  # noqa: F401
 from . import trees  # noqa: F401
 
 PAGES = [
     overview.OverviewPage,
+    tables.TablesPage,
     mutations.MutationsPage,
     edges.EdgesPage,
     edge_explorer.EdgeExplorerPage,
