@@ -32,7 +32,17 @@ class TSModel:
             )
         self.ts = tszip.load(tsbrowse_path)
         self.name = tsbrowse_path.stem
-        for table_name in ["edges", "trees", "mutations", "nodes", "sites"]:
+        for table_name in [
+            "edges",
+            "trees",
+            "mutations",
+            "nodes",
+            "sites",
+            "individuals",
+            "populations",
+            "migrations",
+            "provenances",
+        ]:
             # filter out ragged arrays with offset
             array_names = set(root[table_name].keys())
             ragged_array_names = {
@@ -45,18 +55,18 @@ class TSModel:
             array_names -= {f"{name}_offset" for name in ragged_array_names}
             arrays = {name: root[table_name][name][:] for name in array_names}
             ragged_array_names -= {"metadata"}
-            # Not needed for now
-            # for name in ragged_array_names:
-            #     array = root[table_name][name][:]
-            #     offsets = root[table_name][f"{name}_offset"][:]
-            #     arrays[name] = np.array(
-            # [
-            #     array[s].tobytes().decode("utf-8")
-            #     for s in (
-            #         slice(start, end) for start, end in zip(offsets[:-1], offsets[1:])
-            #     )
-            # ]
-            # )
+            for name in ragged_array_names:
+                array = root[table_name][name][:]
+                offsets = root[table_name][f"{name}_offset"][:]
+                arrays[name] = np.array(
+                    [
+                        array[s].tobytes().decode("utf-8")
+                        for s in (
+                            slice(start, end)
+                            for start, end in zip(offsets[:-1], offsets[1:])
+                        )
+                    ]
+                )
             df = pd.DataFrame(arrays)
             setattr(self, f"{table_name}_df", df)
 
