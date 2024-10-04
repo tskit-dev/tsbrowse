@@ -9,7 +9,6 @@ from bokeh.models import HoverTool
 from .. import config
 from ..plot_helpers import center_plot_title
 from ..plot_helpers import customise_ticks
-from ..plot_helpers import filter_points
 from ..plot_helpers import hover_points
 from ..plot_helpers import make_hist_on_axis
 from ..plot_helpers import selected_hist
@@ -35,8 +34,6 @@ def make_muts_panel(log_y, tsm):
 
     range_stream = hv.streams.RangeXY(source=points)
 
-    filtered = points.apply(filter_points, streams=[range_stream])
-
     tooltips = [
         ("ID", "@id"),
         ("parents", "@num_parents"),
@@ -44,7 +41,7 @@ def make_muts_panel(log_y, tsm):
         ("inheritors", "@num_inheritors"),
     ]
     hover = HoverTool(tooltips=tooltips)
-    filtered.opts(
+    points.opts(
         color="num_inheritors",
         alpha="num_inheritors",
         cmap="BuGn",
@@ -53,9 +50,9 @@ def make_muts_panel(log_y, tsm):
         tools=[hover, "tap"],
     )
 
-    hover = filtered.apply(hover_points)
+    hover = points.apply(hover_points)
     shaded = hd.datashade(
-        filtered,
+        points,
         width=400,
         height=400,
         streams=[range_stream],
