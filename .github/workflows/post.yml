@@ -6,21 +6,20 @@ on:
 jobs:
   post:
     name: Python
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        python: [ "3.11" ]
-        os:  [ ubuntu-latest, ]
-    defaults:
-      run:
-        shell: bash
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    env:
+      SCREENSHOTS_BRANCH: "pr-screenshots"
     steps:
-      
       - name: Checkout
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      - uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -36,27 +35,52 @@ jobs:
           python -m tsbrowse screenshot out.tsbrowse edges
           python -m tsbrowse screenshot out.tsbrowse nodes
 
-      - name: Generate comment
+      - name: Commit Screenshots
         run: |
-          echo '<details><summary>Screenshots</summary>' > comment.md
-          echo >> comment.md
-          for img in *.png; do
-            data=$(base64 -w 0 "$img")
-            echo "![Screenshot](data:image/png;base64,$data)" >> comment.md
-            echo >> comment.md
-          done
-          echo '</details>' >> comment.md
+          git config --global user.name 'GitHub Action'
+          git config --global user.email 'action@github.com'
+          pr_number="${{ github.event.pull_request.number }}"
+          screenshot_dir="pr_${pr_number}"
+          
+          # Check if the screenshots branch exists, create it if it doesn't
+          if ! git ls-remote --exit-code --heads origin $SCREENSHOTS_BRANCH; then
+            git checkout --orphan $SCREENSHOTS_BRANCH
+            git rm -rf .
+            git commit --allow-empty -m "Initial commit for screenshots branch"
+            git push origin $SCREENSHOTS_BRANCH
+          else
+            git fetch origin $SCREENSHOTS_BRANCH
+            git checkout $SCREENSHOTS_BRANCH
+          fi
+          
+          # Create PR-specific directory and move screenshots into it
+          mkdir -p $screenshot_dir
+          mv *.png $screenshot_dir/
+          
+          git add $screenshot_dir
+          git commit -m "Add screenshots for PR #${pr_number}"
+          git push origin $SCREENSHOTS_BRANCH
 
-      - name: Post comment
+      - name: Post Comment
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-              const fs = require('fs');
-              const comment_body = fs.readFileSync('comment.md', 'utf8');
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: context.payload.number,
-                body: comment_body,
-              });
+            const fs = require('fs').promises;
+            
+            const prNumber = context.payload.pull_request.number;
+            const screenshotDir = `pr_${prNumber}`;
+            const pngFiles = (await fs.readdir(screenshotDir)).filter(file => file.endsWith('.png'));
+            
+            let commentBody = '## Screenshots\n\n';
+            for (const file of pngFiles) {
+              const imageUrl = `https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/${process.env.SCREENSHOTS_BRANCH}/${screenshotDir}/${file}`;
+              commentBody += `![${file}](${imageUrl})\n\n`;
+            }
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: commentBody,
+            });
