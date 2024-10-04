@@ -50,11 +50,15 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const fs = require('fs');
-            const comment_body = fs.readFileSync('comment.md', 'utf8');
-            await github.rest.issues.createComment({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: context.payload.pull_request.number,
-              body: comment_body,
-            });
+              const fs = require('fs');
+              const comment_body = fs.readFileSync('comment.md', 'utf8');
+              const pullRequest = context.payload.workflow_run.pull_requests[0];
+              if (!pullRequest) {
+                throw new Error("No associated pull request found.");
+              }
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pullRequest.number,
+                body: comment_body,
+              });
