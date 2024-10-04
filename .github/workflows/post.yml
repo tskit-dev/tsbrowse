@@ -42,7 +42,6 @@ jobs:
           pr_number="${{ github.event.pull_request.number }}"
           screenshot_dir="pr_${pr_number}"
           
-          # Check if the screenshots branch exists, create it if it doesn't
           if ! git ls-remote --exit-code --heads origin $SCREENSHOTS_BRANCH; then
             git checkout --orphan $SCREENSHOTS_BRANCH
             git rm -rf .
@@ -53,15 +52,14 @@ jobs:
             git checkout $SCREENSHOTS_BRANCH
           fi
           
-          # Create PR-specific directory and move screenshots into it
           mkdir -p $screenshot_dir
           mv *.png $screenshot_dir/
           
           git add $screenshot_dir
-          git commit -m "Add screenshots for PR #${pr_number}"
+          git commit -m "Update screenshots for PR #${pr_number}"
           git push origin $SCREENSHOTS_BRANCH
 
-      - name: Post Comment
+      - name: Update or Post Comment
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -72,15 +70,39 @@ jobs:
             const screenshotDir = `pr_${prNumber}`;
             const pngFiles = (await fs.readdir(screenshotDir)).filter(file => file.endsWith('.png'));
             
-            let commentBody = '## Screenshots\n\n';
+            let commentBody = '## Automated Screenshots\n\n';
+            commentBody += 'These screenshots are automatically updated as the PR changes.\n\n';
+            commentBody += '<details><summary>Click to view screenshots</summary>\n\n';
             for (const file of pngFiles) {
               const imageUrl = `https://raw.githubusercontent.com/${context.repo.owner}/${context.repo.repo}/${process.env.SCREENSHOTS_BRANCH}/${screenshotDir}/${file}`;
-              commentBody += `![${file}](${imageUrl})\n\n`;
+              commentBody += `### ${file}\n\n![${file}](${imageUrl})\n\n`;
             }
+            commentBody += '</details>';
             
-            await github.rest.issues.createComment({
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
-              body: commentBody,
             });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('## Automated Screenshots')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody,
+              });
+              console.log('Updated existing comment');
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: commentBody,
+              });
+              console.log('Created new comment');
+            }
