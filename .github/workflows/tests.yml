@@ -50,20 +50,6 @@ jobs:
 
       - name: Tests with numba
         run: coverage run --source=tsbrowse -m pytest -x tests
-    
-      - name: Create Screenshots
-        run: |
-          msp simulate --length 1000 --recombination-rate 0.01 --mutation-rate 0.01 100 out.trees
-          python -m tsbrowse preprocess out.trees
-          python -m tsbrowse screenshot out.tsbrowse mutations
-          python -m tsbrowse screenshot out.tsbrowse edges
-          python -m tsbrowse screenshot out.tsbrowse nodes
-          
-      - name: Upload Screenshot Artifact
-        uses: actions/upload-artifact@v3
-        with:
-          name: screenshots
-          path: "*.png"
 
       - name: Tests with coverage (no numba)
         run: TSBROWSE_DISABLE_NUMBA=1 coverage run --source=tsbrowse -m pytest -x tests
