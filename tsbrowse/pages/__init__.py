@@ -1,10 +1,7 @@
-from . import edge_explorer  # noqa: F401
 from . import edges  # noqa: F401
-from . import frequency_spectra  # noqa: F401
 from . import mutations  # noqa: F401
 from . import nodes  # noqa: F401
 from . import overview  # noqa: F401
-from . import popgen  # noqa: F401
 from . import tables  # noqa: F401
 from . import trees  # noqa: F401
 
@@ -13,11 +10,8 @@ PAGES = [
     tables.TablesPage,
     mutations.MutationsPage,
     edges.EdgesPage,
-    edge_explorer.EdgeExplorerPage,
     trees.TreesPage,
     nodes.NodesPage,
-    popgen.PopgenPage,
-    frequency_spectra.FrequencySpectraPage,
 ]
 PAGES_MAP = {page.key: page for page in PAGES}
 PAGES_BY_TITLE = {page.title: page for page in PAGES}
