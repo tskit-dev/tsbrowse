@@ -68,6 +68,7 @@ class TSModel:
                     ]
                 )
             df = pd.DataFrame(arrays)
+            df["id"] = df.index
             setattr(self, f"{table_name}_df", df)
 
     @property

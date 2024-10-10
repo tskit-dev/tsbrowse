@@ -41,7 +41,7 @@ class NodesPage:
             points = df.hvplot.scatter(
                 x="ancestors_span",
                 y="time",
-                hover_cols=["ancestors_span", "time"],
+                hover_cols=["id", "ancestors_span", "time"],
             ).opts(width=config.PLOT_WIDTH, height=config.PLOT_HEIGHT)
 
             range_stream = hv.streams.RangeXY(source=points)

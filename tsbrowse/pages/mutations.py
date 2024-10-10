@@ -9,12 +9,11 @@ from bokeh.models import HoverTool
 from .. import config
 from ..plot_helpers import center_plot_title
 from ..plot_helpers import customise_ticks
+from ..plot_helpers import filter_points
 from ..plot_helpers import hover_points
 from ..plot_helpers import make_hist_on_axis
 from ..plot_helpers import selected_hist
 
-
-pn.extension('floatpanel')
 
 def make_muts_panel(log_y, tsm):
     plot_width = 1000
@@ -24,43 +23,38 @@ def make_muts_panel(log_y, tsm):
         muts_df["log_time"] = np.log10(1 + tsm.mutations_df["time"])
         y_dim = "log_time"
 
-    float_display = pn.pane.Markdown(f"SAY WHAT")
-
-
+    hover_tool = HoverTool(
+        tooltips=[
+            ("ID", "@id"),
+            ("parents", "@num_parents"),
+            ("descendants", "@num_descendants"),
+            ("inheritors", "@num_inheritors"),
+        ]
+    )
     points = muts_df.hvplot.scatter(
         x="position",
         y=y_dim,
         hover_cols=["id", "num_parents", "num_descendants", "num_inheritors"],
-    )
-    points.opts(
+    ).opts(
         width=plot_width,
         height=config.PLOT_HEIGHT,
+        color="num_inheritors",
+        cmap="winter",
+        colorbar_position="left",
+        clabel="inheritors",
+        tools=[hover_tool, "tap"],
     )
 
     range_stream = hv.streams.RangeXY(source=points)
+    streams = [range_stream]
 
-    tooltips = [
-        ("ID", "@id"),
-        ("parents", "@num_parents"),
-        ("descendants", "@num_descendants"),
-        ("inheritors", "@num_inheritors"),
-    ]
-    hover = HoverTool(tooltips=tooltips)
-    points.opts(
-        color="num_inheritors",
-        alpha="num_inheritors",
-        cmap="BuGn",
-        colorbar_position="left",
-        clabel="inheritors",
-        tools=[hover, "tap"],
-    )
-
-    hover = points.apply(hover_points)
+    filtered = points.apply(filter_points, streams=streams)
+    hover = filtered.apply(hover_points, threshold=config.THRESHOLD)
     shaded = hd.datashade(
         points,
         width=400,
         height=400,
-        streams=[range_stream],
+        streams=streams,
         cmap=config.PLOT_COLOURS[1:],
     )
 
@@ -69,11 +63,11 @@ def make_muts_panel(log_y, tsm):
     )
 
     time_hist = hv.DynamicMap(
-        make_hist_on_axis(dimension=y_dim, points=points), streams=[range_stream]
+        make_hist_on_axis(dimension=y_dim, points=points), streams=streams
     )
     site_hist = hv.DynamicMap(
         make_hist_on_axis(dimension="position", points=points),
-        streams=[range_stream],
+        streams=streams,
     )
 
     breakpoints = tsm.ts.breakpoints(as_array=True)
@@ -151,7 +145,7 @@ def make_muts_panel(log_y, tsm):
             return bars
         else:
             return hv.Bars([], "population", "frequency").opts(
-                title="Population frequencies", 
+                title="Population frequencies",
                 default_tools=[],
                 tools=["hover"],
                 hooks=[center_plot_title],
@@ -180,16 +174,21 @@ def make_muts_panel(log_y, tsm):
     tap_widgets_layout = (pop_data_dynamic + mut_info_table_dynamic).cols(1)
     float_panel = pn.layout.FloatPanel(
         pn.Column(
-            tap_widgets_layout, 
+            tap_widgets_layout,
             align="center",
         ),
         name="Mutation information",
         position="left-top",
-        config = {
-            "contentSize": {"width": 450, "height": 650},
-            "headerControls": {"close": "remove", "maximize": "remove", "normalize": "remove", "minimize": "remove"}
+        config={
+            "contentSize": {"width": 450, "height": 660},
+            "headerControls": {
+                "close": "remove",
+                "maximize": "remove",
+                "normalize": "remove",
+                "minimize": "remove",
+            },
         },
-        visible=False # Initially not shown
+        visible=False,  # Initially not shown
     )
     return pn.Column(
         float_panel,
