@@ -14,6 +14,8 @@ from ..plot_helpers import make_hist_on_axis
 from ..plot_helpers import selected_hist
 
 
+pn.extension('floatpanel')
+
 def make_muts_panel(log_y, tsm):
     plot_width = 1000
     muts_df = tsm.mutations_df
@@ -21,6 +23,9 @@ def make_muts_panel(log_y, tsm):
     if log_y:
         muts_df["log_time"] = np.log10(1 + tsm.mutations_df["time"])
         y_dim = "log_time"
+
+    float_display = pn.pane.Markdown(f"SAY WHAT")
+
 
     points = muts_df.hvplot.scatter(
         x="position",
@@ -112,7 +117,7 @@ def make_muts_panel(log_y, tsm):
     def update_pop_freq_plot(x_range, y_range, index):
         if not index:
             return hv.Bars([], "population", "frequency").opts(
-                title="Tap on a mutation",
+                title="Population frequencies",
                 default_tools=[],
                 tools=["hover"],
                 hooks=[center_plot_title],
@@ -146,7 +151,7 @@ def make_muts_panel(log_y, tsm):
             return bars
         else:
             return hv.Bars([], "population", "frequency").opts(
-                title="Tap on a mutation",
+                title="Population frequencies", 
                 default_tools=[],
                 tools=["hover"],
                 hooks=[center_plot_title],
@@ -154,7 +159,9 @@ def make_muts_panel(log_y, tsm):
 
     def update_mut_info_table(x_range, y_range, index):
         if not index:
+            float_panel.visible = False
             return hv.Table([], kdims=["mutation"], vdims=["value"])
+        float_panel.visible = True
         mut_data = get_mut_data(x_range, y_range, index)
         pops = [col for col in mut_data.index if "pop_" in col]
         mut_data = mut_data.drop(pops)
@@ -171,13 +178,22 @@ def make_muts_panel(log_y, tsm):
         update_mut_info_table, streams=[range_stream, selection_stream]
     )
     tap_widgets_layout = (pop_data_dynamic + mut_info_table_dynamic).cols(1)
-
-    return pn.Row(
-        layout.opts(shared_axes=True).cols(1),
+    float_panel = pn.layout.FloatPanel(
         pn.Column(
-            tap_widgets_layout,
+            tap_widgets_layout, 
             align="center",
         ),
+        name="Mutation information",
+        position="left-top",
+        config = {
+            "contentSize": {"width": 450, "height": 650},
+            "headerControls": {"close": "remove", "maximize": "remove", "normalize": "remove", "minimize": "remove"}
+        },
+        visible=False # Initially not shown
+    )
+    return pn.Column(
+        float_panel,
+        layout.opts(shared_axes=True).cols(1),
     )
 
 
