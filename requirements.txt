@@ -6,6 +6,7 @@ daiquiri
 datashader
 diskcache
 hvplot
+matplotlib
 msprime
 panel
 pre-commit
