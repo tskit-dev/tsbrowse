@@ -32,6 +32,7 @@ WANTED_COLUMNS = {
         "position",
         "num_parents",
         "num_descendants",
+        "num_inheritors",
         "inherited_state",
     ],
     "nodes": [
@@ -45,9 +46,7 @@ WANTED_COLUMNS = {
     ],
     "sites": ["id", "position", "ancestral_state", "num_mutations"],
     "individuals": ["id", "flags", "parents", "location"],
-    "populations": [
-        "id",
-    ],
+    "populations": ["id"],
     "migrations": ["id", "left", "right", "node", "source", "dest", "time"],
     "provenances": ["id", "timestamp", "record"],
 }
