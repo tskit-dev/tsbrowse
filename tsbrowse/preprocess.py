@@ -1,6 +1,7 @@
 import dataclasses
 import json
 import pathlib
+import warnings
 
 import daiquiri
 import numba
@@ -514,6 +515,17 @@ def preprocess(tszip_path, output_path, show_progress=False):
         total=2 + len(preprocessors), desc="Processing", disable=not show_progress
     ) as pbar:
         ts = tszip.load(tszip_path)
+        # Check if all mutation times are unknown, calulate them if so
+        if np.all(tskit.is_unknown_time(ts.mutations_time)):
+            warnings.warn(
+                "All mutation times are unknown. Calculating mutation times"
+                " from tree sequence",
+                stacklevel=1,
+            )
+            tables = ts.dump_tables()
+            tables.compute_mutation_times()
+            ts = tables.tree_sequence()
+
         pbar.update(1)
 
         tszip.compress(ts, output_path)

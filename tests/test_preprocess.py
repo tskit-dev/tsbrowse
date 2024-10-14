@@ -26,6 +26,7 @@ def single_tree_example_ts():
         tables.mutations.add_row(site=j, derived_state="T", node=j)
     tables.sites.add_row(position=7, ancestral_state="FOOBAR")
     tables.mutations.add_row(site=6, derived_state="FOOBARD", node=6)
+    tables.compute_mutation_times()
     return tables.tree_sequence()
 
 
@@ -297,6 +298,23 @@ class TestNodeIsSample:
         for node in ts.nodes():
             assert node.is_sample() == is_sample[node.id]
             assert (node.flags & (1 << bit)) != 0
+
+
+def test_preprocess_calculate_mutation_times(tmpdir):
+    ts = msprime.sim_ancestry(5, sequence_length=1e4, random_seed=42)
+    ts = msprime.sim_mutations(ts, rate=0.1, random_seed=43)
+    assert ts.num_mutations > 0
+    # Wipe out mutation times
+    tables = ts.dump_tables()
+    tables.mutations.time = np.full_like(tables.mutations.time, tskit.UNKNOWN_TIME)
+    ts = tables.tree_sequence()
+    input_path = os.path.join(tmpdir, "test.trees")
+    ts.dump(input_path)
+    output_path = os.path.join(tmpdir, "test.trees")
+    with pytest.warns(UserWarning, match="All mutation times are unknown"):
+        preprocess.preprocess(input_path, output_path)
+    ts = tszip.load(output_path)
+    assert not np.any(tskit.is_unknown_time(ts.tables.mutations.time))
 
 
 @pytest.mark.parametrize("use_tszip", [True, False])
