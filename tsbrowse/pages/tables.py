@@ -1,5 +1,56 @@
 import panel as pn
 
+WANTED_COLUMNS = {
+    "edges": [
+        "id",
+        "left",
+        "right",
+        "parent",
+        "child",
+        "branch_length",
+        "span",
+        "parent_time",
+        "child_time",
+    ],
+    "trees": [
+        "id",
+        "left",
+        "right",
+        "num_mutations",
+        "num_sites",
+        "total_branch_length",
+        "max_internal_arity",
+        "mean_internal_arity",
+    ],
+    "mutations": [
+        "id",
+        "site",
+        "node",
+        "derived_state",
+        "parent",
+        "time",
+        "position",
+        "num_parents",
+        "num_descendants",
+        "num_inheritors",
+        "inherited_state",
+    ],
+    "nodes": [
+        "id",
+        "flags",
+        "time",
+        "population",
+        "individual",
+        "num_mutations",
+        "ancestors_span",
+    ],
+    "sites": ["id", "position", "ancestral_state", "num_mutations"],
+    "individuals": ["id", "flags", "parents", "location"],
+    "populations": ["id"],
+    "migrations": ["id", "left", "right", "node", "source", "dest", "time"],
+    "provenances": ["id", "timestamp", "record"],
+}
+
 
 class TablesPage:
     key = "tables"
@@ -48,6 +99,8 @@ class TablesPage:
             return pn.pane.Markdown("# Select a table to display")
 
         df = getattr(self.tsm, f"{table_name}_df")
+        # Limit and order the columns
+        df = df[WANTED_COLUMNS[table_name]]
 
         if filter_expr:
             try:
@@ -61,6 +114,7 @@ class TablesPage:
 
         return pn.widgets.Tabulator(
             df,
+            hidden_columns=["index"],
             pagination="remote",
             page_size=25,
             height=800,
