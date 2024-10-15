@@ -46,7 +46,9 @@ jobs:
           cache: 'pip'
 
       - name: Install deps
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          playwright install
 
       - name: Tests with numba
         run: coverage run --source=tsbrowse -m pytest -x tests

@@ -25,15 +25,22 @@ jobs:
           cache: 'pip'
 
       - name: Install deps
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          playwright install
 
-      - name: Create Screenshots
+
+      - name: Create Screenshots - CLI
         run: |
           msp simulate --length 1000 --recombination-rate 0.01 --mutation-rate 0.01 100 out.trees
           python -m tsbrowse preprocess out.trees
           python -m tsbrowse screenshot out.tsbrowse mutations
           python -m tsbrowse screenshot out.tsbrowse edges
           python -m tsbrowse screenshot out.tsbrowse nodes
+
+      - name: Create Screenshots - WEB
+        run: |
+          python -m pytest --save-screenshots tests/test_ui.py
 
       - name: Commit Screenshots
         run: |

@@ -9,6 +9,7 @@ msprime
 panel
 pre-commit
 pytest
+pytest-playwright
 selenium
 tskit
 tszip
