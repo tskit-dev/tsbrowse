@@ -70,8 +70,8 @@ class App:
             yield self.pages[selected_page].sidebar
 
         template = pn.template.FastListTemplate(
-            title=self.tsm.name[:15] + "..."
-            if len(self.tsm.name) > 15
+            title=self.tsm.name[:75] + "..."
+            if len(self.tsm.name) > 75
             else self.tsm.name,
             header=[header_selector],
             sidebar=get_sidebar,

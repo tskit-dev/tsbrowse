@@ -47,7 +47,7 @@ def test_screenshot_cli(tmpdir):
     with Image.open(default_output) as img:
         width, height = img.size
         assert width == 1560
-        assert height == 296
+        assert height == 347
 
     # Test with path
     custom_output = os.path.join(tmpdir, "custom_screenshot.png")
