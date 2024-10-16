@@ -33,3 +33,15 @@ tsbrowse is currently in development. To install the latest dev version from git
 ```
 python -m pip install git+https://github.com/tskit-dev/tsbrowse
 ```
+
+## Development
+
+Test are run with pytest:
+
+`python -m pytest`
+
+To run the UI tests so you can see what the browser is doing use
+
+`python -m pytest --headed --slowmo 1000 tests/test_ui.py`
+
+`playwright codegen` is also useful for writing UI test code.
