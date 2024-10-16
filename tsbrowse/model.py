@@ -32,6 +32,7 @@ class TSModel:
             )
         self.ts = tszip.load(tsbrowse_path)
         self.name = tsbrowse_path.stem
+        self.full_path = tsbrowse_path
         for table_name in [
             "edges",
             "trees",
