@@ -75,7 +75,7 @@ def serve(path, port, show, log_level, no_log_filter, annotations_file):
 
     logger.info("Starting panel server")
     app_ = app.App(tsm)
-    pn.serve(app_.view(), port=port, show=show, verbose=False)
+    pn.serve(app_.view, port=port, show=show, verbose=False)
 
 
 @cli.command()
