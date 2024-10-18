@@ -33,8 +33,7 @@ def test_component(page, port, tmpdir, save_screenshots):
 
     page.set_viewport_size({"width": 1920, "height": 1080})
     expect(page.get_by_role("link", name="Tree Sequence")).to_be_visible()
-    # needs tskit 0.5.9
-    # expect(page.get_by_role("cell", name="Provenance Timestamp")).to_be_visible()
+    expect(page.get_by_role("cell", name="Provenance Timestamp")).to_be_visible()
     if save_screenshots:
         page.screenshot(path="overview.png")
 

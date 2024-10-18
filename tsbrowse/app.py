@@ -11,9 +11,6 @@ from tsbrowse import pages
 logger = daiquiri.getLogger("tsbrowse")
 
 RAW_CSS = """
-        .sidenav#sidebar {
-            background-color: #15E3AC;
-        }
         .title {
             font-size: var(--type-ramp-plus-2-font-size);
         }
