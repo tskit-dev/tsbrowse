@@ -45,10 +45,7 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install deps
-        run: |
-          pip install -r requirements.txt
-          playwright install
+
 
       - name: Tests with numba
         run: coverage run --source=tsbrowse -m pytest -x tests
@@ -61,3 +58,16 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           coveralls --service=github
+
+      - name: Install deps
+        run: |
+            pip install -r requirements.txt
+            playwright install
+  
+      - name: Build wheel
+        run: python -m build --wheel
+
+      - name: Install wheel
+        run: |
+          pip install dist/*.whl
+          python -m tsbrowse --help
