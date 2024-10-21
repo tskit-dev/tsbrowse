@@ -14,7 +14,7 @@ class NodesPage:
     key = "nodes"
     title = "Nodes"
 
-    def __init__(self, tsm):
+    def __init__(self, tsm, common_controls):
         df_nodes = tsm.nodes_df
         df_nodes = df_nodes[(df_nodes.ancestors_span != -np.inf)]
         bins = min(50, int(np.sqrt(len(df_nodes))))

@@ -10,7 +10,7 @@ from ..plot_helpers import hover_points
 from ..plot_helpers import make_hist
 
 
-def make_edges_panel(log_y, node_type, tsm):
+def make_edges_panel(pos_start, pos_end, log_y, node_type, tsm):
     edges_df = tsm.edges_df
     if node_type == "Child node":
         time_column = "child_time"
@@ -33,7 +33,7 @@ def make_edges_panel(log_y, node_type, tsm):
     edges_df[y_dim_right] = edges_df[y_dim_left]
 
     lines = hv.Segments(edges_df, kdims=["left", y_dim_left, "right", y_dim_right])
-    range_stream = hv.streams.RangeXY(source=lines)
+    range_stream = hv.streams.RangeXY(source=lines, x_range=(pos_start, pos_end))
     streams = [range_stream]
     filtered = lines.apply(filter_points, streams=streams)
     hover = filtered.apply(hover_points)
@@ -92,7 +92,9 @@ class EdgesPage:
     key = "edges"
     title = "Edges"
 
-    def __init__(self, tsm):
+    def __init__(self, tsm, common_controls):
+        pos_start = common_controls["pos_start"]
+        pos_end = common_controls["pos_end"]
         log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
         node_type_radio = pn.widgets.RadioBoxGroup(
             options=["Parent node", "Child node"], value="Parent node", inline=True
@@ -102,7 +104,14 @@ class EdgesPage:
         radio_title = pn.pane.Markdown("Plot time of:")
         options_box = pn.WidgetBox(log_y_checkbox, radio_title, node_type_radio)
         edges_panel = pn.bind(
-            make_edges_panel, log_y=log_y_checkbox, node_type=node_type_radio, tsm=tsm
+            make_edges_panel,
+            pos_start=pos_start,
+            pos_end=pos_end,
+            log_y=log_y_checkbox,
+            node_type=node_type_radio,
+            tsm=tsm,
         )
         self.content = pn.Column(edges_panel)
-        self.sidebar = pn.Column(pn.pane.Markdown("# Edges"), options_box)
+        self.sidebar = pn.Column(
+            pos_start, pos_end, pn.pane.Markdown("# Edges"), options_box
+        )

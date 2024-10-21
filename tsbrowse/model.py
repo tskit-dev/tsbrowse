@@ -31,6 +31,19 @@ class TSModel:
                 f"{TSBROWSE_DATA_VERSION} rerun tsbrowse preprocess"
             )
         self.ts = tszip.load(tsbrowse_path)
+        all_positions = np.concatenate(
+            [
+                self.ts.tables.sites.position,
+                self.ts.tables.edges.left,
+                self.ts.tables.edges.right,
+            ]
+        )
+        self.pos_range = int(np.min(all_positions)), int(np.max(all_positions))
+        all_times = np.concatenate(
+            [self.ts.tables.nodes.time, self.ts.tables.mutations.time]
+        )
+        self.time_range = np.min(all_times), np.max(all_times)
+
         self.name = tsbrowse_path.stem
         self.full_path = tsbrowse_path
         for table_name in [
