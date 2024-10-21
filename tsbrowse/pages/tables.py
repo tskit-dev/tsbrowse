@@ -62,6 +62,7 @@ class TablesPage:
         self.table_selector = pn.widgets.Select(
             name="Select Table",
             options=[
+                "",
                 "edges",
                 "trees",
                 "mutations",
@@ -84,14 +85,12 @@ class TablesPage:
 
         self.content = pn.Column(
             pn.bind(self.get_filtered_table, self.table_selector, self.filter_input),
-            sizing_mode="stretch_both",
         )
         self.sidebar = pn.Column(
             pn.pane.Markdown("# Tables"),
             self.table_selector,
             self.filter_input,
             self.filter_status,
-            sizing_mode="stretch_height",
         )
 
     def get_filtered_table(self, table_name, filter_expr):

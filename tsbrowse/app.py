@@ -71,8 +71,8 @@ class App:
             if len(self.tsm.name) > 75
             else self.tsm.name,
             header=[header_selector],
-            sidebar=get_sidebar,
-            main=get_content,
+            sidebar=pn.Column(get_sidebar),
+            main=pn.Column(get_content),
             raw_css=[RAW_CSS],
             **DEFAULT_PARAMS,
         )
