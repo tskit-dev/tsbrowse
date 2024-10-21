@@ -1,3 +1,45 @@
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "tsbrowse"
+authors = [
+    {name = "Tskit Developers", email = "admin@tskit.dev"},
+]
+description = "Webapp to view and visualise tskit ARGs"
+readme = "README.md"
+requires-python = ">=3.8"
+license = {text = "MIT"}
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "click",
+    "daiquiri",
+    "panel",
+    "hvplot",
+    "datashader",
+    "tskit",
+    "tszip",
+]
+dynamic = ["version"]
+keywords = ["tree sequence", "ancestral recombination graph", "tskit", "quality control"]
+
+[project.urls]
+"Bug Tracker" = "https://github.com/tskit-dev/tsbrowse/issues"
+"Source Code" = "https://github.com/tskit-dev/tsbrowse"
+Homepage = "https://tskit.dev/tsbrowse/"
+
+[tool.setuptools]
+packages = ["tsbrowse", "tsbrowse.pages"]
+
+[tool.setuptools_scm]
+write_to = "tsbrowse/_version.py"
+
+[tool.pytest]
+testpaths = ["tests"]
