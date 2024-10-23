@@ -5,6 +5,7 @@ coveralls
 daiquiri
 datashader
 hvplot
+jupyter-book
 matplotlib
 msprime
 panel
@@ -12,5 +13,6 @@ pre-commit
 pytest
 pytest-playwright
 selenium
+sphinx_issues
 tskit
 tszip

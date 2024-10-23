@@ -1,0 +1,61 @@
+# Book settings
+# Learn more at https://jupyterbook.org/customize/config.html
+
+title: Tsbrowse manual
+author: Tsbrowse Developers
+copyright: "2024"
+only_build_toc_files: true
+
+execute:
+  execute_notebooks: cache
+
+launch_buttons:
+  binderhub_url: ""
+
+repository:
+  url: https://github.com/tskit-dev/tsbrowse
+  branch: main
+  path_to_book: docs
+
+html:
+  use_issues_button: true
+  use_repository_button: true
+  use_edit_page_button: true
+
+sphinx:
+    extra_extensions:
+    - sphinx_copybutton
+    - sphinx_design
+    - sphinx.ext.autodoc
+    - sphinx.ext.autosummary
+    - sphinx.ext.doctest
+    - sphinx.ext.viewcode
+    - sphinx.ext.intersphinx
+    - sphinx_issues
+    local_extensions:
+      tsbrowse_image_extension: .
+
+    config:
+      html_theme: sphinx_book_theme
+      myst_enable_extensions:
+      - colon_fence
+      - deflist
+      - dollarmath
+      issues_github_path: tskit-dev/tsbrowse
+      intersphinx_mapping:
+        python: ["https://docs.python.org/3/", null]
+        matplotlib: ["https://matplotlib.org/stable", null]
+        numpy: ["https://numpy.org/doc/stable/", null]
+        pandas: ["https://pandas.pydata.org/pandas-docs/stable", null]
+        pyslim: ["https://tskit.dev/pyslim/docs/latest/", null]
+        tskit: ["https://tskit.dev/tskit/docs/stable/", null]
+        tskit-tutorials: ["https://tskit.dev/tutorials/", null]
+        msprime: ["https://tskit.dev/msprime/docs/stable/", null]
+
+      autodoc_member_order: bysource
+
+      suppress_warnings:
+      - etoc.toctree
+      - ref
+
+
