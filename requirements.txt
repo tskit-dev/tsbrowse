@@ -5,6 +5,7 @@ coveralls
 daiquiri
 datashader>=0.16.3
 hvplot
+jupyter-book
 matplotlib
 msprime
 panel>=1.5.2
@@ -12,5 +13,6 @@ pre-commit
 pytest
 pytest-playwright
 selenium
+sphinx_issues
 tskit
 tszip

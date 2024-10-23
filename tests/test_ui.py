@@ -27,7 +27,7 @@ def test_component(page, port, tmpdir, save_screenshots):
     component = app.App(tsm)
 
     url = f"http://localhost:{port}"
-    server = pn.serve(component.view(), port=port, threaded=True, show=False)
+    server = pn.serve(component.view, port=port, threaded=True, show=False)
     time.sleep(2)
     page.goto(url)
 
