@@ -21,9 +21,9 @@ classifiers = [
 dependencies = [
     "click",
     "daiquiri",
-    "panel",
+    "panel>=1.5.2",
     "hvplot",
-    "datashader",
+    "datashader>=0.16.3",
     "tskit",
     "tszip",
 ]
