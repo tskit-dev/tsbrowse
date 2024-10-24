@@ -15,7 +15,7 @@ class TreesPage:
 
         spans = df_trees.right - df_trees.left
 
-        log_y_checkbox = pn.widgets.Checkbox(name="log y-axis", value=True)
+        log_y_checkbox = pn.widgets.Checkbox(name="Log Y-axis", value=True)
 
         plot_options = pn.Column(
             pn.pane.Markdown("# Trees"),
@@ -29,8 +29,8 @@ class TreesPage:
                 bins,
                 log_y=log_y,
                 plot_width=config.PLOT_WIDTH,
-                xlabel="number of sites",
-                ylabel="number of trees",
+                xlabel="Number of Sites",
+                ylabel="Number of Trees",
             )
 
             spans_hist = make_hist(
@@ -39,8 +39,8 @@ class TreesPage:
                 bins,
                 log_y=log_y,
                 plot_width=config.PLOT_WIDTH,
-                xlabel="genomic span",
-                ylabel="number of trees",
+                xlabel="Genomic Span",
+                ylabel="Number of Trees",
             )
 
             muts_hist = make_hist(
@@ -49,8 +49,8 @@ class TreesPage:
                 bins,
                 log_y=log_y,
                 plot_width=config.PLOT_WIDTH,
-                xlabel="number of mutations",
-                ylabel="number of trees",
+                xlabel="Number of Mutations",
+                ylabel="Number of Trees",
             )
 
             tbl_hist = make_hist(
@@ -59,8 +59,8 @@ class TreesPage:
                 bins,
                 log_y=log_y,
                 plot_width=config.PLOT_WIDTH,
-                xlabel="total branch length",
-                ylabel="number of trees",
+                xlabel="Total Banch Length",
+                ylabel="Number of Trees",
             )
 
             mean_arity_hist = make_hist(
@@ -69,8 +69,8 @@ class TreesPage:
                 bins,
                 log_y=log_y,
                 plot_width=config.PLOT_WIDTH,
-                xlabel="mean arity",
-                ylabel="number of trees",
+                xlabel="Mean Arity",
+                ylabel="Number of Trees",
             )
 
             max_arity_hist = make_hist(
@@ -79,8 +79,8 @@ class TreesPage:
                 bins,
                 log_y=log_y,
                 plot_width=config.PLOT_WIDTH,
-                xlabel="max arity",
-                ylabel="number of trees",
+                xlabel="Max Arity",
+                ylabel="Number of Trees",
             )
             return pn.Column(
                 pn.Row(

@@ -43,6 +43,10 @@ def make_muts_panel(log_y, tsm):
         colorbar_position="left",
         clabel="inheritors",
         tools=[hover_tool, "tap"],
+        xlabel="Position",
+        ylabel=f"Time ({tsm.ts.time_units})"
+        if not log_y
+        else f"Log (Time ({tsm.ts.time_units}))",
     )
 
     range_stream = hv.streams.RangeXY(source=points)
@@ -64,10 +68,16 @@ def make_muts_panel(log_y, tsm):
 
     time_hist = hv.DynamicMap(
         make_hist_on_axis(dimension=y_dim, points=points), streams=streams
+    ).opts(
+        xlabel=f"Time ({tsm.ts.time_units})"
+        if not log_y
+        else f"Log (Time ({tsm.ts.time_units}))",
     )
     site_hist = hv.DynamicMap(
         make_hist_on_axis(dimension="position", points=points),
         streams=streams,
+    ).opts(
+        xlabel="Position",
     )
 
     breakpoints = tsm.ts.breakpoints(as_array=True)
@@ -84,7 +94,7 @@ def make_muts_panel(log_y, tsm):
         width=config.PLOT_WIDTH,
         height=100,
         hooks=[customise_ticks],
-        xlabel="tree density",
+        xlabel="Tree Density",
     )
 
     layout = (main << time_hist << site_hist) + trees_hist
@@ -235,7 +245,7 @@ class MutationsPage:
 
     def __init__(self, tsm):
         self.tsm = tsm
-        log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
+        log_y_checkbox = pn.widgets.Checkbox(name="Y-axis", value=False)
         muts_panel = pn.Column(pn.bind(make_muts_panel, log_y=log_y_checkbox, tsm=tsm))
         plot_options = pn.Column(
             pn.pane.Markdown("# Mutations"),

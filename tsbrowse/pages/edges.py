@@ -14,10 +14,10 @@ def make_edges_panel(log_y, node_type, tsm):
     edges_df = tsm.edges_df
     if node_type == "Child node":
         time_column = "child_time"
-        y_label = "time of child node"
+        y_label = f"Time of Child Node ({tsm.ts.time_units})"
     else:
         time_column = "parent_time"
-        y_label = "time of parent node"
+        y_label = f"Time of Parent Node ({tsm.ts.time_units})"
 
     if log_y:
         log_time_column = f"log_{time_column}"
@@ -62,24 +62,24 @@ def make_edges_panel(log_y, node_type, tsm):
         "Genomic span",
         "auto",
         log_y=log_y,
-        xlabel="genomic span",
-        ylabel="number of edges",
+        xlabel="Genomic Span",
+        ylabel="Number of Edges",
     )
     tspan_hist = make_hist(
         edges_df["time_span"],
         "Time span",
         "auto",
         log_y=log_y,
-        xlabel="time span",
-        ylabel="number of edges",
+        xlabel=f"Time span ({tsm.ts.time_units})",
+        ylabel="Number of Edges",
     )
     area_hist = make_hist(
         edges_df["span"] * edges_df["time_span"],
         "Edge area",
         "auto",
         log_y=log_y,
-        xlabel="time span * genomic span",
-        ylabel="number of edges",
+        xlabel="Time Span * Genomic Span",
+        ylabel="Number of Edges",
     )
     area_hist.opts(hv.opts.Histogram(xrotation=90))
     gspan_hist.opts(hv.opts.Histogram(xrotation=90))
@@ -93,7 +93,7 @@ class EdgesPage:
     title = "Edges"
 
     def __init__(self, tsm):
-        log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
+        log_y_checkbox = pn.widgets.Checkbox(name="Log Y-axis", value=False)
         node_type_radio = pn.widgets.RadioBoxGroup(
             options=["Parent node", "Child node"], value="Parent node", inline=True
         )
