@@ -56,7 +56,7 @@ class TablesPage:
     key = "tables"
     title = "Tables"
 
-    def __init__(self, tsm):
+    def __init__(self, tsm, common_controls):
         self.tsm = tsm
 
         self.table_selector = pn.widgets.Select(

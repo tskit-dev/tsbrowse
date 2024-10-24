@@ -233,7 +233,7 @@ class MutationsPage:
     key = "mutations"
     title = "Mutations"
 
-    def __init__(self, tsm):
+    def __init__(self, tsm, common_controls):
         self.tsm = tsm
         log_y_checkbox = pn.widgets.Checkbox(name="Log y-axis", value=False)
         muts_panel = pn.Column(pn.bind(make_muts_panel, log_y=log_y_checkbox, tsm=tsm))

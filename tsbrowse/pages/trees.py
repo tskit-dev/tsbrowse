@@ -9,7 +9,7 @@ class TreesPage:
     key = "trees"
     title = "Trees"
 
-    def __init__(self, tsm):
+    def __init__(self, tsm, common_controls):
         df_trees = tsm.trees_df
         bins = min(50, int(np.sqrt(len(df_trees))))
 

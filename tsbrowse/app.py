@@ -43,7 +43,26 @@ class App:
         self.tsm = tsm
         t = time.time()
         logger.info("Initialising pages")
-        self.pages = {page.title: page(tsm) for page in pages.PAGES}
+
+        print(tsm.pos_range)
+        self.pos_start = pn.widgets.IntInput(
+            name="Genome Range Start",
+            placeholder="Enter a number",
+            value=tsm.pos_range[0],
+        )
+        self.pos_end = pn.widgets.IntInput(
+            name="Genome Range End",
+            placeholder="Enter a number",
+            value=tsm.pos_range[1],
+        )
+        self.common_controls = {
+            "pos_start": self.pos_start,
+            "pos_end": self.pos_end,
+        }
+
+        self.pages = {
+            page.title: page(tsm, self.common_controls) for page in pages.PAGES
+        }
         self.spinner = pn.indicators.LoadingSpinner(value=True, width=50, height=50)
         logger.info(f"Initialised pages in {time.time() - t:.2f}s")
 
@@ -64,7 +83,9 @@ class App:
         @pn.depends(header_selector.param.value)
         def get_sidebar(selected_page):
             yield self.spinner
-            yield self.pages[selected_page].sidebar
+            yield pn.Column(
+                self.pages[selected_page].sidebar,
+            )
 
         template = pn.template.FastListTemplate(
             title=self.tsm.name[:75] + "..."
