@@ -12,15 +12,6 @@ from . import TSBROWSE_DATA_VERSION
 logger = daiquiri.getLogger("tsbrowse")
 
 
-quantised_columns = [
-    "edges/left",
-    "edges/right",
-    "migrations/left",
-    "migrations/right",
-    "sites/position",
-]
-
-
 class TSModel:
     """
     A wrapper around a tskit.TreeSequence object that provides some
@@ -42,10 +33,9 @@ class TSModel:
         self.ts = tszip.load(tsbrowse_path)
         self.name = tsbrowse_path.stem
         self.full_path = tsbrowse_path
-        coordinates = root["coordinates"][:]
+        ts_tables = self.ts.tables
         for table_name in [
             "edges",
-            "trees",
             "mutations",
             "nodes",
             "sites",
@@ -54,6 +44,7 @@ class TSModel:
             "migrations",
             "provenances",
         ]:
+            ts_table = getattr(ts_tables, table_name)
             # filter out ragged arrays with offset
             array_names = set(root[table_name].keys())
             ragged_array_names = {
@@ -61,37 +52,27 @@ class TSModel:
                 for name in array_names
                 if "offset" in name
             }
-            array_names -= set(ragged_array_names)
             array_names -= {"metadata_schema"}
             array_names -= {f"{name}_offset" for name in ragged_array_names}
             arrays = {}
             for name in array_names:
-                if f"{table_name}/{name}" in quantised_columns:
-                    arrays[name] = coordinates[root[table_name][name][:]]
+                if hasattr(ts_table, name):
+                    if name in ragged_array_names:
+                        arrays[name] = [
+                            getattr(row, name) for row in getattr(self.ts, table_name)()
+                        ]
+                    else:
+                        arrays[name] = getattr(ts_table, name)
                 else:
                     arrays[name] = root[table_name][name][:]
-            # ragged_array_names -= {"metadata"}
-            for name in ragged_array_names:
-                array = root[table_name][name][:]
-                offsets = root[table_name][f"{name}_offset"][:]
-                if name in ["location", "parents"]:
-                    arrays[name] = [
-                        tuple(array[s])
-                        for s in (
-                            slice(start, end)
-                            for start, end in zip(offsets[:-1], offsets[1:])
-                        )
-                    ]
-                else:
-                    arrays[name] = np.array(
-                        [
-                            array[s].tobytes().decode("utf-8")
-                            for s in (
-                                slice(start, end)
-                                for start, end in zip(offsets[:-1], offsets[1:])
-                            )
-                        ]
-                    )
+            df = pd.DataFrame(arrays)
+            df["id"] = df.index
+            setattr(self, f"{table_name}_df", df)
+
+        for table_name in ["trees"]:
+            arrays = {
+                name: root[table_name][name][:] for name in root[table_name].keys()
+            }
             df = pd.DataFrame(arrays)
             df["id"] = df.index
             setattr(self, f"{table_name}_df", df)

@@ -83,7 +83,7 @@ def test_model(tmpdir):
 
     assert len(tsm.populations_df) == ts.num_populations
     for m1, m2 in zip(ts.populations(), tsm.populations_df.to_dict("records")):
-        assert m1._metadata.decode("utf-8") == m2["metadata"]
+        assert m1.metadata == m2["metadata"]
 
     assert len(tsm.migrations_df) == ts.num_migrations
     for col in ["left", "right", "node", "source", "dest", "time"]:
