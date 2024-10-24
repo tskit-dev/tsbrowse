@@ -19,7 +19,7 @@ class NodesPage:
         df_nodes = df_nodes[(df_nodes.ancestors_span != -np.inf)]
         bins = min(50, int(np.sqrt(len(df_nodes))))
 
-        log_y_checkbox = pn.widgets.Checkbox(name="log y-axis of histogram", value=True)
+        log_y_checkbox = pn.widgets.Checkbox(name="Log Y-axis of Histogram", value=True)
 
         def make_node_hist_panel(tsm, log_y):
             nodes_hist = make_hist(
@@ -28,8 +28,8 @@ class NodesPage:
                 bins,
                 log_y=log_y,
                 plot_width=config.PLOT_WIDTH,
-                xlabel="ancestor span",
-                ylabel="number of nodes",
+                xlabel="Ancestor Span",
+                ylabel="Number of Nodes",
             )
 
             return pn.Column(pn.Row(nodes_hist))
@@ -42,7 +42,12 @@ class NodesPage:
                 x="ancestors_span",
                 y="time",
                 hover_cols=["id", "ancestors_span", "time"],
-            ).opts(width=config.PLOT_WIDTH, height=config.PLOT_HEIGHT)
+            ).opts(
+                width=config.PLOT_WIDTH,
+                height=config.PLOT_HEIGHT,
+                xlabel="Ancestor Span",
+                ylabel=f"Time ({tsm.ts.time_units})",
+            )
 
             range_stream = hv.streams.RangeXY(source=points)
             streams = [range_stream]

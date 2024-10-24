@@ -46,7 +46,7 @@ def test_component(page, port, tmpdir, save_screenshots):
         page.screenshot(path="tables.png")
 
     page.get_by_role("button", name="Mutations").click()
-    expect(page.get_by_text("Log y-axis")).to_be_visible()
+    expect(page.get_by_text("Log Y-axis")).to_be_visible()
     expect(page.get_by_title("Reset").locator("div")).to_be_visible()
     if save_screenshots:
         page.screenshot(path="mutations.png")
