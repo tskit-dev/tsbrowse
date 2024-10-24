@@ -514,8 +514,10 @@ def preprocess(tszip_path, output_path, show_progress=False):
     with tqdm(
         total=2 + len(preprocessors), desc="Processing", disable=not show_progress
     ) as pbar:
+        logger.info(f"Loading tree sequence from {tszip_path}")
         ts = tszip.load(tszip_path)
-        # Check if all mutation times are unknown, calulate them if so
+
+        # Check if all mutation times are unknown, calculate them if so
         if np.all(tskit.is_unknown_time(ts.mutations_time)):
             warnings.warn(
                 "All mutation times are unknown. Calculating mutation times"
@@ -528,6 +530,7 @@ def preprocess(tszip_path, output_path, show_progress=False):
 
         pbar.update(1)
 
+        logger.info(f"Compressing tree sequence to {output_path}")
         tszip.compress(ts, output_path)
         pbar.update(1)
 
@@ -535,10 +538,12 @@ def preprocess(tszip_path, output_path, show_progress=False):
         data = {}
         for preprocessor in preprocessors:
             group_name = preprocessor.__name__.split(".")[-1]
+            logger.info(f"Processing {group_name}")
             pbar.set_description(f"Processing {group_name}")
             data[group_name] = preprocessor(ts)
             pbar.update(1)
 
+    logger.info(f"Writing preprocessed data to {output_path}")
     with zarr.ZipStore(output_path, mode="a") as zarr_store:
         root = zarr.group(store=zarr_store)
         total_arrays = sum(len(arrays) for arrays in data.values())
@@ -547,6 +552,8 @@ def preprocess(tszip_path, output_path, show_progress=False):
         ) as pbar:
             for table_name, arrays in data.items():
                 for array_name, array in arrays.items():
+                    logger.info(f"Writing {table_name}/{array_name}")
                     root[f"{table_name}/{array_name}"] = array
                     pbar.update(1)
         root.attrs["tsbrowse"] = {"data_version": TSBROWSE_DATA_VERSION}
+    logger.info("Finished writing preprocessed data")

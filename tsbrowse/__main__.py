@@ -87,13 +87,29 @@ def serve(path, port, show, log_level, no_log_filter, annotations_file):
     default=None,
     help="Optional output filename, defaults to tszip_path with .tsbrowse extension",
 )
-def preprocess(tszip_path, output):
+@click.option(
+    "-v",
+    "--verbose",
+    count=True,
+    help="Increase verbosity. Use -v for INFO and -vv for DEBUG.",
+)
+def preprocess(tszip_path, output, verbose):
     """
     Preprocess a tskit tree sequence or tszip file, producing a .tsbrowse file.
     """
     tszip_path = Path(tszip_path)
     if output is None:
         output = tszip_path.with_suffix(".tsbrowse")
+
+    # Set log level based on verbosity
+    if verbose == 1:
+        log_level = "INFO"
+    elif verbose >= 2:
+        log_level = "DEBUG"
+    else:
+        log_level = "WARN"
+
+    setup_logging(log_level, no_log_filter=False)
 
     preprocess_.preprocess(tszip_path, output, show_progress=True)
     logger.info(f"Preprocessing completed. Output saved to: {output}")
