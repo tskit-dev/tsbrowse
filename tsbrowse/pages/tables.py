@@ -11,6 +11,7 @@ WANTED_COLUMNS = {
         "span",
         "parent_time",
         "child_time",
+        "metadata",
     ],
     "trees": [
         "id",
@@ -34,6 +35,7 @@ WANTED_COLUMNS = {
         "num_descendants",
         "num_inheritors",
         "inherited_state",
+        "metadata",
     ],
     "nodes": [
         "id",
@@ -43,11 +45,12 @@ WANTED_COLUMNS = {
         "individual",
         "num_mutations",
         "ancestors_span",
+        "metadata",
     ],
-    "sites": ["id", "position", "ancestral_state", "num_mutations"],
-    "individuals": ["id", "flags", "parents", "location"],
-    "populations": ["id"],
-    "migrations": ["id", "left", "right", "node", "source", "dest", "time"],
+    "sites": ["id", "position", "ancestral_state", "num_mutations", "metadata"],
+    "individuals": ["id", "flags", "parents", "location", "metadata"],
+    "populations": ["id", "metadata"],
+    "migrations": ["id", "left", "right", "node", "source", "dest", "time", "metadata"],
     "provenances": ["id", "timestamp", "record"],
 }
 
