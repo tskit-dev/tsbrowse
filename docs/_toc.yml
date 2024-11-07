@@ -9,7 +9,12 @@ parts:
 - caption: Pages
   chapters:
   - file: overview
+  - file: tables
+  - file: mutations
   - file: edges
+  - file: nodes
+  - file: trees
+
 
 - caption: Extras
   chapters:
