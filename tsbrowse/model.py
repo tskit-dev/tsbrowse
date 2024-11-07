@@ -57,7 +57,32 @@ class TSModel:
             arrays = {}
             for name in array_names:
                 if hasattr(ts_table, name):
-                    if name in ragged_array_names:
+                    if name == "metadata":
+                        packed_metadata = ts_table.metadata.tobytes()
+                        offset = ts_table.metadata_offset
+                        arrays[name] = [
+                            str(
+                                ts_table.metadata_schema.decode_row(
+                                    packed_metadata[start:end]
+                                )
+                            )
+                            for start, end in zip(offset[:-1], offset[1:])
+                        ]
+                    # It would be nice to just let tskit do this decoding, but that
+                    # takes a long time especially for sites which objectify their
+                    # mutations as you iterate.
+                    elif name in ragged_array_names and table_name != "provenances":
+                        packed_data = getattr(ts_table, name)
+                        if name not in ["location", "parents"]:
+                            packed_data = packed_data.tobytes()
+                        offset = getattr(ts_table, f"{name}_offset")
+                        arrays[name] = [
+                            packed_data[start:end]
+                            for start, end in zip(offset[:-1], offset[1:])
+                        ]
+                        if name not in ["location", "parents"]:
+                            arrays[name] = [row.decode() for row in arrays[name]]
+                    elif name in ragged_array_names:
                         arrays[name] = [
                             getattr(row, name) for row in getattr(self.ts, table_name)()
                         ]
