@@ -17,6 +17,7 @@ RAW_CSS = """
     """
 DEFAULT_PARAMS = {
     "site": "tsbrowse",
+    "favicon": "https://tskit.dev/assets/favicons/favicon.ico",
 }
 
 pn.extension(sizing_mode="stretch_width")
