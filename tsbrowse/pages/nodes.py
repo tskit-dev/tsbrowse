@@ -21,9 +21,28 @@ class NodesPage:
 
         log_y_checkbox = pn.widgets.Checkbox(name="Log Y-axis of Histogram", value=True)
 
-        def make_node_hist_panel(tsm, log_y):
+        used_bits = np.uint32(0)
+        flag_counts = np.zeros(32, dtype=int)
+        for flag in df_nodes["flags"]:
+            used_bits |= np.uint32(flag)
+            for i in range(32):
+                if flag & (1 << i):
+                    flag_counts[i] += 1
+
+        used_flags = [i for i in range(32) if used_bits & (1 << i)]
+        options = {f"Flag {i} ({flag_counts[i]})": i for i in used_flags}
+        node_flag_checkboxes = pn.widgets.CheckBoxGroup(
+            name="Node Types", value=[], options=options
+        )
+
+        def make_node_hist_panel(log_y, node_flags):
+            df = df_nodes[
+                df_nodes["flags"].apply(
+                    lambda x: all((x & (1 << flag)) != 0 for flag in node_flags)
+                )
+            ]
             nodes_hist = make_hist(
-                df_nodes.ancestors_span,
+                df.ancestors_span,
                 "Ancestor spans per node",
                 bins,
                 log_y=log_y,
@@ -34,10 +53,16 @@ class NodesPage:
 
             return pn.Column(pn.Row(nodes_hist))
 
-        hist_panel = pn.bind(make_node_hist_panel, log_y=log_y_checkbox, tsm=tsm)
+        hist_panel = pn.bind(
+            make_node_hist_panel, log_y=log_y_checkbox, node_flags=node_flag_checkboxes
+        )
 
-        def make_node_plot(data, node_types):
-            df = data[data["flags"].isin(node_types)]
+        def make_node_plot(node_flags):
+            df = df_nodes[
+                df_nodes["flags"].apply(
+                    lambda x: all((x & (1 << flag)) != 0 for flag in node_flags)
+                )
+            ]
             points = df.hvplot.scatter(
                 x="ancestors_span",
                 y="time",
@@ -66,24 +91,13 @@ class NodesPage:
             )
             return main
 
-        def make_node_panel(node_types):
-            nodes_spans_plot = make_node_plot(
-                df_nodes,
-                node_types=node_types,
-            )
-            return pn.Row(nodes_spans_plot)
-
-        anc_options = list(df_nodes["flags"].unique())
-        checkboxes = pn.widgets.CheckBoxGroup(
-            name="Node Types", value=anc_options, options=anc_options
-        )
-        nodes_panel = pn.bind(make_node_panel, node_types=checkboxes)
-        node_options = pn.Column(
-            pn.pane.Markdown("### Node Flags"),
-            checkboxes,
-        )
+        nodes_panel = pn.bind(make_node_plot, node_flags=node_flag_checkboxes)
 
         self.content = pn.Column(nodes_panel, hist_panel)
         self.sidebar = pn.Column(
-            pn.pane.Markdown("# Nodes"), node_options, log_y_checkbox
+            pn.pane.Markdown("# Nodes"),
+            log_y_checkbox,
+            pn.pane.Markdown(f"###Total Nodes: {len(df_nodes)}**"),
+            pn.pane.Markdown("### Node Flags"),
+            node_flag_checkboxes,
         )
