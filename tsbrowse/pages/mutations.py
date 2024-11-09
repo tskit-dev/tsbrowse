@@ -94,7 +94,7 @@ def make_muts_panel(log_y, tsm):
         width=config.PLOT_WIDTH,
         height=100,
         hooks=[customise_ticks],
-        xlabel="Tree Density",
+        xlabel="Mutation Density",
     )
 
     layout = (main << time_hist << site_hist) + trees_hist
