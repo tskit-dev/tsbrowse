@@ -44,9 +44,9 @@ def make_muts_panel(log_y, tsm):
         clabel="inheritors",
         tools=[hover_tool, "tap"],
         xlabel="Position",
-        ylabel=f"Time ({tsm.ts.time_units})"
+        ylabel=f"Mutation time ({tsm.ts.time_units})"
         if not log_y
-        else f"Log (Time ({tsm.ts.time_units}))",
+        else f"Log (Mutation time ({tsm.ts.time_units}))",
     )
 
     range_stream = hv.streams.RangeXY(source=points)
