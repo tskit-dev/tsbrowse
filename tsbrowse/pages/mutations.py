@@ -12,10 +12,11 @@ from ..plot_helpers import customise_ticks
 from ..plot_helpers import filter_points
 from ..plot_helpers import hover_points
 from ..plot_helpers import make_hist_on_axis
+from ..plot_helpers import parse_range
 from ..plot_helpers import selected_hist
 
 
-def make_muts_panel(log_y, tsm):
+def make_muts_panel(log_y, x_range, tsm):
     plot_width = 1000
     muts_df = tsm.mutations_df
     y_dim = "time"
@@ -31,25 +32,31 @@ def make_muts_panel(log_y, tsm):
             ("inheritors", "@num_inheritors"),
         ]
     )
+    opts = {
+        "width": plot_width,
+        "height": config.PLOT_HEIGHT,
+        "color": "num_inheritors",
+        "cmap": "winter",
+        "clabel": "inheritors",
+        "tools": [hover_tool, "tap"],
+        "xlabel": "Position",
+        "ylabel": f"Mutation time ({tsm.ts.time_units})"
+        if not log_y
+        else f"Log (Mutation time ({tsm.ts.time_units}))",
+    }
+    x_range = parse_range(x_range)
+    if x_range is not None:
+        opts["xlim"] = x_range
     points = muts_df.hvplot.scatter(
         x="position",
         y=y_dim,
         hover_cols=["id", "num_parents", "num_descendants", "num_inheritors"],
+        **opts,
     ).opts(
-        width=plot_width,
-        height=config.PLOT_HEIGHT,
-        color="num_inheritors",
-        cmap="winter",
-        colorbar_position="left",
-        clabel="inheritors",
-        tools=[hover_tool, "tap"],
-        xlabel="Position",
-        ylabel=f"Mutation time ({tsm.ts.time_units})"
-        if not log_y
-        else f"Log (Mutation time ({tsm.ts.time_units}))",
+        **opts,
     )
 
-    range_stream = hv.streams.RangeXY(source=points)
+    range_stream = hv.streams.RangeXY(source=points, x_range=x_range)
     streams = [range_stream]
 
     filtered = points.apply(filter_points, streams=streams)
@@ -63,7 +70,9 @@ def make_muts_panel(log_y, tsm):
     )
 
     main = (shaded * hover).opts(
-        hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10),
+        hv.opts.Points(
+            tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10, xlim=x_range
+        ),
     )
 
     time_hist = hv.DynamicMap(
@@ -74,7 +83,7 @@ def make_muts_panel(log_y, tsm):
         else f"Log (Time ({tsm.ts.time_units}))",
     )
     site_hist = hv.DynamicMap(
-        make_hist_on_axis(dimension="position", points=points),
+        make_hist_on_axis(dimension="position", points=points, x_range=x_range),
         streams=streams,
     ).opts(
         xlabel="Mutation density",
@@ -90,12 +99,15 @@ def make_muts_panel(log_y, tsm):
         }
     )
     trees_hist = hv.DynamicMap(selected_hist(bp_df), streams=[range_stream])
-    trees_hist.opts(
-        width=config.PLOT_WIDTH,
-        height=100,
-        hooks=[customise_ticks],
-        xlabel="Breakpoint Density",
-    )
+    trees_hist_opts = {
+        "width": config.PLOT_WIDTH,
+        "height": 100,
+        "hooks": [customise_ticks],
+        "xlabel": "Breakpoint Density",
+    }
+    if x_range is not None:
+        trees_hist_opts["xlim"] = x_range
+    trees_hist.opts(**trees_hist_opts)
 
     layout = (main << time_hist << site_hist) + trees_hist
 
@@ -200,6 +212,7 @@ def make_muts_panel(log_y, tsm):
         },
         visible=False,  # Initially not shown
     )
+
     return pn.Column(
         float_panel,
         layout.opts(shared_axes=True).cols(1),
@@ -246,10 +259,16 @@ class MutationsPage:
     def __init__(self, tsm):
         self.tsm = tsm
         log_y_checkbox = pn.widgets.Checkbox(name="Log Y-axis", value=False)
-        muts_panel = pn.Column(pn.bind(make_muts_panel, log_y=log_y_checkbox, tsm=tsm))
+        x_range_input = pn.widgets.TextInput(value="", name="X Range (start:stop)")
+        muts_panel = pn.Column(
+            pn.bind(
+                make_muts_panel, log_y=log_y_checkbox, x_range=x_range_input, tsm=tsm
+            )
+        )
         plot_options = pn.Column(
             pn.pane.Markdown("# Mutations"),
             log_y_checkbox,
+            x_range_input,
         )
         self.content = muts_panel
         self.sidebar = plot_options
