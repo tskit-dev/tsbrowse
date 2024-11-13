@@ -22,10 +22,8 @@ class TreesPage:
         )
 
         def make_tree_hist_panel(tsm, log_y):
-            # Create a responsive GridSpec with 3 rows and 2 columns
             gspec = pn.GridSpec(nrows=3, ncols=2, sizing_mode="stretch_both")
 
-            # Create all histograms
             sites_hist = make_hist(
                 df_trees.num_sites,
                 "Sites per tree",
@@ -58,7 +56,6 @@ class TreesPage:
                 "Total branch length per tree",
                 bins,
                 log_y=log_y,
-                plot_width=config.PLOT_WIDTH,
                 xlabel="Total Banch Length",
                 ylabel="Number of Trees",
             )

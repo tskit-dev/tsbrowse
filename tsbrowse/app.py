@@ -24,7 +24,6 @@ DEFAULT_PARAMS = {
     "favicon": "https://tskit.dev/assets/favicons/favicon.ico",
 }
 
-pn.extension(sizing_mode="stretch_both")
 pn.extension("tabulator")
 pn.extension("floatpanel")
 hv.extension("bokeh")
@@ -76,7 +75,7 @@ class App:
             if len(self.tsm.name) > 75
             else self.tsm.name,
             header=[header_selector],
-            sidebar=pn.Column(get_sidebar),
+            sidebar=pn.Column(get_sidebar, sizing_mode="stretch_both"),
             main=pn.Column(get_content, sizing_mode="stretch_both"),
             raw_css=[RAW_CSS],
             **DEFAULT_PARAMS,
