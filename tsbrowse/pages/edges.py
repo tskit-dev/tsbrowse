@@ -81,11 +81,21 @@ def make_edges_panel(log_y, node_type, tsm):
         xlabel="Time Span * Genomic Span",
         ylabel="Number of Edges",
     )
-    area_hist.opts(hv.opts.Histogram(xrotation=90))
-    gspan_hist.opts(hv.opts.Histogram(xrotation=90))
-    tspan_hist.opts(hv.opts.Histogram(xrotation=90))
 
-    return pn.Column(main, pn.Row(gspan_hist, tspan_hist, area_hist))
+    area_hist.opts(width=None, height=None, responsive=True, xrotation=90)
+    gspan_hist.opts(width=None, height=None, responsive=True, xrotation=90)
+    tspan_hist.opts(width=None, height=None, responsive=True, xrotation=90)
+
+    main = main.opts(width=None, height=None, responsive=True)
+
+    gspec = pn.GridSpec(sizing_mode="stretch_both", ncols=2, nrows=4)
+
+    gspec[0:2, :] = main
+    gspec[2, 0] = gspan_hist
+    gspec[2, 1] = tspan_hist
+    gspec[3, :] = area_hist
+
+    return gspec
 
 
 class EdgesPage:
@@ -104,5 +114,8 @@ class EdgesPage:
         edges_panel = pn.bind(
             make_edges_panel, log_y=log_y_checkbox, node_type=node_type_radio, tsm=tsm
         )
-        self.content = pn.Column(edges_panel)
+        self.content = pn.Column(
+            edges_panel,
+            sizing_mode="stretch_both",
+        )
         self.sidebar = pn.Column(pn.pane.Markdown("# Edges"), options_box)

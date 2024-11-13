@@ -14,13 +14,16 @@ RAW_CSS = """
         .title {
             font-size: var(--type-ramp-plus-2-font-size);
         }
+        div.card-margin {
+            min-height: 800px;
+            height: calc(100% - 30px);  /* Take full height of parent minus padding*/
+        }
     """
 DEFAULT_PARAMS = {
     "site": "tsbrowse",
     "favicon": "https://tskit.dev/assets/favicons/favicon.ico",
 }
 
-pn.extension(sizing_mode="stretch_width")
 pn.extension("tabulator")
 pn.extension("floatpanel")
 hv.extension("bokeh")
@@ -72,8 +75,8 @@ class App:
             if len(self.tsm.name) > 75
             else self.tsm.name,
             header=[header_selector],
-            sidebar=pn.Column(get_sidebar),
-            main=pn.Column(get_content),
+            sidebar=pn.Column(get_sidebar, sizing_mode="stretch_both"),
+            main=pn.Column(get_content, sizing_mode="stretch_both"),
             raw_css=[RAW_CSS],
             **DEFAULT_PARAMS,
         )

@@ -44,8 +44,8 @@ def make_hist(
     xlabel,
     ylabel="count",
     log_y=True,
-    plot_width=400,
-    plot_height=400,
+    plot_width=None,
+    plot_height=None,
 ):
     """
     Make histogram from given count data

@@ -46,16 +46,11 @@ class NodesPage:
                 "Ancestor spans per node",
                 bins,
                 log_y=log_y,
-                plot_width=config.PLOT_WIDTH,
                 xlabel="Ancestor Span",
                 ylabel="Number of Nodes",
             )
-
-            return pn.Column(pn.Row(nodes_hist))
-
-        hist_panel = pn.bind(
-            make_node_hist_panel, log_y=log_y_checkbox, node_flags=node_flag_checkboxes
-        )
+            nodes_hist.opts(width=None, height=None, responsive=True)
+            return nodes_hist
 
         def make_node_plot(node_flags):
             df = df_nodes[
@@ -68,8 +63,6 @@ class NodesPage:
                 y="time",
                 hover_cols=["id", "ancestors_span", "time"],
             ).opts(
-                width=config.PLOT_WIDTH,
-                height=config.PLOT_HEIGHT,
                 xlabel="Ancestor Span",
                 ylabel=f"Time ({tsm.ts.time_units})",
             )
@@ -80,8 +73,6 @@ class NodesPage:
             hover = filtered.apply(hover_points, threshold=config.THRESHOLD)
             shaded = hd.datashade(
                 points,
-                width=400,
-                height=400,
                 streams=streams,
                 cmap=config.PLOT_COLOURS[1:],
             )
@@ -89,15 +80,20 @@ class NodesPage:
             main = (shaded * hover).opts(
                 hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10)
             )
+            main.opts(width=None, height=None, responsive=True)
             return main
 
-        nodes_panel = pn.bind(make_node_plot, node_flags=node_flag_checkboxes)
+        gspec = pn.GridSpec(sizing_mode="stretch_both", ncols=3)
+        gspec[0:2, 0] = pn.bind(make_node_plot, node_flags=node_flag_checkboxes)
+        gspec[2:, 0] = pn.bind(
+            make_node_hist_panel, log_y=log_y_checkbox, node_flags=node_flag_checkboxes
+        )
 
-        self.content = pn.Column(nodes_panel, hist_panel)
+        self.content = gspec
         self.sidebar = pn.Column(
             pn.pane.Markdown("# Nodes"),
             log_y_checkbox,
-            pn.pane.Markdown(f"###Total Nodes: {len(df_nodes)}**"),
+            pn.pane.Markdown(f"### Total Nodes: **{len(df_nodes)}**"),
             pn.pane.Markdown("### Node Flags"),
             node_flag_checkboxes,
         )

@@ -1,7 +1,6 @@
 import numpy as np
 import panel as pn
 
-from .. import config
 from ..plot_helpers import make_hist
 
 
@@ -23,12 +22,13 @@ class TreesPage:
         )
 
         def make_tree_hist_panel(tsm, log_y):
+            gspec = pn.GridSpec(nrows=3, ncols=2, sizing_mode="stretch_both")
+
             sites_hist = make_hist(
                 df_trees.num_sites,
                 "Sites per tree",
                 bins,
                 log_y=log_y,
-                plot_width=config.PLOT_WIDTH,
                 xlabel="Number of Sites",
                 ylabel="Number of Trees",
             )
@@ -38,7 +38,6 @@ class TreesPage:
                 "Genomic span per tree",
                 bins,
                 log_y=log_y,
-                plot_width=config.PLOT_WIDTH,
                 xlabel="Genomic Span",
                 ylabel="Number of Trees",
             )
@@ -48,7 +47,6 @@ class TreesPage:
                 "Mutations per tree",
                 bins,
                 log_y=log_y,
-                plot_width=config.PLOT_WIDTH,
                 xlabel="Number of Mutations",
                 ylabel="Number of Trees",
             )
@@ -58,7 +56,6 @@ class TreesPage:
                 "Total branch length per tree",
                 bins,
                 log_y=log_y,
-                plot_width=config.PLOT_WIDTH,
                 xlabel="Total Banch Length",
                 ylabel="Number of Trees",
             )
@@ -68,7 +65,6 @@ class TreesPage:
                 "Mean arity per tree \n(not yet implemented)",
                 bins,
                 log_y=log_y,
-                plot_width=config.PLOT_WIDTH,
                 xlabel="Mean Arity",
                 ylabel="Number of Trees",
             )
@@ -78,23 +74,21 @@ class TreesPage:
                 "Max arity per tree",
                 bins,
                 log_y=log_y,
-                plot_width=config.PLOT_WIDTH,
                 xlabel="Max Arity",
                 ylabel="Number of Trees",
             )
-            return pn.Column(
-                pn.Row(
-                    sites_hist,
-                    spans_hist,
-                ),
-                pn.Row(
-                    muts_hist,
-                    tbl_hist,
-                ),
-                pn.Row(mean_arity_hist, max_arity_hist),
-            )
+
+            # Assign histograms to grid positions
+            gspec[0, 0] = sites_hist
+            gspec[0, 1] = spans_hist
+            gspec[1, 0] = muts_hist
+            gspec[1, 1] = tbl_hist
+            gspec[2, 0] = mean_arity_hist
+            gspec[2, 1] = max_arity_hist
+
+            return gspec
 
         hist_panel = pn.bind(make_tree_hist_panel, log_y=log_y_checkbox, tsm=tsm)
 
-        self.content = pn.Column(hist_panel)
+        self.content = pn.Column(hist_panel, sizing_mode="stretch_both")
         self.sidebar = plot_options
