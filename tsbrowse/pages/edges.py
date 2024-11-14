@@ -102,12 +102,12 @@ def make_edges_panel(log_y, node_type, x_range, tsm):
 
     main = main.opts(width=None, height=None, responsive=True)
 
-    gspec = pn.GridSpec(sizing_mode="stretch_both", ncols=2, nrows=4)
+    gspec = pn.GridSpec(sizing_mode="stretch_both", ncols=5, nrows=3)
 
-    gspec[0:2, :] = main
-    gspec[2, 0] = gspan_hist
-    gspec[2, 1] = tspan_hist
-    gspec[3, :] = area_hist
+    gspec[:, :3] = main
+    gspec[0, 3:] = gspan_hist
+    gspec[1, 3:] = tspan_hist
+    gspec[2, 3:] = area_hist
 
     return gspec
 
