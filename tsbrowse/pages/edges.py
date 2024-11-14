@@ -10,7 +10,15 @@ from ..plot_helpers import hover_points
 from ..plot_helpers import make_hist
 
 
-def make_edges_panel(log_y, node_type, tsm):
+def parse_range(range_str):
+    try:
+        start, end = map(float, range_str.split(":"))
+        return (start, end)
+    except (ValueError, TypeError):
+        return None  # Default range if parsing fails
+
+
+def make_edges_panel(log_y, node_type, x_range, tsm):
     edges_df = tsm.edges_df
     if node_type == "Child node":
         time_column = "child_time"
@@ -46,13 +54,19 @@ def make_edges_panel(log_y, node_type, tsm):
             ("branch_length", "@branch_length"),
         ]
     )
+    opts = {
+        "tools": [hover_tool],
+        "width": config.PLOT_WIDTH,
+        "height": config.PLOT_HEIGHT,
+        "xlabel": "Position",
+        "ylabel": y_label,
+    }
+    x_range = parse_range(x_range)
+    if x_range is not None:
+        opts["xlim"] = x_range
     main = (shaded * hover).opts(
         hv.opts.Segments(
-            tools=[hover_tool],
-            width=config.PLOT_WIDTH,
-            height=config.PLOT_HEIGHT,
-            xlabel="Position",
-            ylabel=y_label,
+            **opts,
         )
     )
 
@@ -110,9 +124,16 @@ class EdgesPage:
         # using a markdown widget to display radiobox title
         # (https://github.com/holoviz/panel/issues/1313):
         radio_title = pn.pane.Markdown("Plot time of:")
-        options_box = pn.WidgetBox(log_y_checkbox, radio_title, node_type_radio)
+        x_range = pn.widgets.TextInput(value="", name="X Range (start:stop)")
+        options_box = pn.WidgetBox(
+            log_y_checkbox, radio_title, node_type_radio, x_range
+        )
         edges_panel = pn.bind(
-            make_edges_panel, log_y=log_y_checkbox, node_type=node_type_radio, tsm=tsm
+            make_edges_panel,
+            log_y=log_y_checkbox,
+            node_type=node_type_radio,
+            x_range=x_range,
+            tsm=tsm,
         )
         self.content = pn.Column(
             edges_panel,

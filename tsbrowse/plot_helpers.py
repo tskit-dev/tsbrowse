@@ -19,19 +19,20 @@ def filter_points(points, x_range, y_range):
     return points
 
 
-def make_hist_on_axis(dimension, points):
+def make_hist_on_axis(dimension, points, x_range=None):
     """
     Make histogram function for a specified axis of a scatter plot
     """
 
     def compute_hist(x_range, y_range):
         filtered_points = filter_points(points, x_range, y_range)
+        opts = {} if x_range is None else {"xlim": x_range}
         hist = hv.operation.histogram(
             filtered_points,
             dimension=dimension,
             bins="auto",
             normed="height",
-        )
+        ).opts(**opts)
         return hist
 
     return compute_hist
@@ -99,3 +100,11 @@ def customise_ticks(plot, element):
 
 def center_plot_title(plot, element):
     plot.state.title.align = "center"
+
+
+def parse_range(range_str):
+    try:
+        start, end = map(float, range_str.split(":"))
+        return (start, end)
+    except (ValueError, TypeError):
+        return None
