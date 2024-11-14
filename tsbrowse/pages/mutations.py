@@ -77,7 +77,7 @@ def make_muts_panel(log_y, tsm):
         make_hist_on_axis(dimension="position", points=points),
         streams=streams,
     ).opts(
-        xlabel="Position",
+        xlabel="Mutation density",
     )
 
     breakpoints = tsm.ts.breakpoints(as_array=True)
@@ -94,7 +94,7 @@ def make_muts_panel(log_y, tsm):
         width=config.PLOT_WIDTH,
         height=100,
         hooks=[customise_ticks],
-        xlabel="Mutation Density",
+        xlabel="Breakpoint Density",
     )
 
     layout = (main << time_hist << site_hist) + trees_hist
