@@ -9,7 +9,7 @@ authors = [
 ]
 description = "Webapp to view and visualise tskit ARGs"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 license = {text = "MIT"}
 classifiers = [
     "Intended Audience :: Science/Research",
