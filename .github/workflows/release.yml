@@ -1,0 +1,125 @@
+on:
+  push:
+    branches:
+      - main
+      - test
+    tags:
+      - '*'
+  release:
+    types: [published]
+ 
+jobs:
+    distbuild:
+      name: Build Distribution
+      runs-on: ubuntu-latest
+      steps:
+        - uses: actions/checkout@v3
+        - uses: actions/setup-python@v4
+          with:
+            python-version: '3.12'
+        - name: Install dependencies
+          run: |
+            python3 -m pip install --upgrade pip
+            python3 -m pip install twine build
+        - name: Build sdist and wheel
+          run: |
+            python -m build
+        - name: Check distribution artefacts
+          run: |
+            python3 -m twine check dist/*
+        - name: Upload wheel and sdist
+          uses: actions/upload-artifact@v4
+          with:
+            name: wheels
+            path: dist
+  
+    OSX-test:
+      needs: ['distbuild']
+      runs-on: macos-latest
+      strategy:
+        matrix:
+          python: [3.9, "3.10", 3.11, 3.12]
+      steps:
+        - name: Download wheels
+          uses: actions/download-artifact@v4
+          with:
+            name: wheels
+        - name: Set up Python ${{ matrix.python }}
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python }}
+        - name: Install wheel and test
+          run: |
+            python -VV
+            # Install the local wheel
+            pip install tsbrowse --only-binary tsbrowse -f .
+            python -c "import tsbrowse"
+  
+    windows-test:
+      needs: ['distbuild']
+      runs-on: windows-latest
+      strategy:
+        matrix:
+          python: [3.9, "3.10", 3.11, 3.12]
+          wordsize: [64]
+      steps:
+        - name: Download wheels
+          uses: actions/download-artifact@v4
+          with:
+            name: wheels
+        - name: Set up Python ${{ matrix.python }}
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python }}
+        - name: Install wheel and test
+          run: |
+            python -VV
+            pip install wheel
+            # Install the local wheel
+            pip install tsbrowse --only-binary tsbrowse -f .
+            python -c "import tsbrowse"
+  
+    linux-test:
+      runs-on: ubuntu-latest
+      needs: ['distbuild']
+      strategy:
+        matrix:
+          python: [3.9, "3.10", 3.11, 3.12]
+      steps:
+        - name: Download wheels
+          uses: actions/download-artifact@v4
+          with:
+            name: wheels
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python }}
+        - name: Install wheel and test
+          run: |
+            python -VV
+            # Install the local wheel
+            pip install tsbrowse --only-binary tsbrowse -f .
+            python -c "import tsbrowse"
+  
+    PyPI_Upload:
+      runs-on: ubuntu-latest
+      environment: release
+      needs: ['windows-test', 'OSX-test', 'linux-test']
+      permissions:
+        id-token: write
+      steps:
+        - name: Download all
+          uses: actions/download-artifact@v4
+        - name: Move to dist
+          run: |
+            mkdir dist
+            cp */*.{whl,gz} dist/.
+        - name: Publish distribution to Test PyPI
+          if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+          uses: pypa/gh-action-pypi-publish@release/v1
+          with:
+            repository_url: https://test.pypi.org/legacy/
+        - name: Publish distribution to PRODUCTION PyPI
+          if: github.event_name == 'release'
+          uses: pypa/gh-action-pypi-publish@release/v1
+  
