@@ -96,20 +96,13 @@ def make_edges_panel(log_y, node_type, x_range, tsm):
         ylabel="Number of Edges",
     )
 
-    area_hist.opts(width=None, height=None, responsive=True, xrotation=90)
-    gspan_hist.opts(width=None, height=None, responsive=True, xrotation=90)
-    tspan_hist.opts(width=None, height=None, responsive=True, xrotation=90)
+    area_hist.opts(width=600, height=250, xrotation=90)
+    gspan_hist.opts(width=600, height=250, xrotation=90)
+    tspan_hist.opts(width=600, height=250, xrotation=90)
 
-    main = main.opts(width=None, height=None, responsive=True)
+    main = main.opts(width=800, height=800, responsive=True)
 
-    gspec = pn.GridSpec(sizing_mode="stretch_both", ncols=5, nrows=3)
-
-    gspec[:, :3] = main
-    gspec[0, 3:] = gspan_hist
-    gspec[1, 3:] = tspan_hist
-    gspec[2, 3:] = area_hist
-
-    return gspec
+    return pn.Row(main, pn.Column(gspan_hist, tspan_hist, area_hist))
 
 
 class EdgesPage:
