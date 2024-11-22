@@ -48,8 +48,9 @@ class NodesPage:
                 log_y=log_y,
                 xlabel="Ancestor Span",
                 ylabel="Number of Nodes",
+                plot_width=1400,
+                plot_height=300,
             )
-            nodes_hist.opts(width=None, height=None, responsive=True)
             return nodes_hist
 
         def make_node_plot(node_flags):
@@ -63,6 +64,8 @@ class NodesPage:
                 y="time",
                 hover_cols=["id", "ancestors_span", "time"],
             ).opts(
+                width=1400,
+                height=500,
                 xlabel="Ancestor Span",
                 ylabel=f"Time ({tsm.ts.time_units})",
             )
@@ -73,6 +76,8 @@ class NodesPage:
             hover = filtered.apply(hover_points, threshold=config.THRESHOLD)
             shaded = hd.datashade(
                 points,
+                width=1400,
+                height=500,
                 streams=streams,
                 cmap=config.PLOT_COLOURS[1:],
             )
@@ -80,16 +85,18 @@ class NodesPage:
             main = (shaded * hover).opts(
                 hv.opts.Points(tools=["hover"], alpha=0.1, hover_alpha=0.2, size=10)
             )
-            main.opts(width=None, height=None, responsive=True)
             return main
 
-        gspec = pn.GridSpec(sizing_mode="stretch_both", ncols=3)
-        gspec[0:2, 0] = pn.bind(make_node_plot, node_flags=node_flag_checkboxes)
-        gspec[2:, 0] = pn.bind(
+        nodes_plot = pn.bind(make_node_plot, node_flags=node_flag_checkboxes)
+        hist_plot = pn.bind(
             make_node_hist_panel, log_y=log_y_checkbox, node_flags=node_flag_checkboxes
         )
 
-        self.content = gspec
+        self.content = pn.Column(
+            nodes_plot,
+            hist_plot,
+        )
+
         self.sidebar = pn.Column(
             pn.pane.Markdown("# Nodes"),
             log_y_checkbox,
