@@ -1,6 +1,7 @@
 # tsbrowse
-Inspect large genetic genealogies (e.g. ARGs) stored in the [tskit](https://tskit.dev) "succinct tree sequence" format,
-via a genome browser style app. _Tsbrowse_ can deal with ARGs of thousands or potentially millions of samples.
+Inspect large genetic genealogies (e.g. ARGs) stored in the [tskit](https://tskit.dev) "succinct tree sequence" format, via a web app.
+_Tsbrowse_ can scale to ARGs with millions of samples.
+
 It is particularly useful to help evaluate ARGs that have been inferred using tools such as
 [tsinfer](https://github.com/tskit-dev/tsinfer),
 [sc2ts](https://github.com/tskit-dev/sc2ts),
@@ -8,15 +9,21 @@ It is particularly useful to help evaluate ARGs that have been inferred using to
 [KwARG](https://github.com/a-ignatieva/kwarg),
 [Threads](https://pypi.org/project/threads-arg/), etc.
 
-To view a tskit tree sequence or tszip file first pre-process it:
+## Quickstart
+
+First install `tsbrowse` from PyPI:
+
+`python -m pip install tsbrowse`
+
+A tskit tree sequence must first be preprocessed to a `.tsbrowse` file:
 
 `python -m tsbrowse preprocess /path/to/trees-file`
 
-This will write a `.tsbrowse` file
-
-To launch the app use:
+This will write a `.tsbrowse` file that can then be viewed using the web app:
 
 `python -m tsbrowse serve /path/to/tsbrowse-file`
+
+This command will launch a web server that can be accessed at `http://localhost:8080` in a web browser.
 
 To display the genes track use:
 
@@ -24,21 +31,18 @@ To display the genes track use:
 
 (where `genes.csv` is a semicolon-separated text file containing no header and information about one gene on a row in the order: `chr;start;end;strand;ensembl ID;gene name`)
 
-To generate a PNG of a specific page use, e.g:
+An example tree sequence file can be found here: [example.trees](https://raw.githubusercontent.com/tskit-dev/tsbrowse/refs/heads/main/example/example.trees.tsz).
 
-`python -m tsbrowse screenshot /path/to/tsbrowse-file mutations`
+## Tips
 
-On WSL, it may be necessary to disable Numba's CUDA support:
+If you are using Windows Subsystem for Linux (WSL) you may need to disable Numba's CUDA support:
 
 `NUMBA_DISABLE_CUDA=1 python -m tsbrowse serve /path/to/tsbrowse-file`
 
-## Installation
+A PNG of a specific page in tsbrowse can be generated using the `screenshot` command:
 
-tsbrowse is currently in development. To install the latest dev version from github, try
+`python -m tsbrowse screenshot /path/to/tsbrowse-file mutations`
 
-```
-python -m pip install git+https://github.com/tskit-dev/tsbrowse
-```
 
 ## Development
 
