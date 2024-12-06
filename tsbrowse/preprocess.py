@@ -1,5 +1,4 @@
 import dataclasses
-import json
 import pathlib
 import warnings
 
@@ -97,92 +96,6 @@ def alloc_tree_position(ts):
         edges_right=ts.edges_right,
         edge_insertion_order=ts.indexes_edge_insertion_order,
         edge_removal_order=ts.indexes_edge_removal_order,
-    )
-
-
-@jit.numba_jit()
-def _compute_population_mutation_counts(
-    tree_pos,
-    num_nodes,
-    num_mutations,
-    num_populations,
-    edges_parent,
-    edges_child,
-    nodes_is_sample,
-    nodes_population,
-    mutations_position,
-    mutations_node,
-    mutations_parent,
-):
-    num_pop_samples = np.zeros((num_nodes, num_populations), dtype=np.int32)
-
-    pop_mutation_count = np.zeros((num_populations, num_mutations), dtype=np.int32)
-    parent = np.zeros(num_nodes, dtype=np.int32) - 1
-
-    for u in range(num_nodes):
-        if nodes_is_sample[u]:
-            num_pop_samples[u, nodes_population[u]] = 1
-
-    mut_id = 0
-    while tree_pos.next():
-        for j in range(tree_pos.out_range[0], tree_pos.out_range[1]):
-            e = tree_pos.edge_removal_order[j]
-            c = edges_child[e]
-            p = edges_parent[e]
-            parent[c] = -1
-            u = p
-            while u != -1:
-                for k in range(num_populations):
-                    num_pop_samples[u, k] -= num_pop_samples[c, k]
-                u = parent[u]
-
-        for j in range(tree_pos.in_range[0], tree_pos.in_range[1]):
-            e = tree_pos.edge_insertion_order[j]
-            p = edges_parent[e]
-            c = edges_child[e]
-            parent[c] = p
-            u = p
-            while u != -1:
-                for k in range(num_populations):
-                    num_pop_samples[u, k] += num_pop_samples[c, k]
-                u = parent[u]
-
-        left, right = tree_pos.interval
-        while mut_id < num_mutations and mutations_position[mut_id] < right:
-            assert mutations_position[mut_id] >= left
-            mutation_node = mutations_node[mut_id]
-            for pop in range(num_populations):
-                pop_mutation_count[pop, mut_id] = num_pop_samples[mutation_node, pop]
-            mut_id += 1
-
-    return pop_mutation_count
-
-
-def compute_population_mutation_counts(ts):
-    """
-    Return a (num_populations, num_mutations) array that gives the frequency
-    of each mutation in each of the populations in the specified tree sequence.
-    """
-    logger.info(
-        f"Computing mutation frequencies within {ts.num_populations} populations"
-    )
-    mutations_position = ts.sites_position[ts.mutations_site].astype(int)
-
-    if np.any(ts.nodes_population[ts.samples()] == -1):
-        raise ValueError("Sample nodes must be assigned to populations")
-
-    return _compute_population_mutation_counts(
-        alloc_tree_position(ts),
-        ts.num_nodes,
-        ts.num_mutations,
-        ts.num_populations,
-        ts.edges_parent,
-        ts.edges_child,
-        node_is_sample(ts),
-        ts.nodes_population,
-        mutations_position,
-        ts.mutations_node,
-        ts.mutations_parent,
     )
 
 
@@ -322,23 +235,6 @@ def mutations(ts):
     inherited_state[mutations_with_parent] = derived_state[parent]
     mutations_inherited_state = inherited_state
 
-    population_data = {}
-    if ts.num_populations > 0:
-        pop_mutation_count = compute_population_mutation_counts(ts)
-        for pop in ts.populations():
-            name = f"pop{pop.id}"
-            if isinstance(pop.metadata, bytes):
-                try:
-                    metadata_dict = json.loads(pop.metadata.decode("utf-8"))
-                except (json.JSONDecodeError, UnicodeDecodeError):
-                    metadata_dict = {}
-            else:
-                metadata_dict = pop.metadata
-            if "name" in metadata_dict:
-                name = metadata_dict["name"]
-            col_name = f"pop_{name}_freq"
-            population_data[col_name] = pop_mutation_count[pop.id] / ts.num_samples
-
     counts = compute_mutation_counts(ts)
     logger.info("Preprocessed mutations")
     return {
@@ -347,7 +243,6 @@ def mutations(ts):
         "num_descendants": counts.num_descendants,
         "num_inheritors": counts.num_inheritors,
         "num_parents": counts.num_parents,
-        **population_data,
     }
 
 
