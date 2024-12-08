@@ -113,7 +113,10 @@ def preprocess(tszip_path, output, verbose):
 
     preprocess_.preprocess(tszip_path, output, show_progress=True)
     logger.info(f"Preprocessing completed. Output saved to: {output}")
-    print(f"Preprocessing completed. You can now view with `tsbrowse serve {output}`")
+    print(
+        "Preprocessing completed. You can now view with "
+        f"`python -m tsbrowse serve {output}`"
+    )
 
 
 @cli.command()
