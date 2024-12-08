@@ -18,7 +18,13 @@ To launch the app use:
 
 `python -m tsbrowse serve /path/to/tsbrowse-file`
 
-Or to generate a PNG of a specific page use, e.g:
+To display the genes track use:
+
+`python -m tsbrowse serve /path/to/tsbrowse-file --annotations-file genes.`
+
+(where `genes.csv` is a semicolon-separated text file containing no header and information about one gene on a row in the order: `chr;start;end;strand;ensembl ID;gene name`)
+
+To generate a PNG of a specific page use, e.g:
 
 `python -m tsbrowse screenshot /path/to/tsbrowse-file mutations`
 
