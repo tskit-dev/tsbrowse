@@ -49,7 +49,13 @@ def cli():
 
 @cli.command()
 @click.argument("path", type=click.Path(exists=True, dir_okay=False))
-@click.option("--annotations-file", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--annotations-file",
+    type=click.Path(exists=True, dir_okay=False),
+    help="Path to a csv annotations file containing no header and information "
+    "about each gene on a row in the order: "
+    "`chr,start,end,strand,ensembl ID,gene name`",
+)
 @click.option("--port", default=8080, help="Port to serve on")
 @click.option(
     "--show/--no-show",
