@@ -13,8 +13,8 @@ jobs:
       name: Build Distribution
       runs-on: ubuntu-latest
       steps:
-        - uses: actions/checkout@v3
-        - uses: actions/setup-python@v4
+        - uses: actions/checkout@v4.2.2
+        - uses: actions/setup-python@v5.3.0
           with:
             python-version: '3.12'
         - name: Install dependencies
@@ -28,7 +28,7 @@ jobs:
           run: |
             python3 -m twine check dist/*
         - name: Upload wheel and sdist
-          uses: actions/upload-artifact@v4
+          uses: actions/upload-artifact@v4.4.3
           with:
             name: wheels
             path: dist
@@ -41,11 +41,11 @@ jobs:
           python: ["3.10", 3.11, 3.12]
       steps:
         - name: Download wheels
-          uses: actions/download-artifact@v4
+          uses: actions/download-artifact@v4.1.8
           with:
             name: wheels
         - name: Set up Python ${{ matrix.python }}
-          uses: actions/setup-python@v4
+          uses: actions/setup-python@v5.3.0
           with:
             python-version: ${{ matrix.python }}
         - name: Install wheel and test
@@ -64,11 +64,11 @@ jobs:
           wordsize: [64]
       steps:
         - name: Download wheels
-          uses: actions/download-artifact@v4
+          uses: actions/download-artifact@v4.1.8
           with:
             name: wheels
         - name: Set up Python ${{ matrix.python }}
-          uses: actions/setup-python@v4
+          uses: actions/setup-python@v5.3.0
           with:
             python-version: ${{ matrix.python }}
         - name: Install wheel and test
@@ -87,11 +87,11 @@ jobs:
           python: ["3.10", 3.11, 3.12]
       steps:
         - name: Download wheels
-          uses: actions/download-artifact@v4
+          uses: actions/download-artifact@v4.1.8
           with:
             name: wheels
         - name: Set up Python
-          uses: actions/setup-python@v4
+          uses: actions/setup-python@v5.3.0
           with:
             python-version: ${{ matrix.python }}
         - name: Install wheel and test
@@ -109,17 +109,17 @@ jobs:
         id-token: write
       steps:
         - name: Download all
-          uses: actions/download-artifact@v4
+          uses: actions/download-artifact@v4.1.8
         - name: Move to dist
           run: |
             mkdir dist
             cp */*.{whl,gz} dist/.
         - name: Publish distribution to Test PyPI
           if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-          uses: pypa/gh-action-pypi-publish@release/v1
+          uses: pypa/gh-action-pypi-publish@v1.12.3
           with:
             repository_url: https://test.pypi.org/legacy/
         - name: Publish distribution to PRODUCTION PyPI
           if: github.event_name == 'release'
-          uses: pypa/gh-action-pypi-publish@release/v1
+          uses: pypa/gh-action-pypi-publish@v1.12.3
   
