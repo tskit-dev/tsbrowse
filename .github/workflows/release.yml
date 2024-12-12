@@ -11,7 +11,7 @@ on:
 jobs:
     distbuild:
       name: Build Distribution
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-24.04
       steps:
         - uses: actions/checkout@v4.2.2
         - uses: actions/setup-python@v5.3.0
@@ -80,7 +80,7 @@ jobs:
             python -c "import tsbrowse"
   
     linux-test:
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-24.04
       needs: ['distbuild']
       strategy:
         matrix:
@@ -102,7 +102,7 @@ jobs:
             python -c "import tsbrowse"
   
     PyPI_Upload:
-      runs-on: ubuntu-latest
+      runs-on: ubuntu-24.04
       environment: release
       needs: ['windows-test', 'OSX-test', 'linux-test']
       permissions:
