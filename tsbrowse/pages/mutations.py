@@ -39,9 +39,11 @@ def make_muts_panel(log_y, x_range, tsm):
         "clabel": "inheritors",
         "tools": [hover_tool, "tap"],
         "xlabel": "Position",
-        "ylabel": f"Mutation time ({tsm.ts.time_units})"
-        if not log_y
-        else f"Log (Mutation time ({tsm.ts.time_units}))",
+        "ylabel": (
+            f"Mutation time ({tsm.ts.time_units})"
+            if not log_y
+            else f"Log (Mutation time ({tsm.ts.time_units}))"
+        ),
     }
     x_range = parse_range(x_range)
     if x_range is not None:
@@ -77,9 +79,11 @@ def make_muts_panel(log_y, x_range, tsm):
     time_hist = hv.DynamicMap(
         make_hist_on_axis(dimension=y_dim, points=points), streams=streams
     ).opts(
-        xlabel=f"Time ({tsm.ts.time_units})"
-        if not log_y
-        else f"Log (Time ({tsm.ts.time_units}))",
+        xlabel=(
+            f"Time ({tsm.ts.time_units})"
+            if not log_y
+            else f"Log (Time ({tsm.ts.time_units}))"
+        ),
     )
     site_hist = hv.DynamicMap(
         make_hist_on_axis(dimension="position", points=points, x_range=x_range),
