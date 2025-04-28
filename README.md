@@ -29,7 +29,7 @@ To display the genes track use:
 
 `python -m tsbrowse serve /path/to/tsbrowse-file --annotations-file genes.`
 
-(where `genes.csv` is a semicolon-separated text file containing no header and information about one gene on a row in the order: `chr;start;end;strand;ensembl ID;gene name`)
+(where `genes.csv` is a semicolon-separated text file containing a header and information about one gene per row in the order: `chr;start;end;strand;ensembl ID;gene name`)
 
 An example tree sequence file can be found here: [example.trees](https://raw.githubusercontent.com/tskit-dev/tsbrowse/refs/heads/main/example/example.trees.tsz).
 
