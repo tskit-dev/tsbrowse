@@ -52,7 +52,7 @@ def cli():
 @click.option(
     "--annotations-file",
     type=click.Path(exists=True, dir_okay=False),
-    help="Path to a csv annotations file containing no header and information "
+    help="Path to a semicolon-separated file containing a header and information "
     "about each gene on a row in the order: "
     "`chr,start,end,strand,ensembl ID,gene name`",
 )
