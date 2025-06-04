@@ -8,7 +8,7 @@ A node defines a sampled or ancestral sequence represented in an ARG. It is iden
 
 The interactive top plot visualises the total span on the sequence for each ancestral node over time. 
 
-The histograms at the bottom show the distributions of node spans over different dimensions. The leftmost histogram summarises the span of nodes on the sequence; the middle plot summarises the span of nodes over time and the rightmost plot summarises the edge "area" defined as the product of sequence span and time span for each node.
+The histogram at the bottom shows the distribution of the length of genome that the nodes span.
 
 ## Plot controls (sidebar):
 * The `Node flags`checkbox group 
