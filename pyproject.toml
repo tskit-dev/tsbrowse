@@ -7,7 +7,7 @@ name = "tsbrowse"
 authors = [
     {name = "Tskit Developers", email = "admin@tskit.dev"},
 ]
-description = "Webapp to view and visualise tskit ARGs"
+description = "Webapp to view and visualise the information structure in tskit ARGs"
 readme = "README.md"
 requires-python = ">=3.10"
 license = {text = "MIT"}
