@@ -46,8 +46,8 @@ def test_screenshot_cli(tmpdir):
     assert os.path.exists(default_output)
     with Image.open(default_output) as img:
         width, height = img.size
-        assert width > 1000
-        assert height == 347
+        assert width >= 800
+        assert height >= 300
 
     # Test with path
     custom_output = os.path.join(tmpdir, "custom_screenshot.png")

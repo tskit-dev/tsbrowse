@@ -21,7 +21,7 @@ classifiers = [
 dependencies = [
     "click",
     "daiquiri",
-    "panel>=1.5.2",
+    "panel>=1.5.2,<=1.6.1", #Hard pin as mutations page fails with 1.6.2
     "hvplot",
     "datashader>=0.16.3",
     "matplotlib",

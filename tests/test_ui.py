@@ -50,7 +50,9 @@ def test_component(page, port, tmpdir, save_screenshots):
     expect(page.get_by_title("Reset").locator("div")).to_be_visible()
     if save_screenshots:
         page.screenshot(path="mutations.png")
-    # This test was flakey on CI, despite the fact that it works locally.
+
+    # This test is very unstable with panel versions due to the selector,
+    # disabled for now.
     # This horrendous selector is needed because the click event is not
     # handled be the canvas, but by a floating div on top.
     # page.locator("div:nth-child(6) > .bk-Canvas > div:nth-child(12)").click(
