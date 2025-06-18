@@ -29,3 +29,17 @@ We can then run the serve step to view the app in a web browser:
 ```
 python -m tsbrowse serve example.tsbrowse --port 8080
 ```
+### Running tsbrowse using the Docker image
+Assuming the tree sequence is present in the current directory, we run the preprocessing step by doing: 
+```
+docker run -it -v $(pwd):/data --rm tsbrowse:0.0.3 \
+python -m tsbrowse preprocess /data/example.trees
+```
+Here we use `-v` to mount the current directory into the container at `/data`.
+
+We can then run the serve step on the resulting .tsbrowse file to view the app in a web browser:
+```
+docker run -it -v $(pwd):/data -p 8080:8080 --rm tsbrowse:0.0.3 \
+    python -m tsbrowse serve /data/example.trees.tsbrowse --port 8080
+```
+`-p 8080:8080` is required to make the app available at localhost:8080.
