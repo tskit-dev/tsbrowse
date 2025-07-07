@@ -6,7 +6,7 @@ This is the documentation for tsbrowse, an open-source Python package for visual
 
 ## Contents  
 ### Getting started  
-This section includes an introduction to tsbrowse, amd notes on how to install and use the app.  
+This section includes an introduction to tsbrowse, and notes on how to install and use the app.  
     [Introduction](intro.md)  
     [Installing tsbrowse](install.md)  
 ### Pages  
