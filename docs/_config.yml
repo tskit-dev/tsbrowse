@@ -2,9 +2,10 @@
 # Learn more at https://jupyterbook.org/customize/config.html
 
 title: Tsbrowse manual
-author: Tsbrowse Developers
+author: Tskit Developers
 copyright: "2024"
 only_build_toc_files: true
+favicon: favicon.ico
 
 execute:
   execute_notebooks: cache
@@ -32,11 +33,19 @@ sphinx:
     - sphinx.ext.viewcode
     - sphinx.ext.intersphinx
     - sphinx_issues
+    - IPython.sphinxext.ipython_console_highlighting
     local_extensions:
       tsbrowse_image_extension: .
 
     config:
       html_theme: sphinx_book_theme
+      html_theme_options:
+        pygments_dark_style: monokai
+        navigation_with_keys: false
+        logo:
+          text: |
+            tsbrowse<br/>
+            version __TSBROWSE_VERSION__
       myst_enable_extensions:
       - colon_fence
       - deflist
