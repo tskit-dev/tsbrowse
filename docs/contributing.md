@@ -6,19 +6,23 @@ All contributions, bug reports, documentation improvements and ideas are welcome
 there is anything missing, please open an [issue](https://github.com/tskit-dev/tsbrowse/issues)
 or [pull request](https://github.com/tskit-dev/tsbrowse/pulls) on Github.
 
-## Quick start
-### Using a virtual environment
-First, set up a virtual environment:
+## Requirements
+
+The packages needed for development are specified as optional dependencies
+in the ``pyproject.toml`` file. Install these using:
+
 ```
-$ python3 -m venv tsbrowse_env
+python3 -m venv env
+source env/bin/activate
+python3 -m pip install -e ".[dev]"
 ```
-Then, activate the virtual environment:
+
+Alternatively, you can use uv for faster dependency management:
+
 ```
-$ source tsbrowse_env/bin/activate
-```
-Within the virtual environment, install requirements:
-```
-$ python3 -m pip install -r requirements.txt
+uv venv
+source .venv/bin/activate
+uv pip install -e ".[dev]"
 ```
 
 ### Github workflow

@@ -1,5 +1,8 @@
 [build-system]
-requires = ["setuptools>=45", "setuptools_scm[toml]>=6.2"]
+requires = [
+    "setuptools>=64",
+    "setuptools-scm>=8",
+]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -31,6 +34,46 @@ dependencies = [
 dynamic = ["version"]
 keywords = ["tree sequence", "ancestral recombination graph", "tskit", "quality control"]
 
+[project.optional-dependencies]
+test = [
+    "build==1.2.2.post1",
+    "coverage==7.6.9",
+    "coveralls==4.0.1",
+    "msprime==1.3.4",
+    "pytest==8.4.2",
+    "pytest-playwright==0.6.2",
+    "selenium==4.27.1",
+    "numcodecs>=0.6,<0.15.1", #Pinned due to https://github.com/zarr-developers/numcodecs/issues/733
+]
+docs = [
+    "jupyter-book==1.0.4.post1",
+    "matplotlib==3.10.0",
+    "msprime==1.3.4",
+    "sphinx_issues==5.0.1",
+    "pytest-playwright==0.6.2",
+    "numcodecs>=0.6,<0.15.1", #Pinned due to https://github.com/zarr-developers/numcodecs/issues/733
+]
+dev = [
+    "build",
+    "click",
+    "coverage",
+    "coveralls", 
+    "daiquiri",
+    "datashader>=0.16.3",
+    "hvplot",
+    "jupyter-book==1.0.4.post1",
+    "matplotlib",
+    "msprime",
+    "panel>=1.5.2,<=1.6.1",
+    "pre-commit",
+    "pytest",
+    "pytest-playwright",
+    "selenium",
+    "sphinx_issues",
+    "tskit",
+    "tszip",
+]
+
 [project.urls]
 "Bug Tracker" = "https://github.com/tskit-dev/tsbrowse/issues"
 "Source Code" = "https://github.com/tskit-dev/tsbrowse"
@@ -42,5 +85,7 @@ packages = ["tsbrowse", "tsbrowse.pages"]
 [tool.setuptools_scm]
 write_to = "tsbrowse/_version.py"
 
-[tool.pytest]
-testpaths = ["tests"]
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
