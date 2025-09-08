@@ -15,10 +15,10 @@ jobs:
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ github.token }}
-      - uses: actions/checkout@v4.2.2
-      - uses: actions/setup-python@v5.3.0
+      - uses: actions/setup-python@v5.4.0
         with:
-          python-version: '3.11'
+          python-version: '3.12'
+      - uses: actions/checkout@v4.2.2
       - uses: pre-commit/action@v3.0.1
 
   test:
@@ -27,7 +27,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: [ "3.11" ]
+        python: [ "3.10", "3.13" ]
         os:  [ ubuntu-24.04, ]
     defaults:
       run:
@@ -41,34 +41,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.2.2
 
-      - uses: actions/setup-python@v5.3.0
+      - name: Install uv and set the python version
+        uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.11'
-          cache: 'pip'
+          version: "0.8.15"
 
       - name: Install deps
         run: |
-            pip install -r requirements.txt
-            playwright install
+            uv venv
+            uv pip install -r pyproject.toml --extra test
+            uv run --no-sync playwright install
 
       - name: Tests with numba
-        run: coverage run --source=tsbrowse -m pytest -x tests
+        run: uv run --no-sync coverage run --source=tsbrowse -m pytest -x tests
 
       - name: Tests with coverage (no numba)
-        run: TSBROWSE_DISABLE_NUMBA=1 coverage run --source=tsbrowse -m pytest -x tests
+        run: TSBROWSE_DISABLE_NUMBA=1 uv run --no-sync coverage run --source=tsbrowse -m pytest -x tests
 
       - name: Upload coverage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          coveralls --service=github
+          uv run --no-sync coveralls --service=github
 
-
-  
       - name: Build wheel
-        run: python -m build --wheel
+        run: uv run --no-sync python -m build --wheel
 
       - name: Install wheel
         run: |
-          pip install dist/*.whl
-          python -m tsbrowse --help
+          uv pip install dist/*.whl
+          uv run --no-sync python -m tsbrowse --help
