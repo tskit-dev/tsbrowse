@@ -16,3 +16,4 @@ selenium
 sphinx_issues
 tskit
 tszip
+numcodecs>=0.6,<0.15.1 #Pinned due to https://github.com/zarr-developers/numcodecs/issues/733
