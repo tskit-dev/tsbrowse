@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.0.4] - 2025-XX-XX
+
+- Support Python3.10-3.13 (#256)
+
 ## [0.0.3] - 2025-06-11
 
 - Fix missing matplib dependency (#249)
