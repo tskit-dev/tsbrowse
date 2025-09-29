@@ -1,19 +1,26 @@
 # tsbrowse
+[![License](https://img.shields.io/github/license/tskit-dev/tsbrowse)](https://github.com/tskit-dev/tsbrowse/blob/main/LICENSE) [![PyPI version](https://img.shields.io/pypi/v/tsbrowse.svg)](https://pypi.org/project/tsbrowse/) [![Supported Python Versions](https://img.shields.io/pypi/pyversions/tsbrowse.svg)](https://pypi.org/project/tsbrowse/) [![Docs Build](https://github.com/tskit-dev/tsbrowse/actions/workflows/docs.yml/badge.svg)](https://github.com/tskit-dev/tsbrowse/actions/workflows/docs.yml) [![Tests](https://github.com/tskit-dev/tsbrowse/actions/workflows/tests.yml/badge.svg)](https://github.com/tskit-dev/tsbrowse/actions/workflows/tests.yml)
 Inspect large genetic genealogies (e.g. ARGs) stored in the [tskit](https://tskit.dev) "succinct tree sequence" format, via a web app.
 _Tsbrowse_ can scale to ARGs with millions of samples.
 
+Documentation: https://tskit.dev/tsbrowse/docs/stable/ (latest: https://tskit.dev/tsbrowse/docs/latest/)
+
 It is particularly useful to help evaluate ARGs that have been inferred using tools such as
 [tsinfer](https://github.com/tskit-dev/tsinfer),
-[sc2ts](https://github.com/tskit-dev/sc2ts),
+[sc2ts](https://github.com/jeromekelleher/sc2ts),
 [Relate](https://github.com/MyersGroup/relate),
 [KwARG](https://github.com/a-ignatieva/kwarg),
 [Threads](https://pypi.org/project/threads-arg/), etc.
 
 ## Quickstart
 
-First install `tsbrowse` from PyPI:
+## Installation
 
-`python -m pip install tsbrowse`
+Install from PyPI:
+
+```
+python -m pip install tsbrowse
+```
 
 A tskit tree sequence must first be preprocessed to a `.tsbrowse` file:
 
@@ -46,7 +53,7 @@ A PNG of a specific page in tsbrowse can be generated using the `screenshot` com
 
 ## Development
 
-Test are run with pytest:
+Tests are run with pytest:
 
 `python -m pytest`
 
