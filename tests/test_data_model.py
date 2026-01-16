@@ -33,7 +33,7 @@ def test_model(tmpdir):
     assert ts.num_migrations > 0
     assert ts.num_mutations > 0
 
-    tables = ts.tables
+    tables = ts.dump_tables()
     tables.nodes.metadata_schema = tskit.MetadataSchema({"codec": "json"})
 
     # Give each individual a location
