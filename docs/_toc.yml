@@ -18,6 +18,7 @@ parts:
 
 - caption: Extras
   chapters:
+  - file: CITATION
   - file: contributing
   - file: CHANGELOG
   - url: https://tskit.dev/community/
