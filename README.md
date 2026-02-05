@@ -62,3 +62,6 @@ To run the UI tests so you can see what the browser is doing use
 `python -m pytest --headed --slowmo 1000 tests/test_ui.py`
 
 `playwright codegen` is also useful for writing UI test code.
+
+## Citing tsbrowse
+If you use `tsbrowse` in your work, please cite [this paper](<https://doi.org/10.1093/bioinformatics/btaf393>)
