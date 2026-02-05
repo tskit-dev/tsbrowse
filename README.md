@@ -7,9 +7,8 @@ Documentation: https://tskit.dev/tsbrowse/docs/stable/ (latest: https://tskit.de
 
 It is particularly useful to help evaluate ARGs that have been inferred using tools such as
 [tsinfer](https://github.com/tskit-dev/tsinfer),
-[sc2ts](https://github.com/jeromekelleher/sc2ts),
+[sc2ts](https://github.com/tskit-dev/sc2ts),
 [Relate](https://github.com/MyersGroup/relate),
-[KwARG](https://github.com/a-ignatieva/kwarg),
 [Threads](https://pypi.org/project/threads-arg/), etc.
 
 ## Quickstart
