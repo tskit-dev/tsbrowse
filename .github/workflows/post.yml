@@ -28,8 +28,6 @@ jobs:
         run: |
           uv venv
           uv pip install -r pyproject.toml --extra test
-          uv run --no-sync playwright install
-
 
       - name: Create Screenshots - CLI
         run: |
@@ -49,7 +47,7 @@ jobs:
           git config --global user.email 'action@github.com'
           pr_number="${{ github.event.pull_request.number }}"
           screenshot_dir="pr_${pr_number}"
-          
+
           if ! git ls-remote --exit-code --heads origin $SCREENSHOTS_BRANCH; then
             git checkout --orphan $SCREENSHOTS_BRANCH
             git rm -rf .
@@ -59,10 +57,10 @@ jobs:
             git fetch origin $SCREENSHOTS_BRANCH
             git checkout $SCREENSHOTS_BRANCH
           fi
-          
+
           mkdir -p $screenshot_dir
           mv *.png $screenshot_dir/
-          
+
           git add $screenshot_dir
           git commit -m "Update screenshots for PR #${pr_number}"
           git push origin $SCREENSHOTS_BRANCH
@@ -73,11 +71,11 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs').promises;
-            
+
             const prNumber = context.payload.pull_request.number;
             const screenshotDir = `pr_${prNumber}`;
             const pngFiles = (await fs.readdir(screenshotDir)).filter(file => file.endsWith('.png'));
-            
+
             let commentBody = '## Automated Screenshots\n\n';
             commentBody += 'These screenshots are automatically updated as the PR changes.\n\n';
             commentBody += '<details><summary>Click to view screenshots</summary>\n\n';
@@ -86,17 +84,17 @@ jobs:
               commentBody += `### ${file}\n\n![${file}](${imageUrl})\n\n`;
             }
             commentBody += '</details>';
-            
+
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
             });
-            
-            const botComment = comments.find(comment => 
+
+            const botComment = comments.find(comment =>
               comment.user.type === 'Bot' && comment.body.includes('## Automated Screenshots')
             );
-            
+
             if (botComment) {
               await github.rest.issues.updateComment({
                 owner: context.repo.owner,
