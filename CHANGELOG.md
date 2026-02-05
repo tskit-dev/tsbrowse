@@ -1,8 +1,11 @@
 # Changelog
 
-## [0.0.4] - 2025-09-18
+## [0.1.0] - 2026-02-05
+
+Maintenance release.
 
 - Support Python3.10-3.13 (#256)
+- Add explicit pins for Zarr<3
 
 ## [0.0.3] - 2025-06-11
 
