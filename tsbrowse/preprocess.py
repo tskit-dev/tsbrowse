@@ -10,8 +10,9 @@ import tszip
 import zarr
 from tqdm import tqdm
 
-from . import jit
 from tsbrowse import TSBROWSE_DATA_VERSION
+
+from . import jit
 
 logger = daiquiri.getLogger("tsbrowse")
 
@@ -210,9 +211,7 @@ def mutations(ts):
     derived_state = np.array(
         [
             derived_state[s].tobytes().decode("utf-8")
-            for s in (
-                slice(start, end) for start, end in zip(offsets[:-1], offsets[1:])
-            )
+            for s in (slice(start, end) for start, end in zip(offsets[:-1], offsets[1:]))
         ]
     )
     ancestral_state = tables.sites.ancestral_state
@@ -220,9 +219,7 @@ def mutations(ts):
     ancestral_state = np.array(
         [
             ancestral_state[s].tobytes().decode("utf-8")
-            for s in (
-                slice(start, end) for start, end in zip(offsets[:-1], offsets[1:])
-            )
+            for s in (slice(start, end) for start, end in zip(offsets[:-1], offsets[1:]))
         ]
     )
     del tables
@@ -442,9 +439,7 @@ def preprocess(tszip_path, output_path, show_progress=False):
     with zarr.ZipStore(output_path, mode="a") as zarr_store:
         root = zarr.group(store=zarr_store)
         total_arrays = sum(len(arrays) for arrays in data.values())
-        with tqdm(
-            total=total_arrays, desc="Writing", disable=not show_progress
-        ) as pbar:
+        with tqdm(total=total_arrays, desc="Writing", disable=not show_progress) as pbar:
             for table_name, arrays in data.items():
                 for array_name, array in arrays.items():
                     logger.info(f"Writing {table_name}/{array_name}")

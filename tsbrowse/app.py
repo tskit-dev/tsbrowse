@@ -5,8 +5,7 @@ import holoviews as hv
 import panel as pn
 from holoviews import opts
 
-from tsbrowse import config
-from tsbrowse import pages
+from tsbrowse import config, pages
 
 logger = daiquiri.getLogger("tsbrowse")
 
@@ -30,9 +29,7 @@ hv.extension("bokeh")
 hv.opts.defaults(
     opts.Scatter(color=config.PLOT_COLOURS[2]),
     opts.Points(color=config.PLOT_COLOURS[2]),
-    opts.Histogram(
-        fill_color=config.PLOT_COLOURS[0], line_color=config.PLOT_COLOURS[2]
-    ),
+    opts.Histogram(fill_color=config.PLOT_COLOURS[0], line_color=config.PLOT_COLOURS[2]),
     opts.Bars(color=config.PLOT_COLOURS[0], line_color=config.PLOT_COLOURS[2]),
     opts.Segments(color=config.PLOT_COLOURS[2]),
     opts.Curve(color=config.PLOT_COLOURS[2]),

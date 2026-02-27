@@ -5,9 +5,7 @@ import panel as pn
 import pytest
 from playwright.sync_api import expect
 
-from tsbrowse import app
-from tsbrowse import model
-from tsbrowse import preprocess
+from tsbrowse import app, model, preprocess
 
 
 @pytest.fixture

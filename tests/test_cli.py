@@ -4,8 +4,9 @@ import tszip
 from click.testing import CliRunner
 from PIL import Image
 
-from . import test_preprocess
 from tsbrowse import __main__ as main
+
+from . import test_preprocess
 
 
 def test_preprocess_cli(tmpdir):

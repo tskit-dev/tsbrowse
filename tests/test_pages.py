@@ -4,9 +4,7 @@ import tskit
 import tszip
 
 from tests import test_preprocess
-from tsbrowse import model
-from tsbrowse import pages
-from tsbrowse import preprocess
+from tsbrowse import model, pages, preprocess
 
 # TODO give these some pytest metadata so they are named.
 examples = [

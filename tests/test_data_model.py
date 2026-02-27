@@ -5,8 +5,7 @@ import tskit
 import tszip
 import zarr
 
-from tsbrowse import model
-from tsbrowse import preprocess
+from tsbrowse import model, preprocess
 
 
 def test_model(tmpdir):
