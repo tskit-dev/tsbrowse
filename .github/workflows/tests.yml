@@ -47,7 +47,7 @@ jobs:
       - name: Run tests (without numba)
         run: |
           TSBROWSE_DISABLE_NUMBA=1 uv run --no-default-groups pytest \
-            --cov=tsb--no-default-groups rowse --cov-branch --cov-report=xml --cov-append -x tests
+            --cov=tsbrowse --cov-branch --cov-report=xml --cov-append -x tests
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
