@@ -24,7 +24,8 @@ class TSBrowsePreprocessor:
         return re.findall(pattern, content)
 
     def generate_image(self, ts_file, page_name):
-        output_filename = f"{Path(ts_file).stem}_{page_name}.png"
+        ts_file = self.src_dir / ts_file
+        output_filename = f"{ts_file.stem}_{page_name}.png"
         output_path = self.image_dir / output_filename
 
         if output_path in self.processed_images:

@@ -37,7 +37,7 @@ jobs:
         run: uv sync --locked --group test --no-default-groups
 
       - name: Install playwright browsers
-        run: uv run playwright install --with-deps chromium
+        run: uv run --no-default-groups playwright install --with-deps chromium
 
       - name: Run tests (with numba)
         run: |
@@ -47,7 +47,7 @@ jobs:
       - name: Run tests (without numba)
         run: |
           TSBROWSE_DISABLE_NUMBA=1 uv run --no-default-groups pytest \
-            --cov=tsbrowse --cov-branch --cov-report=xml --cov-append -x tests
+            --cov=tsb--no-default-groups rowse --cov-branch --cov-report=xml --cov-append -x tests
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5.4.0
