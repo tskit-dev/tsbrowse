@@ -9,3 +9,7 @@ on:
 jobs:
   Docs:
     uses: tskit-dev/.github/.github/workflows/docs.yml@main
+    with:
+      pre-build-command: |
+        uv run --locked --no-default-groups --group=docs \
+          playwright install --with-deps chromium
