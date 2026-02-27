@@ -7,26 +7,17 @@ on:
   merge_group:
 
 jobs:
-
-  pre-commit:
-    name: Lint
-    uses: tskit-dev/.github/.github/workflows/lint.yml@v4
-
   packaging:
     name: Python packaging
-    uses: tskit-dev/.github/.github/workflows/python-packaging.yml@v4
+    uses: tskit-dev/.github/.github/workflows/python-packaging.yml@main
 
   test:
     name: Python
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
-        python: [ "3.10", "3.13" ]
-        os:  [ ubuntu-24.04, ]
-    defaults:
-      run:
-        shell: bash
+        python: ["3.11", "3.13"]
     steps:
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.12.1
@@ -36,26 +27,34 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.2.2
 
-      - name: Install uv and set the python version
+      - name: Install uv
         uses: astral-sh/setup-uv@v6
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python }}
           version: "0.8.15"
 
-      - name: Install deps
+      - name: Install dependencies
+        run: uv sync --locked --group test --no-default-groups
+
+      - name: Install playwright browsers
+        run: uv run playwright install --with-deps chromium
+
+      - name: Run tests (with numba)
         run: |
-            uv venv
-            uv pip install -r pyproject.toml --extra test
-            uv run --no-sync playwright install
+          uv run --no-default-groups pytest --cov=tsbrowse --cov-branch \
+            --cov-report=xml -x tests
 
-      - name: Tests with numba
-        run: uv run --no-sync coverage run --source=tsbrowse -m pytest -x tests
-
-      - name: Tests with coverage (no numba)
-        run: TSBROWSE_DISABLE_NUMBA=1 uv run --no-sync coverage run --source=tsbrowse -m pytest -x tests
-
-      - name: Upload coverage
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run tests (without numba)
         run: |
-          uv run --no-sync coveralls --service=github
+          TSBROWSE_DISABLE_NUMBA=1 uv run --no-default-groups pytest \
+            --cov=tsbrowse --cov-branch --cov-report=xml --cov-append -x tests
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v5.4.0
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: true
+          flags: python-tests
+          files: coverage.xml
+          disable_search: true
+          verbose: true
