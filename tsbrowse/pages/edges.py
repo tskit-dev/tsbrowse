@@ -5,9 +5,7 @@ import numpy as np
 import panel as pn
 
 from .. import config
-from ..plot_helpers import filter_points
-from ..plot_helpers import hover_points
-from ..plot_helpers import make_hist
+from ..plot_helpers import filter_points, hover_points, make_hist
 
 
 def parse_range(range_str):
@@ -118,9 +116,7 @@ class EdgesPage:
         # (https://github.com/holoviz/panel/issues/1313):
         radio_title = pn.pane.Markdown("Plot time of:")
         x_range = pn.widgets.TextInput(value="", name="X Range (start:stop)")
-        options_box = pn.WidgetBox(
-            log_y_checkbox, radio_title, node_type_radio, x_range
-        )
+        options_box = pn.WidgetBox(log_y_checkbox, radio_title, node_type_radio, x_range)
         edges_panel = pn.bind(
             make_edges_panel,
             log_y=log_y_checkbox,

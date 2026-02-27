@@ -6,8 +6,7 @@ import panel as pn
 from playwright.sync_api import sync_playwright
 from sphinx.util import logging
 
-from tsbrowse import app
-from tsbrowse import model
+from tsbrowse import app, model
 
 logger = logging.getLogger(__name__)
 

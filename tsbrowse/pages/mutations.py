@@ -7,12 +7,14 @@ import panel as pn
 from bokeh.models import HoverTool
 
 from .. import config
-from ..plot_helpers import customise_ticks
-from ..plot_helpers import filter_points
-from ..plot_helpers import hover_points
-from ..plot_helpers import make_hist_on_axis
-from ..plot_helpers import parse_range
-from ..plot_helpers import selected_hist
+from ..plot_helpers import (
+    customise_ticks,
+    filter_points,
+    hover_points,
+    make_hist_on_axis,
+    parse_range,
+    selected_hist,
+)
 
 
 def make_muts_panel(log_y, x_range, tsm):

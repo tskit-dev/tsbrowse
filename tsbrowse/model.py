@@ -189,7 +189,7 @@ class TSModel:
         )
         node_spans = self.ts.sample_count_stat(
             [self.ts.samples()],
-            lambda x: (x > 0),
+            lambda x: x > 0,
             1,
             polarised=True,
             span_normalise=False,

@@ -8,8 +8,7 @@ import tskit
 import tszip
 import zarr
 
-from tsbrowse import preprocess
-from tsbrowse import TSBROWSE_DATA_VERSION
+from tsbrowse import TSBROWSE_DATA_VERSION, preprocess
 
 
 def single_tree_example_ts():

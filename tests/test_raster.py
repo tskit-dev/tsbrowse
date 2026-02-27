@@ -2,10 +2,7 @@ import msprime
 import pytest
 import tszip
 
-from tsbrowse import model
-from tsbrowse import pages
-from tsbrowse import preprocess
-from tsbrowse import raster
+from tsbrowse import model, pages, preprocess, raster
 
 
 @pytest.fixture(scope="module")

@@ -3336,26 +3336,26 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "jupyter-book", specifier = "==1.0.4.post1" },
-    { name = "matplotlib", specifier = "==3.10.6" },
-    { name = "msprime", specifier = "==1.3.4" },
-    { name = "playwright", specifier = "==1.48.0" },
+    { name = "jupyter-book", specifier = "<2" },
+    { name = "matplotlib" },
+    { name = "msprime" },
+    { name = "playwright" },
     { name = "prek", specifier = "==0.3.3" },
-    { name = "pytest", specifier = "==8.4.2" },
+    { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "pytest-playwright", specifier = "==0.7.1" },
+    { name = "pytest-playwright" },
     { name = "ruff", specifier = "==0.15.1" },
-    { name = "selenium", specifier = "==4.35.0" },
-    { name = "sphinx-issues", specifier = "==5.0.1" },
+    { name = "selenium" },
+    { name = "sphinx-issues" },
     { name = "twine" },
     { name = "validate-pyproject", extras = ["all"] },
 ]
 docs = [
-    { name = "jupyter-book", specifier = "==1.0.4.post1" },
-    { name = "matplotlib", specifier = "==3.10.6" },
-    { name = "msprime", specifier = "==1.3.4" },
-    { name = "playwright", specifier = "==1.48.0" },
-    { name = "sphinx-issues", specifier = "==5.0.1" },
+    { name = "jupyter-book", specifier = "<2" },
+    { name = "matplotlib" },
+    { name = "msprime" },
+    { name = "playwright" },
+    { name = "sphinx-issues" },
 ]
 lint = [
     { name = "prek", specifier = "==0.3.3" },
@@ -3366,12 +3366,12 @@ packaging = [
     { name = "validate-pyproject", extras = ["all"] },
 ]
 test = [
-    { name = "msprime", specifier = "==1.3.4" },
-    { name = "playwright", specifier = "==1.48.0" },
-    { name = "pytest", specifier = "==8.4.2" },
+    { name = "msprime" },
+    { name = "playwright" },
+    { name = "pytest" },
     { name = "pytest-cov" },
-    { name = "pytest-playwright", specifier = "==0.7.1" },
-    { name = "selenium", specifier = "==4.35.0" },
+    { name = "pytest-playwright" },
+    { name = "selenium" },
 ]
 
 [[package]]

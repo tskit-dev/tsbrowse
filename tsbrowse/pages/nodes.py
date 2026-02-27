@@ -5,9 +5,7 @@ import numpy as np
 import panel as pn
 
 from .. import config
-from ..plot_helpers import filter_points
-from ..plot_helpers import hover_points
-from ..plot_helpers import make_hist
+from ..plot_helpers import filter_points, hover_points, make_hist
 
 
 class NodesPage:
