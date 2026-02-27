@@ -1,125 +1,54 @@
+# NOTE: this file is inconsistently named with other repos
+# in tskit-dev (usually called "wheels.yml")
+name: Publish Python release
+
 on:
   push:
-    branches:
-      - main
-      - test
-    tags:
-      - '*'
+    branches: [test-publish]
   release:
     types: [published]
- 
+
 jobs:
-    distbuild:
-      name: Build Distribution
-      runs-on: ubuntu-24.04
-      steps:
-        - uses: actions/checkout@v4.2.2
-        - uses: actions/setup-python@v5.3.0
-          with:
-            python-version: '3.12'
-        - name: Install dependencies
-          run: |
-            python3 -m pip install --upgrade pip
-            python3 -m pip install twine build
-        - name: Build sdist and wheel
-          run: |
-            python -m build
-        - name: Check distribution artefacts
-          run: |
-            python3 -m twine check dist/*
-        - name: Upload wheel and sdist
-          uses: actions/upload-artifact@v4.4.3
-          with:
-            name: wheels
-            path: dist
-  
-    OSX-test:
-      needs: ['distbuild']
-      runs-on: macos-latest
-      strategy:
-        matrix:
-          python: ["3.10", 3.11, 3.12]
-      steps:
-        - name: Download wheels
-          uses: actions/download-artifact@v4.1.8
-          with:
-            name: wheels
-        - name: Set up Python ${{ matrix.python }}
-          uses: actions/setup-python@v5.3.0
-          with:
-            python-version: ${{ matrix.python }}
-        - name: Install wheel and test
-          run: |
-            python -VV
-            # Install the local wheel
-            pip install tsbrowse --only-binary tsbrowse -f .
-            python -c "import tsbrowse"
-  
-    windows-test:
-      needs: ['distbuild']
-      runs-on: windows-latest
-      strategy:
-        matrix:
-          python: ["3.10", 3.11, 3.12]
-          wordsize: [64]
-      steps:
-        - name: Download wheels
-          uses: actions/download-artifact@v4.1.8
-          with:
-            name: wheels
-        - name: Set up Python ${{ matrix.python }}
-          uses: actions/setup-python@v5.3.0
-          with:
-            python-version: ${{ matrix.python }}
-        - name: Install wheel and test
-          run: |
-            python -VV
-            pip install wheel
-            # Install the local wheel
-            pip install tsbrowse --only-binary tsbrowse -f .
-            python -c "import tsbrowse"
-  
-    linux-test:
-      runs-on: ubuntu-24.04
-      needs: ['distbuild']
-      strategy:
-        matrix:
-          python: ["3.10", 3.11, 3.12]
-      steps:
-        - name: Download wheels
-          uses: actions/download-artifact@v4.1.8
-          with:
-            name: wheels
-        - name: Set up Python
-          uses: actions/setup-python@v5.3.0
-          with:
-            python-version: ${{ matrix.python }}
-        - name: Install wheel and test
-          run: |
-            python -VV
-            # Install the local wheel
-            pip install tsbrowse --only-binary tsbrowse -f .
-            python -c "import tsbrowse"
-  
-    PyPI_Upload:
-      runs-on: ubuntu-24.04
-      environment: release
-      needs: ['windows-test', 'OSX-test', 'linux-test']
-      permissions:
-        id-token: write
-      steps:
-        - name: Download all
-          uses: actions/download-artifact@v4.1.8
-        - name: Move to dist
-          run: |
-            mkdir dist
-            cp */*.{whl,gz} dist/.
-        - name: Publish distribution to Test PyPI
-          if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
-          uses: pypa/gh-action-pypi-publish@v1.12.3
-          with:
-            repository_url: https://test.pypi.org/legacy/
-        - name: Publish distribution to PRODUCTION PyPI
-          if: github.event_name == 'release'
-          uses: pypa/gh-action-pypi-publish@v1.12.3
-  
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4.2.2
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+          version: "0.8.15"
+
+      - name: Build
+        run: uv build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    runs-on: ubuntu-24.04
+    environment: release
+    needs: [build]
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v7.0.0
+        with:
+          name: dist
+          path: dist
+
+      - name: Publish to TestPyPI
+        if: github.event_name == 'push' && github.ref_name == 'test-publish'
+        uses: pypa/gh-action-pypi-publish@v1.13.0
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          verbose: true
+
+      - name: Publish to PyPI
+        if: github.event_name == 'release'
+        uses: pypa/gh-action-pypi-publish@v1.13.0
