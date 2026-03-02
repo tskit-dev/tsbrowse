@@ -1,4 +1,3 @@
-
 import msprime
 import numpy as np
 import pytest
@@ -103,9 +102,7 @@ class TestModelErrors:
             model.TSModel(tsbrowse_path)
 
     def test_wrong_data_version(self, tmpdir):
-        ts = msprime.sim_ancestry(
-            samples=2, sequence_length=10, random_seed=42
-        )
+        ts = msprime.sim_ancestry(samples=2, sequence_length=10, random_seed=42)
         tsbrowse_path = tmpdir / "test.tsbrowse"
         tszip.compress(ts, tmpdir / "test.tszip")
         preprocess.preprocess(tmpdir / "test.tszip", tsbrowse_path)
