@@ -1,11 +1,12 @@
+
 import msprime
 import numpy as np
 import pytest
 import tskit
 import tszip
+import zarr
 
 from tsbrowse import model, preprocess
-from tsbrowse.zarr_compat import open_root_group, open_zip_store
 
 
 def test_model(tmpdir):
@@ -91,21 +92,25 @@ def test_model(tmpdir):
         )
 
 
-def test_model_errors(tmpdir):
-    # Write an empty zarr ZipStore
-    with open_zip_store(tmpdir / "test.tsbrowse", mode="w") as z:
-        g = open_root_group(z, mode="w", zarr_format=2)
-        g.attrs["foo"] = "bar"
-    with pytest.raises(ValueError, match="File is not a tsbrowse file"):
-        model.TSModel(tmpdir / "test.tsbrowse")
+class TestModelErrors:
+    def test_not_tsbrowse_file(self, tmpdir):
+        tsbrowse_path = tmpdir / "test.tsbrowse"
+        # Write an empty zarr ZipStore
+        with zarr.storage.ZipStore(str(tsbrowse_path), mode="w") as z:
+            g = zarr.open_group(store=z, mode="w", zarr_format=2)
+            g.attrs["foo"] = "bar"
+        with pytest.raises(ValueError, match="File is not a tsbrowse file"):
+            model.TSModel(tsbrowse_path)
 
-    ts = msprime.sim_ancestry(
-        recombination_rate=1e-3, samples=2, sequence_length=1000, random_seed=42
-    )
-    tszip.compress(ts, tmpdir / "test.tszip")
-    preprocess.preprocess(tmpdir / "test.tszip", tmpdir / "test.tsbrowse")
-    with open_zip_store(tmpdir / "test.tsbrowse", mode="w") as z:
-        g = open_root_group(z, mode="w", zarr_format=2)
-        g.attrs["tsbrowse"] = {"data_version": 0}
-    with pytest.raises(ValueError, match="File .* has version .*"):
-        model.TSModel(tmpdir / "test.tsbrowse")
+    def test_wrong_data_version(self, tmpdir):
+        ts = msprime.sim_ancestry(
+            samples=2, sequence_length=10, random_seed=42
+        )
+        tsbrowse_path = tmpdir / "test.tsbrowse"
+        tszip.compress(ts, tmpdir / "test.tszip")
+        preprocess.preprocess(tmpdir / "test.tszip", tsbrowse_path)
+        with zarr.storage.ZipStore(str(tsbrowse_path), mode="w") as z:
+            g = zarr.open_group(store=z, mode="w", zarr_format=2)
+            g.attrs["tsbrowse"] = {"data_version": 0}
+        with pytest.raises(ValueError, match="File .* has version .*"):
+            model.TSModel(tsbrowse_path)

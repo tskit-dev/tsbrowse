@@ -5,9 +5,9 @@ import daiquiri
 import numpy as np
 import pandas as pd
 import tszip
+import zarr
 
 from . import TSBROWSE_DATA_VERSION
-from .zarr_compat import open_root_group, open_zip_store
 
 logger = daiquiri.getLogger("tsbrowse")
 
@@ -20,7 +20,10 @@ class TSModel:
 
     def __init__(self, tsbrowse_path):
         tsbrowse_path = pathlib.Path(tsbrowse_path)
-        root = open_root_group(open_zip_store(tsbrowse_path, mode="r"), mode="r")
+        root = zarr.open_group(
+            store=zarr.storage.ZipStore(tsbrowse_path, mode="r"),
+            mode="r",
+        )
         if "tsbrowse" not in root.attrs or "data_version" not in root.attrs["tsbrowse"]:
             raise ValueError("File is not a tsbrowse file, run tsbrowse preprocess")
         if root.attrs["tsbrowse"]["data_version"] != TSBROWSE_DATA_VERSION:
