@@ -3,9 +3,9 @@ import numpy as np
 import pytest
 import tskit
 import tszip
-import zarr
 
 from tsbrowse import model, preprocess
+from tsbrowse.zarr_compat import open_root_group, open_zip_store
 
 
 def test_model(tmpdir):
@@ -93,8 +93,8 @@ def test_model(tmpdir):
 
 def test_model_errors(tmpdir):
     # Write an empty zarr ZipStore
-    with zarr.ZipStore(tmpdir / "test.tsbrowse", mode="w") as z:
-        g = zarr.group(store=z)
+    with open_zip_store(tmpdir / "test.tsbrowse", mode="w") as z:
+        g = open_root_group(z, mode="w", zarr_format=2)
         g.attrs["foo"] = "bar"
     with pytest.raises(ValueError, match="File is not a tsbrowse file"):
         model.TSModel(tmpdir / "test.tsbrowse")
@@ -104,8 +104,8 @@ def test_model_errors(tmpdir):
     )
     tszip.compress(ts, tmpdir / "test.tszip")
     preprocess.preprocess(tmpdir / "test.tszip", tmpdir / "test.tsbrowse")
-    with zarr.ZipStore(tmpdir / "test.tsbrowse", mode="w") as z:
-        g = zarr.group(store=z)
+    with open_zip_store(tmpdir / "test.tsbrowse", mode="w") as z:
+        g = open_root_group(z, mode="w", zarr_format=2)
         g.attrs["tsbrowse"] = {"data_version": 0}
     with pytest.raises(ValueError, match="File .* has version .*"):
         model.TSModel(tmpdir / "test.tsbrowse")
