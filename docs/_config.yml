@@ -56,7 +56,6 @@ sphinx:
         matplotlib: ["https://matplotlib.org/stable", null]
         numpy: ["https://numpy.org/doc/stable/", null]
         pandas: ["https://pandas.pydata.org/pandas-docs/stable", null]
-        pyslim: ["https://tskit.dev/pyslim/docs/latest/", null]
         tskit: ["https://tskit.dev/tskit/docs/stable/", null]
         tskit-tutorials: ["https://tskit.dev/tutorials/", null]
         msprime: ["https://tskit.dev/msprime/docs/stable/", null]
