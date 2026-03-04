@@ -3329,7 +3329,7 @@ requires-dist = [
     { name = "panel", specifier = ">=1.5.2,<=1.6.1" },
     { name = "tskit" },
     { name = "tszip" },
-    { name = "zarr", specifier = ">=2.18,<3" },
+    { name = "zarr", specifier = ">=2.18" },
 ]
 
 [package.metadata.requires-dev]

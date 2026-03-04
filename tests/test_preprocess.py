@@ -8,9 +8,8 @@ import numpy.testing as nt
 import pytest
 import tskit
 import tszip
-import zarr
 
-from tsbrowse import TSBROWSE_DATA_VERSION, preprocess
+from tsbrowse import TSBROWSE_DATA_VERSION, _zarr_compat, preprocess
 
 
 def single_tree_example_ts():
@@ -275,8 +274,8 @@ def test_preprocess(tmpdir, use_tszip):
     tszip.load(output_path).tables.assert_equals(ts.tables)
 
     # Check that the file contains the expected arrays
-    with zarr.storage.ZipStore(pathlib.Path(output_path), mode="r") as zarr_store:
-        root = zarr.open_group(store=zarr_store, mode="r")
+    with _zarr_compat.open_zip_store(pathlib.Path(output_path), mode="r") as zarr_store:
+        root = _zarr_compat.open_group_for_read(zarr_store)
         assert root.attrs["tsbrowse"]["data_version"] == TSBROWSE_DATA_VERSION
         for array_name in [
             "mutations/position",
