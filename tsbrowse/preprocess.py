@@ -438,7 +438,7 @@ def preprocess(tszip_path, output_path, show_progress=False):
 
     logger.info(f"Writing preprocessed data to {output_path}")
     with zarr.storage.ZipStore(output_path, mode="a") as zarr_store:
-        root = zarr.open_group(store=zarr_store, zarr_format=2)
+        root = zarr.open_group(store=zarr_store)
         total_arrays = sum(len(arrays) for arrays in data.values())
         with tqdm(total=total_arrays, desc="Writing", disable=not show_progress) as pbar:
             for table_name, arrays in data.items():
