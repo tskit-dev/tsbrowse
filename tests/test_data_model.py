@@ -96,7 +96,7 @@ class TestModelErrors:
         tsbrowse_path = tmpdir / "test.tsbrowse"
         # Write an empty zarr ZipStore
         with zarr.storage.ZipStore(str(tsbrowse_path), mode="w") as z:
-            g = zarr.open_group(store=z, mode="w", zarr_format=2)
+            g = zarr.open_group(store=z, mode="w")
             g.attrs["foo"] = "bar"
         with pytest.raises(ValueError, match="File is not a tsbrowse file"):
             model.TSModel(tsbrowse_path)
@@ -107,7 +107,7 @@ class TestModelErrors:
         tszip.compress(ts, tmpdir / "test.tszip")
         preprocess.preprocess(tmpdir / "test.tszip", tsbrowse_path)
         with zarr.storage.ZipStore(str(tsbrowse_path), mode="w") as z:
-            g = zarr.open_group(store=z, mode="w", zarr_format=2)
+            g = zarr.open_group(store=z, mode="w")
             g.attrs["tsbrowse"] = {"data_version": 0}
         with pytest.raises(ValueError, match="File .* has version .*"):
             model.TSModel(tsbrowse_path)
