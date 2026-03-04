@@ -33,7 +33,7 @@ dependencies = [
     "matplotlib",
     "tskit",
     "tszip",
-    "zarr>=2.18,<3",
+    "zarr>=2.18",
 ]
 dynamic = ["version"]
 keywords = ["tree sequence", "ancestral recombination graph", "tskit", "quality control"]

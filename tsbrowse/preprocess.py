@@ -7,12 +7,11 @@ import numba
 import numpy as np
 import tskit
 import tszip
-import zarr
 from tqdm import tqdm
 
 from tsbrowse import TSBROWSE_DATA_VERSION
 
-from . import jit
+from . import _zarr_compat, jit
 
 logger = daiquiri.getLogger("tsbrowse")
 
@@ -437,8 +436,8 @@ def preprocess(tszip_path, output_path, show_progress=False):
             pbar.update(1)
 
     logger.info(f"Writing preprocessed data to {output_path}")
-    with zarr.storage.ZipStore(output_path, mode="a") as zarr_store:
-        root = zarr.open_group(store=zarr_store)
+    with _zarr_compat.open_zip_store(output_path, mode="a") as zarr_store:
+        root = _zarr_compat.open_group_for_write(zarr_store)
         total_arrays = sum(len(arrays) for arrays in data.values())
         with tqdm(total=total_arrays, desc="Writing", disable=not show_progress) as pbar:
             for table_name, arrays in data.items():
