@@ -1,8 +1,9 @@
 # Changelog
 
-## [0.1.1] - 2026-03-xx
+## [0.1.1] - 2026-03-05
 
-- Pin to Zarr Python >= 3 (keeping Zarr v2 as on-disk format) (#278)
+Maintenance release.
+
 - Drop support for Python 3.10
 
 ## [0.1.0] - 2026-02-05
