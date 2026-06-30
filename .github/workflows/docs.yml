@@ -15,6 +15,6 @@ jobs:
   Docs:
     permissions:
       contents: read
-    uses: tskit-dev/.github/.github/workflows/docs.yml@main
+    uses: tskit-dev/.github/.github/workflows/docs.yml@v20
     with:
       install-playwright: true
