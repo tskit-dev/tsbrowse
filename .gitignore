@@ -128,3 +128,6 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# setuptools-scm generated version file
+tsbrowse/_version.py
