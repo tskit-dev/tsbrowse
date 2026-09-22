@@ -1,8 +1,8 @@
 # Changelog
 
-## [0.1.2] - 2026-XX-XX
+## [0.1.2] - 2026-09-22
 
-In development
+Maintenance release.
 
 - Add support for Zarr v3 (#517)
 - Add support for Python 3.14 (#279)
