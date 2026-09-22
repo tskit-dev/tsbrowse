@@ -5,6 +5,7 @@
 In development
 
 - Add support for Zarr v3 (#517)
+- Add support for Python 3.14 (#279)
 
 ## [0.1.1] - 2026-03-05
 
